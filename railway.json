@@ -5,10 +5,12 @@
     "buildCommand": "npm install && npm --workspace=backend run prisma:generate"
   },
   "deploy": {
-    "startCommand": "npm --workspace=backend run migrate:deploy && npm --workspace=backend run start",
+    "preDeployCommand": "cd backend && DATABASE_URL=\"$DIRECT_URL\" npx prisma migrate deploy",
+    "startCommand": "npm --workspace=backend run start",
     "healthcheckPath": "/api/v1/health",
     "healthcheckTimeout": 30,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 5
   }
 }
+
