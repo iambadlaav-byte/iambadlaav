@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>New paid registration — {{program}} — {{userName}}</title>
+  <style>
+    body { font-family: 'DM Sans', Helvetica, Arial, sans-serif; background: #F8F4EF; color: #2D2D2D; margin: 0; padding: 0; }
+    .wrapper { max-width: 560px; margin: 0 auto; padding: 40px 24px; }
+    .header { border-bottom: 2px solid #D4A017; padding-bottom: 16px; margin-bottom: 32px; }
+    .brand { font-size: 22px; font-weight: 700; color: #1A3C5E; }
+    h1 { font-size: 22px; font-weight: 600; color: #1A3C5E; margin: 0 0 24px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    td { padding: 10px 12px; border-bottom: 1px solid #e0d8cc; }
+    td:first-child { color: #5a6e7a; font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; width: 38%; }
+    td:last-child { color: #0d1b2a; font-weight: 500; }
+    .cta { display: inline-block; margin-top: 24px; background: #1A3C5E; color: #e8f4f8; font-size: 13px; padding: 10px 20px; border-radius: 3px; text-decoration: none; }
+    .footer { margin-top: 40px; font-size: 11px; color: #5a6e7a; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <div class="brand">Dnyanpith — Admin</div>
+    </div>
+
+    <h1>New paid registration</h1>
+
+    <table>
+      <tr><td>Name</td><td>{{userName}}</td></tr>
+      <tr><td>Email</td><td>{{userEmail}}</td></tr>
+      <tr><td>Program</td><td>{{program}}</td></tr>
+      <tr><td>Plan</td><td>{{plan}}</td></tr>
+      <tr><td>Batch</td><td>{{batchName}}</td></tr>
+      <tr><td>Amount</td><td>₹{{amount}}</td></tr>
+      <tr><td>Coupon</td><td>{{couponCode}}</td></tr>
+      <tr><td>Invoice</td><td>{{invoiceNumber}}</td></tr>
+      <tr><td>Registration ID</td><td>{{regId}}</td></tr>
+    </table>
+
+    <a href="{{adminUrl}}" class="cta">View in Admin Dashboard</a>
+
+    <div class="footer">
+      Dnyanpith Abhyasika Pvt. Ltd. · Automated notification — do not reply.
+    </div>
+  </div>
+</body>
+</html>

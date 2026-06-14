@@ -1,0 +1,61 @@
+# ============================================================
+# DNYANPITH BACKEND — .env.example
+# Copy to backend/.env and fill in real values.
+# NEVER commit backend/.env
+# ============================================================
+
+# --- DATABASE (Supabase Postgres) ---
+# Prisma v7 note: Connection URL is set in prisma.config.ts, which reads DATABASE_URL.
+#
+# For running the Express app (runtime queries):
+#   Use the transaction pooler URL (port 6543, ?pgbouncer=true&connection_limit=1)
+#   Source: Supabase Dashboard → Project Settings → Database → Connection String → Transaction pooler
+DATABASE_URL="postgresql://postgres.PROJECTREF:PASSWORD@aws-0-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1"
+
+# For running migrations (prisma migrate dev / prisma db push):
+#   Override DATABASE_URL with the direct connection (port 5432, no PgBouncer):
+#   DATABASE_URL="$DIRECT_URL" npx prisma migrate dev --name <migration_name>
+#   Source: Supabase Dashboard → Project Settings → Database → Connection String → Session pooler
+DIRECT_URL="postgresql://postgres.PROJECTREF:PASSWORD@aws-0-ap-south-1.pooler.supabase.com:5432/postgres"
+
+# --- AUTH SECRETS ---
+# Generate with: node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+# Run twice — JWT_SECRET and JWT_REFRESH_SECRET must be DIFFERENT values.
+# Each must be 64+ chars. NEVER reuse across dev/staging/prod.
+JWT_SECRET="REPLACE_WITH_64_CHAR_RANDOM_STRING"
+JWT_REFRESH_SECRET="REPLACE_WITH_DIFFERENT_64_CHAR_RANDOM_STRING"
+
+# --- EMAIL (Brevo SMTP) ---
+# Source: Brevo Dashboard → SMTP & API → SMTP
+BREVO_SMTP_USER="your-smtp-user@smtp-brevo.com"
+BREVO_SMTP_PASS="your-brevo-smtp-key"
+
+# --- PAYMENTS (Razorpay) ---
+# Source: Razorpay Dashboard → Settings → API Keys
+RAZORPAY_KEY_ID="rzp_test_XXXXXXXXXXXXXXXXXX"
+RAZORPAY_KEY_SECRET="REPLACE_WITH_RAZORPAY_SECRET"
+RAZORPAY_WEBHOOK_SECRET="REPLACE_WITH_WEBHOOK_SECRET"
+
+# --- MEDIA (Cloudinary) ---
+# Source: Cloudinary Dashboard → Settings → Access Keys
+CLOUDINARY_CLOUD_NAME="your-cloud-name"
+CLOUDINARY_API_KEY="your-api-key"
+CLOUDINARY_API_SECRET="your-api-secret"
+
+# --- ERROR TRACKING (Sentry) ---
+# Source: Sentry → Create project (Node) → Client keys (DSN)
+SENTRY_DSN_BACKEND="https://XXXXXXXX@oXXXXXX.ingest.sentry.io/XXXXXXX"
+
+# --- APP ---
+NODE_ENV="development"
+PORT="4000"
+APP_VERSION="dev"
+
+# Comma-separated allowed CORS origins (no spaces between items)
+ALLOWED_ORIGINS="http://localhost:5173,https://dnyanpith.org,https://www.dnyanpith.org"
+
+# Pino log level: trace | debug | info | warn | error | fatal
+LOG_LEVEL="info"
+
+# --- SEED (prisma db seed only) ---
+SEED_ADMIN_PASSWORD="changeme-on-first-deploy"

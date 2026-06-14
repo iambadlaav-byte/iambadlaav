@@ -1,0 +1,20 @@
+{
+  "name": "@dnyanpith/validators",
+  "version": "0.0.1",
+  "description": "Shared Zod validation schemas for Dnyanpith frontend and backend",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./shared": "./src/shared.js",
+    "./auth": "./src/auth.js",
+    "./enquiries": "./src/enquiries.js",
+    "./registrations": "./src/registrations.js",
+    "./community": "./src/community.js",
+    "./students": "./src/students.js",
+    "./content": "./src/content.js"
+  },
+  "dependencies": {
+    "zod": "^4.4"
+  }
+}

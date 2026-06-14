@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#16271e" />
+    <meta
+      name="description"
+      content="Badlaav — Trip नाही, Turning Point. A 3-day residential retreat in Ambajogai for professionals and teams who need a real reset, not another workshop."
+    />
+
+    <title>Badlaav — Trip नाही, Turning Point.</title>
+
+    <!-- Warm theme fonts: Cormorant Garamond (display), DM Sans (body), DM Mono (labels) + Mukta (Devanagari) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Mono:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Mukta:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate icon" href="/favicon.svg" />
+
+    <!--
+      Razorpay Standard Checkout SDK — deferred so it doesn't block render.
+      window.Razorpay is checked in src/lib/razorpay.js before openCheckout().
+      CSP allows https://checkout.razorpay.com in backend app.js helmet config.
+    -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

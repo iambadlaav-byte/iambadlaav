@@ -1,0 +1,497 @@
+// Prisma schema — Dnyanpith Ecosystem Website
+// 14 user-facing models (per ARCHITECTURE.md §15) + 4 ops-side models
+// Total: 18 models
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Prisma v7: database connection URLs have moved to prisma.config.ts
+// The datasource block no longer accepts url/directUrl — see ../prisma.config.ts
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum UserRole {
+  GUEST
+  REGISTERED
+  ENROLLED
+  VOLUNTEER
+  ADMIN
+}
+
+enum Program {
+  BADLAAV
+  MISSION_UDAAN
+  FUTURE_READINESS
+  ANTRANG
+}
+
+enum BatchStatus {
+  OPEN
+  FULL
+  CLOSED
+  PAST
+}
+
+enum RegistrationType {
+  INDIVIDUAL
+  COUPLE
+  CORPORATE
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+  FAILED
+}
+
+enum RegistrationStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum EnquiryType {
+  CORPORATE
+  COLLEGE
+  PARTNER
+  GENERIC
+  PRESS
+}
+
+enum EnquiryStatus {
+  NEW
+  CONTACTED
+  CONVERTED
+  CLOSED
+}
+
+enum Initiative {
+  VACHAN_VARI
+  ANTRANG
+  FIVE_AM_CLUB
+  GET_TOGETHER
+}
+
+enum VolunteerStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum JobStatus {
+  NEW
+  REVIEWED
+  SHORTLISTED
+  REJECTED
+  HIRED
+}
+
+enum TestimonialStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum EventStatus {
+  UPCOMING
+  PAST
+  CANCELLED
+}
+
+enum MediaType {
+  PHOTO
+  VIDEO
+}
+
+// ============================================================
+// MODEL 1 — User
+// Auth lockout columns added per RESEARCH Pitfall 8 (atomic lockout).
+// These columns are SHARED across OTP and password paths — parity is the goal.
+// NEVER hard-delete (CONSTRAINT-SCHEMA-002) — use deletedAt for soft delete.
+// ============================================================
+model User {
+  id                String    @id @default(cuid())
+  name              String
+  email             String    @unique
+  phone             String    @default("")
+  city              String?
+  state             String?
+  occupation        String?
+  age               Int?
+  photoUrl          String?
+  role              UserRole  @default(REGISTERED)
+  passwordHash      String?
+  emailVerified     Boolean   @default(false)
+  coursesCompleted  Int       @default(0)
+
+  // Auth lockout — per CONSTRAINT-SEC-004 (5/30 lockout on all auth paths)
+  // Both OTP and password failures increment this counter atomically (Pitfall 8)
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  lastLoginAt         DateTime?
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime? // soft delete only
+
+  registrations    Registration[]
+  communityJoins   CommunityMember[]
+  volunteerApp     Volunteer?
+  refreshTokens    RefreshToken[]
+}
+
+// ============================================================
+// MODEL 2 — Batch
+// ============================================================
+model Batch {
+  id               String      @id @default(cuid())
+  program          Program
+  name             String      // e.g. "Badlaav · Aug 2026"
+  startDate        DateTime
+  endDate          DateTime
+  venue            String      @default("")
+  totalSeats       Int
+  seatsBooked      Int         @default(0)
+  priceIndividual  Decimal
+  priceCouple      Decimal?
+  priceCorporate   Decimal?
+  status           BatchStatus @default(OPEN)
+  createdAt        DateTime    @default(now())
+
+  registrations    Registration[]
+}
+
+// ============================================================
+// MODEL 3 — Registration
+// ============================================================
+model Registration {
+  id                  String             @id @default(cuid())
+  userId              String
+  user                User               @relation(fields: [userId], references: [id])
+  program             Program
+  batchId             String?
+  batch               Batch?             @relation(fields: [batchId], references: [id])
+  regType             RegistrationType
+  partner2Name        String?
+  plan                String             // 'individual' | 'couple' | 'corporate_batch'
+  amount              Decimal
+  couponCode          String?
+  discountAmount      Decimal?
+  finalAmount         Decimal
+  age                 Int?
+  occupation          String?
+  dietaryNote         String?
+  paymentStatus       PaymentStatus      @default(PENDING)
+  razorpayOrderId     String?
+  razorpayPaymentId   String?
+  invoiceUrl          String?
+  invoiceNumber       String?
+  status              RegistrationStatus @default(ACTIVE)
+  createdAt           DateTime           @default(now())
+  completedAt         DateTime?
+  // Failed-payment recovery cron: marks when the 15-min reminder was sent (T-05-11).
+  // Prevents duplicate reminders. Added in Plan 05 (Task 3b migration).
+  reminderSentAt      DateTime?
+
+  @@index([userId])
+  @@index([batchId])
+  @@index([paymentStatus])
+  @@index([status])
+  // Dedup index: one active/pending registration per user per batch+program.
+  // Enforced via controller pre-check (partial index not supported by Prisma @@unique);
+  // this composite index speeds up the pre-check query.
+  @@index([userId, batchId, program])
+}
+
+// ============================================================
+// MODEL 4 — Enquiry
+// ============================================================
+model Enquiry {
+  id             String        @id @default(cuid())
+  type           EnquiryType
+  name           String
+  organisation   String?
+  designation    String?
+  email          String
+  phone          String
+  teamSize       String?
+  preferredMonth String?
+  message        String?       @db.Text
+  source         String?
+  status         EnquiryStatus @default(NEW)
+  adminNote      String?       @db.Text
+  createdAt      DateTime      @default(now())
+
+  @@index([status])
+  @@index([type])
+}
+
+// ============================================================
+// MODEL 5 — CommunityMember
+// ============================================================
+model CommunityMember {
+  id          String     @id @default(cuid())
+  name        String
+  phone       String
+  city        String
+  email       String?
+  occupation  String?
+  initiative  Initiative
+  userId      String?
+  user        User?      @relation(fields: [userId], references: [id])
+  joinedAt    DateTime   @default(now())
+
+  @@index([initiative])
+  @@index([city])
+  @@index([userId])
+  // Dedup: same WhatsApp number cannot join the same initiative twice.
+  @@unique([phone, initiative])
+}
+
+// ============================================================
+// MODEL 6 — Volunteer
+// ============================================================
+model Volunteer {
+  id              String          @id @default(cuid())
+  userId          String          @unique
+  user            User            @relation(fields: [userId], references: [id])
+  batchAttended   String
+  whyVolunteer    String          @db.Text
+  skills          String[]
+  availability    String[]
+  canTravel       Boolean
+  photoUrl        String?
+  messageToArjun  String?         @db.Text
+  status          VolunteerStatus @default(PENDING)
+  approvedBy      String?
+  approvedAt      DateTime?
+  createdAt       DateTime        @default(now())
+
+  @@index([status])
+}
+
+// ============================================================
+// MODEL 7 — JobApplication
+// ============================================================
+model JobApplication {
+  id                  String    @id @default(cuid())
+  name                String
+  email               String
+  phone               String
+  roleApplying        String
+  city                String
+  qualification       String
+  resumeUrl           String    // Cloudinary URL (private folder)
+  whyText             String    @db.Text
+  linkedinUrl         String?
+  expectedJoiningDate DateTime?
+  status              JobStatus @default(NEW)
+  adminNote           String?   @db.Text
+  createdAt           DateTime  @default(now())
+
+  @@index([status])
+}
+
+// ============================================================
+// MODEL 8 — Testimonial
+// ============================================================
+model Testimonial {
+  id          String            @id @default(cuid())
+  name        String
+  designation String
+  program     String
+  year        String
+  text        String            @db.Text
+  photoUrl    String?
+  videoUrl    String?
+  consent     Boolean
+  status      TestimonialStatus @default(PENDING)
+  createdAt   DateTime          @default(now())
+
+  @@index([status])
+}
+
+// ============================================================
+// MODEL 9 — BlogPost
+// ============================================================
+model BlogPost {
+  id          String     @id @default(cuid())
+  title       String
+  slug        String     @unique
+  excerpt     String?
+  content     String     @db.Text
+  coverImage  String?
+  category    String
+  tags        String[]
+  authorId    String
+  status      PostStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([status, publishedAt(sort: Desc)])
+}
+
+// ============================================================
+// MODEL 10 — Event
+// ============================================================
+model Event {
+  id          String      @id @default(cuid())
+  title       String
+  description String      @db.Text
+  startDate   DateTime
+  endDate     DateTime?
+  location    String
+  city        String
+  type        String      // 'badlaav' | 'antrang' | 'meetup' | 'workshop'
+  totalSeats  Int?
+  seatsBooked Int         @default(0)
+  price       Decimal?
+  coverImage  String?
+  status      EventStatus @default(UPCOMING)
+  createdAt   DateTime    @default(now())
+
+  @@index([status, startDate])
+}
+
+// ============================================================
+// MODEL 11 — GalleryItem
+// ============================================================
+model GalleryItem {
+  id        String    @id @default(cuid())
+  url       String    // Cloudinary URL
+  caption   String?
+  category  String    // 'badlaav' | 'abhyasika' | 'community' | 'gallery'
+  type      MediaType @default(PHOTO)
+  altText   String    @default("") // mandatory per CONSTRAINT-MEDIA-001
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+
+  @@index([category])
+}
+
+// ============================================================
+// MODEL 12 — Message (generic contact form)
+// ============================================================
+model Message {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  type      String   // matches enquiry type
+  message   String   @db.Text
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([isRead])
+}
+
+// ============================================================
+// MODEL 13 — Coupon
+// ============================================================
+model Coupon {
+  id                 String    @id @default(cuid())
+  code               String    @unique
+  discountPct        Int?
+  discountAmount     Decimal?
+  applicablePrograms Program[]
+  maxUses            Int?
+  currentUses        Int       @default(0)
+  validUntil         DateTime?
+  active             Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+
+  @@index([active])
+}
+
+// ============================================================
+// MODEL 14 — OTP
+// ============================================================
+model OTP {
+  id        String   @id @default(cuid())
+  email     String
+  // Stored as sha256 hash — plaintext code is sent to email and never persisted
+  code      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
+// ============================================================
+// OPS MODEL 1 — ProcessedWebhook
+// Replay protection for Razorpay webhooks (ARCHITECTURE.md §23.4).
+// Unique constraint on eventId ensures only one delivery is processed.
+// Added in Plan 02 so migrations stay clean when Plan 05 uses it.
+// ============================================================
+model ProcessedWebhook {
+  id         String   @id @default(cuid())
+  eventId    String   @unique // Razorpay event id — unique per delivery
+  eventType  String
+  receivedAt DateTime @default(now())
+
+  @@index([eventType])
+}
+
+// ============================================================
+// OPS MODEL 2 — RefreshToken
+// Opaque token (not JWT) hashed at rest. Reuse detection revokes
+// entire user family (RESEARCH Pattern 3 / Pitfall 4).
+// ============================================================
+model RefreshToken {
+  id           String    @id @default(cuid())
+  tokenHash    String    @unique // sha256 of the random token
+  userId       String
+  user         User      @relation(fields: [userId], references: [id])
+  issuedAt     DateTime  @default(now())
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  revokeReason String?   // 'rotated' | 'reuse_detected' | 'logout'
+
+  @@index([userId])
+}
+
+// ============================================================
+// OPS MODEL 3 — InvoiceSequence
+// Gap-less sequential invoice numbering per Indian FY.
+// Row-locked via SELECT FOR UPDATE in prisma.$transaction
+// (ARCHITECTURE.md §23.9 / RESEARCH Pattern 7).
+// ============================================================
+model InvoiceSequence {
+  financialYear String @id   // e.g. "2026-27"
+  currentValue  Int    @default(0)
+}
+
+// ============================================================
+// OPS MODEL 4 — AuditLog
+// Sensitive admin actions logged per DECISION-020 / DECISION-018.
+// Plan 07 writes to this table from admin controllers.
+// ============================================================
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorId     String?  // null for system-generated events
+  action      String   // e.g. 'admin.registration.mark_completed'
+  subjectType String?  // e.g. 'Registration'
+  subjectId   String?
+  meta        Json?    // arbitrary context (before/after values, etc.)
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+
+  @@index([actorId])
+  @@index([action])
+  @@index([createdAt])
+}

@@ -1,0 +1,13 @@
+# Railway Nixpacks build config.
+# Pins Node 20 LTS so Prisma 7 (needs >=18.18) and pg are happy.
+# Without this Railway picks "whatever LTS is current", which can shift under us.
+
+[phases.setup]
+nixPkgs = ["nodejs_20", "npm-10_x"]
+
+[variables]
+# Skip Cypress/Playwright postinstalls if a dep ever pulls them — saves build time.
+CYPRESS_INSTALL_BINARY = "0"
+PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1"
+# Surface Prisma's own logs during build so we see schema errors clearly.
+DEBUG = "prisma:client"

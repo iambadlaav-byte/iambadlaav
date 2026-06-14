@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   CSS VARIABLE BRIDGE — "Warm" theme fallbacks
+   ThemeContext sets these at runtime from lib/themes.js; the values
+   here are static fallbacks so the first paint is already on-theme.
+   Echoes brand tokens so canvas, SVG, and Framer Motion components
+   can reference the same values via var(--color-*) syntax.
+   ============================================================ */
+:root {
+  /* ── Warm theme (light, premium retreat) ── */
+  --color-cream: 247 243 234; /* warm sand — default page background */
+  --color-soft: 239 232 217; /* pale sand — alternating bands, cards */
+  --color-navy: 31 58 46; /* deep forest — header bar, dark surfaces */
+  --color-ink: 22 39 30; /* deepest forest — hero overlay, footer */
+  --color-charcoal: 51 48 42; /* warm near-black — body text on light */
+  --color-pearl: 244 238 226; /* warm light — text on dark surfaces */
+  --color-gold: 190 154 78; /* muted antique gold — primary CTAs */
+  --color-ochre: 194 112 62; /* terracotta — warmth accent */
+  --color-teal: 62 107 79; /* deep sage — links, secondary actions */
+  --color-teal-light: 90 140 104; /* sage — hover, accent phrase */
+  --color-sage: 74 124 89; /* fern — success states */
+  --color-muted: 138 129 112; /* warm taupe — captions, metadata */
+  --color-danger: 196 74 58; /* form errors, destructive actions */
+  --color-on-gold: 22 39 30; /* dark text on gold CTA backgrounds */
+  --color-on-ochre: 244 238 226; /* light text on terracotta backgrounds */
+
+  /* Font families — switched by ThemeContext */
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'DM Mono', ui-monospace, monospace;
+
+  /* Section spacing — fluid */
+  --section-y: clamp(60px, 8vw, 120px);
+  --section-x: 5%;
+
+  /* Container widths (mirrors tailwind.config.js maxWidth tokens) */
+  --container-narrow: 700px;
+  --container-default: 1160px;
+  --container-wide: 1440px;
+
+  /* Fluid heading sizes — used via Tailwind arbitrary value:
+     text-[length:var(--text-display)] etc. (no inline style=) */
+  --text-display: clamp(2.8rem, 7vw, 6rem); /* H1 hero */
+  --text-heading: clamp(1.8rem, 4vw, 3rem); /* H2 section */
+  --text-subheading: clamp(1.4rem, 3vw, 2rem); /* H3 card, form headings */
+}
+
+/* ============================================================
+   BASE STYLES
+   ============================================================ */
+html {
+  -webkit-text-size-adjust: 100%; /* prevent iOS font-size inflation */
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-cream text-charcoal font-sans;
+  line-height: 1.7; /* Brand atmosphere — things breathe */
+}
+
+/* ============================================================
+   ACCESSIBILITY — REDUCED MOTION
+   Master switch; animation components also check useReducedMotion().
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   FOCUS STYLES — visible focus rings for keyboard nav (WCAG 2.4.7)
+   ============================================================ */
+:focus-visible {
+  outline: 2px solid rgb(var(--color-teal));
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   TYPOGRAPHY — base resets; sizing applied via Tailwind in components
+   ============================================================ */
+h1, h2, h3, h4, h5, h6 {
+  @apply font-display;
+  line-height: 1.15;
+}
+
+/* ============================================================
+   SCROLLBAR (optional polish)
+   ============================================================ */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgb(var(--color-soft));
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--color-teal) / 0.6);
+  border-radius: 4px;
+}
+
+/* ============================================================
+   AMBIENT KEYFRAMES (theme-agnostic)
+   ============================================================ */
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50%       { transform: scale(1.04); opacity: 0.9; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-10px); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(190, 154, 78, 0.08); }
+  50%       { box-shadow: 0 0 40px rgba(190, 154, 78, 0.16), 0 0 80px rgba(190, 154, 78, 0.05); }
+}
+
+@keyframes revealUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

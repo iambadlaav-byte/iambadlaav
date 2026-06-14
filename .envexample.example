@@ -1,0 +1,80 @@
+# ============================================================
+# BADLAAV WEBSITE — Environment Variables Template
+# ============================================================
+# Copy the BACKEND section into  backend/.env
+# Copy the FRONTEND section into frontend/.env  (VITE_* only)
+# NEVER commit real .env files — .gitignore already excludes them.
+# In production: paste BACKEND vars into Railway, FRONTEND vars into Vercel.
+# ============================================================
+
+
+# ============================================================
+# ===== BACKEND (backend/.env) =====
+# ============================================================
+
+# --- DATABASE (Supabase Postgres) ---
+# Supabase free tier: db.<ref>.supabase.co is IPv6-only and unreachable from
+# most platforms — always use the pooler hostname for both URLs.
+#
+# DATABASE_URL = transaction pooler (port 6543, pgbouncer) → runtime queries
+# DIRECT_URL   = session pooler     (port 5432)            → migrations / seed
+#
+# URL-encode special chars in your password: @ → %40, # → %23, : → %3A
+DATABASE_URL="postgresql://postgres.PROJECTREF:PASSWORD@aws-1-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1"
+DIRECT_URL="postgresql://postgres.PROJECTREF:PASSWORD@aws-1-ap-south-1.pooler.supabase.com:5432/postgres"
+
+# --- AUTH SECRETS ---
+# Generate each with: node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+# Run twice — must be DIFFERENT values, 64+ chars, never reused across envs.
+JWT_SECRET="REPLACE_WITH_64_CHAR_RANDOM_STRING"
+JWT_REFRESH_SECRET="REPLACE_WITH_DIFFERENT_64_CHAR_RANDOM_STRING"
+
+# --- EMAIL (Brevo SMTP) ---
+# Source: Brevo Dashboard → SMTP & API → SMTP (the SMTP KEY, not your account password)
+BREVO_SMTP_USER="your-smtp-user@smtp-brevo.com"
+BREVO_SMTP_PASS="xsmtpsib-REPLACE-WITH-YOUR-BREVO-SMTP-KEY"
+
+# --- PAYMENTS (Razorpay) ---
+RAZORPAY_KEY_ID="rzp_test_XXXXXXXXXXXXXXXXXX"
+RAZORPAY_KEY_SECRET="REPLACE_WITH_RAZORPAY_SECRET"
+# Webhook URL (prod): https://<your-api-domain>/api/v1/payments/webhook
+RAZORPAY_WEBHOOK_SECRET="REPLACE_WITH_WEBHOOK_SECRET"
+
+# --- MEDIA (Cloudinary) ---
+CLOUDINARY_CLOUD_NAME="your-cloud-name"
+CLOUDINARY_API_KEY="your-api-key"
+CLOUDINARY_API_SECRET="REPLACE_WITH_CLOUDINARY_SECRET"
+
+# --- ERROR TRACKING (Sentry — backend project, platform Node.js) ---
+SENTRY_DSN_BACKEND=""
+
+# --- APP ---
+NODE_ENV="development"
+PORT="4000"
+APP_VERSION="dev"
+# Comma-separated allowed CORS origins (no spaces). Add prod domain at launch.
+ALLOWED_ORIGINS="http://localhost:5173"
+LOG_LEVEL="info"
+
+# Cron jobs (failed-payment reminder, etc.) run only when this is "true".
+# Set to "true" on exactly ONE Railway service to prevent duplicate emails
+# if you ever scale beyond a single instance.
+RUN_CRONS="true"
+
+# --- SEED (prisma db seed only) ---
+SEED_ADMIN_PASSWORD="changeme-on-first-deploy"
+
+
+# ============================================================
+# ===== FRONTEND (frontend/.env — VITE_* only, browser-exposed) =====
+# ============================================================
+# Local dev: Vite proxies /api to the backend on port 4000.
+# In Vercel set VITE_API_URL to your Railway URL (e.g. https://badlaav-api.up.railway.app).
+VITE_API_URL=http://localhost:4000
+# Razorpay PUBLIC key id only — never the secret.
+VITE_RAZORPAY_KEY_ID=rzp_test_REPLACE_WITH_YOUR_KEY
+# Cloudinary cloud name is public.
+VITE_CLOUDINARY_CLOUD_NAME=your-cloud-name
+# Sentry (frontend project, platform React) — different from backend DSN.
+VITE_SENTRY_DSN=
+VITE_SENTRY_ENVIRONMENT=development

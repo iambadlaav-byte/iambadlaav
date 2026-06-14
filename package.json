@@ -1,0 +1,24 @@
+{
+  "name": "badlaav",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Badlaav — 3-day residential retreat website (a Dnyanpith initiative)",
+  "engines": {
+    "node": ">=18.18"
+  },
+  "workspaces": [
+    "frontend",
+    "backend",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm:dev:fe\" \"npm:dev:be\"",
+    "dev:fe": "npm --workspace=frontend run dev",
+    "dev:be": "npm --workspace=backend run dev",
+    "lint": "eslint . --max-warnings=0",
+    "build": "npm --workspace=frontend run build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

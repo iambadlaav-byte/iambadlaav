@@ -1,0 +1,214 @@
+# ============================================================
+# DNYANPITH ECOSYSTEM WEBSITE — .gitignore
+# ============================================================
+# Place this at the project root: dnyanpith-website/.gitignore
+
+# ============================================================
+# ENVIRONMENT & SECRETS (NEVER COMMIT)
+# ============================================================
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.staging
+.env.test
+*.pem
+*.key
+*.cert
+secrets/
+credentials.json
+
+# Razorpay, Cloudinary, Brevo, Supabase secrets — never anywhere in repo
+**/secrets.json
+**/credentials/
+
+# ============================================================
+# NODE / NPM
+# ============================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+.npm
+.yarn-integrity
+package-lock.json.bak
+
+# ============================================================
+# BUILD OUTPUTS
+# ============================================================
+dist/
+build/
+out/
+.next/
+.nuxt/
+.vercel/
+.netlify/
+.parcel-cache/
+
+# Vite specific
+frontend/dist/
+frontend/.vite/
+
+# ============================================================
+# PRISMA
+# ============================================================
+# Migrations are committed (we want them)
+# But the generated client is regenerated, so ignore it
+backend/node_modules/.prisma/
+backend/prisma/.env
+
+# Local SQLite (if used during prototyping)
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# ============================================================
+# LOGS
+# ============================================================
+logs/
+*.log
+backend/logs/
+frontend/logs/
+
+# ============================================================
+# TESTING & COVERAGE
+# ============================================================
+coverage/
+.nyc_output/
+*.lcov
+.coverage/
+
+# ============================================================
+# IDE / EDITORS
+# ============================================================
+# VS Code — keep shared settings (.vscode/settings.json can be committed
+# if you decide to standardize team settings), ignore the rest
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/
+*.code-workspace
+
+# Antigravity IDE / Gemini
+.gemini/
+.antigravityignore
+
+# JetBrains (WebStorm, IntelliJ)
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+\#*\#
+.\#*
+
+# ============================================================
+# OS-GENERATED FILES
+# ============================================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ============================================================
+# CLAUDE CODE
+# ============================================================
+# Local Claude Code conversation state (per-user, don't commit)
+.claude/
+.claude_history
+claude-session-*.json
+
+# ============================================================
+# UPLOADS & MEDIA (only if temporarily on disk during dev)
+# ============================================================
+# Production uploads go straight to Cloudinary — no local storage
+# But just in case during development:
+uploads/
+public/uploads/
+backend/uploads/
+tmp/
+temp/
+
+# ============================================================
+# CACHE
+# ============================================================
+.cache/
+.eslintcache
+.stylelintcache
+.turbo/
+
+# ============================================================
+# BACKUP FILES (your local backups before pushing)
+# ============================================================
+*.bak
+*.backup
+*-backup.*
+*~
+backups/
+
+# ============================================================
+# DEPLOYMENT
+# ============================================================
+.vercel/
+.railway/
+.firebase/
+.serverless/
+
+# ============================================================
+# OPTIONAL: BLOCK MISC GENERATED FILES
+# ============================================================
+# Sourcemaps in production builds — already in dist/, but belt-and-braces
+*.map
+
+# Bundle analyzer outputs
+stats.html
+bundle-analysis.html
+
+# Storybook (if added in Phase 2)
+storybook-static/
+
+# ============================================================
+# WHAT IS COMMITTED (FOR REFERENCE — NOT LITERAL GITIGNORE)
+# ============================================================
+# ✅ Source code (frontend/src/, backend/src/)
+# ✅ Configuration (package.json, vite.config.js, tailwind.config.js)
+# ✅ Documentation (docs/, README.md, CLAUDE.md)
+# ✅ Prisma schema + migrations (backend/prisma/)
+# ✅ .env.example files (template only, never with real values)
+# ✅ Scripts (scripts/)
+# ✅ Public static assets (frontend/public/) — favicon, manifest, robots.txt
