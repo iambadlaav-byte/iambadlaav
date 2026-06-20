@@ -11,7 +11,7 @@ export function Inclusions() {
         <FadeIn>
           <p className="font-mono text-xs uppercase tracking-widest text-muted mb-3">Included</p>
           <h2
-            className="font-display font-light text-ink mb-8"
+            className="font-display font-semibold text-ink mb-8"
             style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)' }}
           >
             Everything is taken care of

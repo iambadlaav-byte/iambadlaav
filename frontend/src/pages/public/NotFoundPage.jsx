@@ -11,8 +11,8 @@ import { FadeIn } from '../../components/animations/FadeIn.jsx';
 
 const NAV_LINKS = [
   { label: 'Home', href: '/' },
-  { label: 'Programs', href: '/programs' },
-  { label: 'Community', href: '/community' },
+  { label: 'The Retreat', href: '/retreat' },
+  { label: 'Gallery', href: '/gallery' },
   { label: 'Contact', href: '/contact' },
 ];
 
@@ -20,8 +20,8 @@ export default function NotFoundPage() {
   return (
     <>
       <Helmet>
-        <title>Page Not Found — Dnyanpith</title>
-        <meta name="description" content="This page wandered off. Find your way back to Dnyanpith." />
+        <title>Page Not Found — Badlaav</title>
+        <meta name="description" content="This page wandered off. Find your way back to Badlaav." />
       </Helmet>
 
       <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden bg-ink">
@@ -32,7 +32,7 @@ export default function NotFoundPage() {
           <FadeIn>
             <p className="font-mono text-xs uppercase tracking-widest text-pearl/40 mb-4">404</p>
             <h1
-              className="font-display font-light text-pearl mb-4"
+              className="font-display font-semibold text-pearl mb-4"
               style={{ fontSize: 'clamp(2.5rem, 7vw, 5rem)' }}
             >
               This page wandered off.

@@ -44,6 +44,7 @@ export async function createRegistration(req, res, next) {
     const {
       regType, fullName, partner2Name, email, phone, city, state,
       program, batchId, plan, age, occupation, dietaryNote, couponCode, consent,
+      questionnaire,
     } = req.body;
 
     // ── 1. Batch validation (if batchId provided) ─────────────────────────────
@@ -190,6 +191,7 @@ export async function createRegistration(req, res, next) {
         age:           age ?? null,
         occupation:    occupation ?? null,
         dietaryNote:   dietaryNote ?? null,
+        questionnaire: questionnaire ?? null,
         paymentStatus: 'PENDING',
       },
     });

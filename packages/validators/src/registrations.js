@@ -34,6 +34,9 @@ export const registrationCreateSchema = z
     consent: z.literal(true, {
       errorMap: () => ({ message: 'You must agree to the terms to proceed.' }),
     }),
+    // The Retreat questionnaire (psychographic answers) — stored as JSON on the
+    // registration. Free-form object; the form shapes it, admin reads it back.
+    questionnaire: z.any().optional().nullable(),
   })
   .refine(
     (d) =>

@@ -53,7 +53,7 @@ export function FormSkeleton({
               </p>
             )}
             {title && (
-              <h2 className="font-display font-light text-ink text-[length:var(--text-subheading)]">
+              <h2 className="font-display font-semibold text-ink text-[length:var(--text-subheading)]">
                 {title}
               </h2>
             )}

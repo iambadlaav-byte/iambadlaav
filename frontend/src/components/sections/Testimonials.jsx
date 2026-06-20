@@ -13,7 +13,7 @@ export function Testimonials() {
         <FadeIn>
           <p className="font-mono text-xs uppercase tracking-widest text-muted text-center mb-3">In their words</p>
           <h2
-            className="font-display font-light text-ink text-center mb-10"
+            className="font-display font-semibold text-ink text-center mb-10"
             style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)' }}
           >
             What participants say

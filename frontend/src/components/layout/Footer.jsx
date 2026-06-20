@@ -3,13 +3,14 @@
  * NO inline styles. NO forbidden phrases.
  */
 import { Link } from 'react-router-dom';
-import { Instagram, Youtube, Mail, MapPin } from 'lucide-react';
-import { CONTACT_EMAIL, WHATSAPP_NUMBER } from '../../lib/constants.js';
+import { Instagram, Mail, MapPin, Phone } from 'lucide-react';
+import { CONTACT_EMAIL, WHATSAPP_NUMBER, CONTACT_PHONE, MAP_LINK } from '../../lib/constants.js';
 import { SITE, SOCIAL } from '../../lib/content.js';
 
 const SITE_LINKS_LEFT = [
   { label: 'Home', href: '/' },
   { label: 'The Retreat', href: '/retreat' },
+  { label: 'The Badlaav Experience', href: '/badlaav-experience' },
   { label: 'Pricing', href: '/pricing' },
   { label: 'Gallery', href: '/gallery' },
 ];
@@ -17,9 +18,12 @@ const SITE_LINKS_LEFT = [
 const SITE_LINKS_RIGHT = [
   { label: 'About', href: '/about' },
   { label: 'Contact', href: '/contact' },
+  { label: 'Volunteer', href: '/volunteer' },
   { label: 'Privacy', href: '/privacy' },
   { label: 'Terms', href: '/terms' },
   { label: 'Refund Policy', href: '/refund' },
+  { label: 'Cookie Policy', href: '/cookies' },
+  { label: 'Code of Conduct', href: '/code-of-conduct' },
 ];
 
 export default function Footer() {
@@ -29,19 +33,24 @@ export default function Footer() {
 
         {/* Column 1 — Contact */}
         <div>
-          <h2 className="font-display text-2xl font-medium text-charcoal">Badlaav</h2>
-          <p className="font-mono text-xs uppercase tracking-widest text-muted mt-1 mb-4">
+          <img
+            src="/images/badlaav-logo.png"
+            alt="Badlaav"
+            className="h-10 w-auto"
+          />
+          <p className="font-mono text-xs uppercase tracking-widest text-muted mt-3 mb-4">
             {SITE.parent}
           </p>
           <div className="space-y-3 text-sm text-charcoal/80 font-sans">
-            <div className="flex items-start gap-2">
+            <a
+              href={MAP_LINK}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-start gap-2 hover:text-teal transition-colors"
+            >
               <MapPin size={15} className="text-teal mt-0.5 shrink-0" />
-              <span>
-                {SITE.legalEntity}
-                <br />
-                Ambajogai, Dist. Beed, Maharashtra 431517
-              </span>
-            </div>
+              <span>Ambajogai, Dist. Beed, Maharashtra 431517</span>
+            </a>
             <div className="flex items-center gap-2">
               <Mail size={15} className="text-teal shrink-0" />
               <a
@@ -49,6 +58,15 @@ export default function Footer() {
                 className="text-teal hover:text-teal-light transition-colors"
               >
                 {CONTACT_EMAIL}
+              </a>
+            </div>
+            <div className="flex items-center gap-2">
+              <Phone size={15} className="text-teal shrink-0" />
+              <a
+                href={`tel:+91${CONTACT_PHONE}`}
+                className="text-teal hover:text-teal-light transition-colors"
+              >
+                {CONTACT_PHONE}
               </a>
             </div>
             <div>
@@ -101,15 +119,6 @@ export default function Footer() {
               aria-label="Instagram"
             >
               <Instagram size={20} />
-            </a>
-            <a
-              href={SOCIAL.youtube}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-charcoal/80 hover:text-teal transition-colors"
-              aria-label="YouTube"
-            >
-              <Youtube size={20} />
             </a>
           </div>
           <p className="font-sans text-xs text-muted leading-relaxed">

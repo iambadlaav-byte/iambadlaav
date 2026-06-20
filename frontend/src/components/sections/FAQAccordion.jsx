@@ -17,7 +17,7 @@ export function FAQAccordion() {
         <FadeIn>
           <p className="font-mono text-xs uppercase tracking-widest text-muted mb-3">Questions</p>
           <h2
-            className="font-display font-light text-ink mb-10"
+            className="font-display font-semibold text-ink mb-10"
             style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)' }}
           >
             Common questions

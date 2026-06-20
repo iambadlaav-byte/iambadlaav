@@ -20,8 +20,8 @@ export function TestimonialCard({ quote, author, designation, program, year, pho
   return (
     <div
       className={cn(
-        'bg-soft rounded-lg p-6 flex flex-col gap-4 h-full',
-        'border-l-2 border-gold/30',
+        'bg-pearl rounded-2xl p-6 flex flex-col gap-4 h-full shadow-sm hover:shadow-lg transition-shadow',
+        'border-l-4 border-gold',
         className
       )}
     >

@@ -8,7 +8,7 @@ import { Link, NavLink } from 'react-router-dom';
 import { X, Phone, MessageCircle } from 'lucide-react';
 import { cn } from '../../lib/cn.js';
 import { useReducedMotion } from '../../hooks/useReducedMotion.js';
-import { WHATSAPP_NUMBER } from '../../lib/constants.js';
+import { WHATSAPP_NUMBER, CONTACT_PHONE } from '../../lib/constants.js';
 
 export default function MobileNav({ open, onClose, links = [] }) {
   const reduceMotion = useReducedMotion();
@@ -97,7 +97,7 @@ export default function MobileNav({ open, onClose, links = [] }) {
           <Link
             to="/contact"
             onClick={onClose}
-            className="block w-full text-center px-5 py-3 bg-gold text-on-gold font-sans font-medium rounded hover:bg-gold/90 transition-colors"
+            className="block w-full text-center px-5 py-3 bg-ochre text-on-ochre font-sans font-semibold rounded-full hover:bg-ochre/90 transition-colors"
           >
             Talk to Arjun Dada
           </Link>
@@ -107,7 +107,7 @@ export default function MobileNav({ open, onClose, links = [] }) {
       {/* Sticky bottom bar — always visible on mobile */}
       <div className="fixed bottom-0 left-0 right-0 z-30 md:hidden h-16 bg-navy border-t border-navy/50 flex items-center">
         <a
-          href="tel:+91XXXXXXXXXX"
+          href={`tel:+91${CONTACT_PHONE}`}
           className="flex-1 flex flex-col items-center justify-center gap-0.5 text-pearl/70 hover:text-pearl transition-colors min-h-[44px]"
           aria-label="Call us"
         >
@@ -127,9 +127,9 @@ export default function MobileNav({ open, onClose, links = [] }) {
         <Link
           to="/register?program=badlaav"
           onClick={onClose}
-          className="flex-1 flex flex-col items-center justify-center gap-0.5 bg-gold text-on-gold hover:bg-gold/90 transition-colors min-h-full"
+          className="flex-1 flex flex-col items-center justify-center gap-0.5 bg-ochre text-on-ochre hover:bg-ochre/90 transition-colors min-h-full"
         >
-          <span className="font-sans text-sm font-medium">Register</span>
+          <span className="font-sans text-sm font-semibold">Register</span>
         </Link>
       </div>
     </>

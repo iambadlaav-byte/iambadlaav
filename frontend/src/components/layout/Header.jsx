@@ -12,9 +12,11 @@ import MobileNav from './MobileNav.jsx';
 
 const NAV_LINKS = [
   { label: 'The Retreat', href: '/retreat' },
+  { label: 'Experience',  href: '/badlaav-experience' },
   { label: 'Pricing',     href: '/pricing' },
   { label: 'About',       href: '/about' },
   { label: 'Gallery',     href: '/gallery' },
+  { label: 'Volunteer',   href: '/volunteer' },
   { label: 'Contact',     href: '/contact' },
 ];
 
@@ -23,19 +25,20 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-navy text-pearl shadow-md">
+      <header className="sticky top-0 z-40 bg-ochre text-pearl shadow-md">
         <div className="max-w-default mx-auto px-4 flex items-center justify-between h-[72px]">
 
           {/* Logo */}
-          <Link
-            to="/"
-            className="font-display text-2xl font-medium text-pearl hover:text-gold transition-colors tracking-wide"
-          >
-            Badlaav
+          <Link to="/" className="flex items-center" aria-label="Badlaav — home">
+            <img
+              src="/images/badlaav-logo-white.png"
+              alt="Badlaav"
+              className="h-9 w-auto"
+            />
           </Link>
 
           {/* Desktop navigation */}
-          <nav className="hidden md:flex items-center gap-7" aria-label="Main navigation">
+          <nav className="hidden lg:flex items-center gap-6" aria-label="Main navigation">
             {NAV_LINKS.map((link) => (
               <NavLink
                 key={link.href}
@@ -58,12 +61,12 @@ export default function Header() {
           <div className="flex items-center gap-3">
             <Link
               to="/register?program=badlaav"
-              className="hidden md:inline-flex items-center px-4 py-2 bg-gold text-on-gold font-sans font-medium text-sm rounded hover:bg-gold/90 transition-colors"
+              className="hidden lg:inline-flex items-center px-5 py-2 bg-pearl text-ochre font-sans font-semibold text-sm rounded-full hover:bg-pearl/90 transition-colors"
             >
               Register
             </Link>
             <button
-              className="md:hidden text-pearl p-2 min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className="lg:hidden text-pearl p-2 min-h-[44px] min-w-[44px] flex items-center justify-center"
               onClick={() => setMobileOpen((o) => !o)}
               aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={mobileOpen}

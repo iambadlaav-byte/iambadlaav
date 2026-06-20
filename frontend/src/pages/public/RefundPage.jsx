@@ -23,7 +23,7 @@ export default function RefundPage() {
       <section className="bg-cream py-[var(--section-y)] px-[var(--section-x)]">
         <div className="max-w-narrow mx-auto">
           <p className="font-mono text-xs uppercase tracking-widest text-teal mb-3">Policy</p>
-          <h1 className="font-display font-light text-ink mb-8" style={{ fontSize: 'clamp(2rem, 5vw, 3.2rem)' }}>
+          <h1 className="font-display font-semibold text-ink mb-8" style={{ fontSize: 'clamp(2rem, 5vw, 3.2rem)' }}>
             Refund &amp; cancellation
           </h1>
 

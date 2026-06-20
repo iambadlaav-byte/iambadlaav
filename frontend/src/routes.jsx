@@ -18,6 +18,8 @@ import { Spinner } from './components/ui/Spinner.jsx';
 
 import HomePage from './pages/public/HomePage.jsx';
 import RetreatPage from './pages/public/RetreatPage.jsx';
+import BadlaavExperiencePage from './pages/public/BadlaavExperiencePage.jsx';
+import VolunteerPage from './pages/public/VolunteerPage.jsx';
 import PricingPage from './pages/public/PricingPage.jsx';
 import AboutPage from './pages/public/AboutPage.jsx';
 import GalleryPage from './pages/public/GalleryPage.jsx';
@@ -28,6 +30,8 @@ import LoginPage from './pages/public/LoginPage.jsx';
 import PrivacyPage from './pages/public/PrivacyPage.jsx';
 import TermsPage from './pages/public/TermsPage.jsx';
 import RefundPage from './pages/public/RefundPage.jsx';
+import CookiePolicyPage from './pages/public/CookiePolicyPage.jsx';
+import CodeOfConductPage from './pages/public/CodeOfConductPage.jsx';
 import NotFoundPage from './pages/public/NotFoundPage.jsx';
 
 // Admin pages — lazy-loaded so they never enter the public bundle.
@@ -67,6 +71,8 @@ export default function AppRoutes() {
         {/* Marketing */}
         <Route path="/" element={<HomePage />} />
         <Route path="/retreat" element={<RetreatPage />} />
+        <Route path="/badlaav-experience" element={<BadlaavExperiencePage />} />
+        <Route path="/volunteer" element={<VolunteerPage />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/gallery" element={<GalleryPage />} />
@@ -84,6 +90,8 @@ export default function AppRoutes() {
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/refund" element={<RefundPage />} />
+        <Route path="/cookies" element={<CookiePolicyPage />} />
+        <Route path="/code-of-conduct" element={<CodeOfConductPage />} />
 
         {/* 404 */}
         <Route path="*" element={<NotFoundPage />} />

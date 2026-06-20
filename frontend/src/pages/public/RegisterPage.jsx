@@ -1,39 +1,33 @@
 /**
- * RegisterPage — FORM-02 Universal Registration Wizard.
- * Route: /register?program=X&plan=Y&...
- *
- * Reads `program` from URL search params and passes it to RegistrationForm
- * as `initialProgram`. The full set of URL params (FORM-05 handoff) is consumed
- * inside RegistrationStep1 via useSearchParams.
+ * RegisterPage — /register?program=X
+ * Programme-aware: The Retreat gets the deep 5-step questionnaire; The Badlaav
+ * Experience gets the lighter form. Default is The Retreat.
  *
  * No animations on form pages (CONSTRAINT-CODE-004).
  */
 import { useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { RegistrationForm } from '../../components/forms/RegistrationForm.jsx';
+import { RetreatRegistrationForm } from '../../components/forms/RetreatRegistrationForm.jsx';
+import { ExperienceRegistrationForm } from '../../components/forms/ExperienceRegistrationForm.jsx';
 
 export default function RegisterPage() {
   const [searchParams] = useSearchParams();
-  const programSlug = searchParams.get('program');
-
-  // Map URL slug to display label for meta
-  const programLabels = {
-    'badlaav':          'Badlaav',
-    'mission-udaan':    'Mission Udaan',
-    'future-readiness': 'Future Readiness',
-    'antrang':          'Antrang',
-  };
-  const programDisplay = programLabels[programSlug?.toLowerCase()] ?? 'a program';
+  const slug = (searchParams.get('program') || 'badlaav').toLowerCase();
+  const isExperience = slug === 'badlaav-experience' || slug === 'experience';
 
   return (
     <>
       <Helmet>
-        <title>Register for {programDisplay} — Dnyanpith</title>
+        <title>{isExperience ? 'Register — The Badlaav Experience' : 'Register — The Retreat'} · Badlaav</title>
         <meta name="robots" content="noindex" />
       </Helmet>
 
       <main>
-        <RegistrationForm initialProgram={programSlug} />
+        {isExperience ? (
+          <ExperienceRegistrationForm />
+        ) : (
+          <RetreatRegistrationForm program="BADLAAV" programLabel="The Retreat" />
+        )}
       </main>
     </>
   );

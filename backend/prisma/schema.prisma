@@ -205,6 +205,8 @@ model Registration {
   // Failed-payment recovery cron: marks when the 15-min reminder was sent (T-05-11).
   // Prevents duplicate reminders. Added in Plan 05 (Task 3b migration).
   reminderSentAt      DateTime?
+  // The Retreat questionnaire (psychographic answers) captured at registration.
+  questionnaire       Json?
 
   @@index([userId])
   @@index([batchId])

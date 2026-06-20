@@ -8,13 +8,14 @@
 import { cn } from '../../lib/cn.js';
 import { Spinner } from './Spinner.jsx';
 
+// LBD palette roles: terracotta = primary CTA, deep green = secondary, gold = highlight only.
 const variantClasses = {
-  primary:   'bg-gold text-on-gold hover:bg-gold/90 focus-visible:outline-gold',
+  primary:   'bg-ochre text-on-ochre hover:bg-ochre/90 focus-visible:outline-ochre',
   secondary: 'bg-navy text-pearl hover:bg-navy/90 focus-visible:outline-navy',
   ghost:     'text-teal hover:text-teal-light underline-offset-4 hover:underline focus-visible:outline-teal',
   danger:    'bg-danger text-pearl hover:bg-danger/90 focus-visible:outline-danger',
-  // Used only on /community/* pages — ochre warmth vs gold CTA (UI-SPEC §Color §Accent reserved-for #5)
-  community: 'bg-ochre text-on-ochre hover:bg-ochre/90 focus-visible:outline-ochre',
+  // Gold is a sparing highlight accent, not a default CTA.
+  gold:      'bg-gold text-on-gold hover:bg-gold/90 focus-visible:outline-gold',
 };
 
 const sizeClasses = {
@@ -42,8 +43,8 @@ export function Button({
       onClick={onClick}
       disabled={isDisabled}
       className={cn(
-        // Base
-        'inline-flex items-center justify-center gap-2 rounded font-sans font-medium',
+        // Base — LBD buttons are full pills
+        'inline-flex items-center justify-center gap-2 rounded-full font-sans font-medium',
         'transition-colors duration-150',
         // Focus ring (WCAG keyboard nav — never remove)
         'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2',

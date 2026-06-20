@@ -84,7 +84,7 @@ export default function PaymentSuccessPage() {
   if (status === 'polling') {
     return (
       <>
-        <Helmet><title>Confirming payment — Dnyanpith</title></Helmet>
+        <Helmet><title>Confirming payment — Badlaav</title></Helmet>
         <main className="flex flex-col items-center justify-center min-h-[60vh] gap-4 px-4">
           <Spinner size={36} />
           <p className="font-sans text-muted text-sm">Confirming your payment…</p>
@@ -96,7 +96,7 @@ export default function PaymentSuccessPage() {
   if (status === 'timeout') {
     return (
       <>
-        <Helmet><title>Payment confirming — Dnyanpith</title></Helmet>
+        <Helmet><title>Payment confirming — Badlaav</title></Helmet>
         <main className="flex flex-col items-center justify-center min-h-[60vh] gap-5 px-4 text-center max-w-[--container-narrow] mx-auto">
           <div className="w-12 h-12 rounded-full bg-soft flex items-center justify-center">
             <Spinner size={20} />
@@ -128,10 +128,10 @@ export default function PaymentSuccessPage() {
   // ── Paid state ─────────────────────────────────────────────────────────────
   const reg         = registration ?? {};
   const programLabels = {
-    BADLAAV:          'Badlaav Retreat',
-    MISSION_UDAAN:    'Mission Udaan',
-    FUTURE_READINESS: 'Future Readiness',
-    ANTRANG:          'Antrang',
+    BADLAAV:             'The Retreat',
+    THE_RETREAT:         'The Retreat',
+    FUTURE_READINESS:    'The Badlaav Experience',
+    BADLAAV_EXPERIENCE:  'The Badlaav Experience',
   };
   const programDisplay = programLabels[reg.program] ?? reg.program ?? '';
   const batchName      = reg.batch?.name ?? '';
@@ -142,7 +142,7 @@ export default function PaymentSuccessPage() {
   return (
     <>
       <Helmet>
-        <title>You're registered — Dnyanpith</title>
+        <title>You're registered — Badlaav</title>
         <meta name="robots" content="noindex" />
       </Helmet>
 
@@ -229,10 +229,10 @@ export default function PaymentSuccessPage() {
           <Button
             as={Link}
             variant="ghost"
-            to="/account/dashboard"
+            to="/"
             className="w-full justify-center"
           >
-            Go to Dashboard
+            Back to home
             <ArrowRight size={14} />
           </Button>
         </div>
@@ -273,13 +273,13 @@ function downloadIcs(reg, programDisplay) {
   const ics = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Dnyanpith//Registration//EN',
+    'PRODID:-//Badlaav//Registration//EN',
     'BEGIN:VEVENT',
-    `UID:${reg.id}@dnyanpith.org`,
+    `UID:${reg.id}@iambadlaav.com`,
     `DTSTART:${fmt(start)}`,
     `DTEND:${fmt(end)}`,
     `SUMMARY:${programDisplay} — ${reg.batch.name ?? ''}`,
-    `DESCRIPTION:Your Dnyanpith registration. Invoice: ${reg.invoiceNumber ?? 'pending'}`,
+    `DESCRIPTION:Your Badlaav registration. Invoice: ${reg.invoiceNumber ?? 'pending'}`,
     `LOCATION:${reg.batch.venue ?? 'Ambajogai, Maharashtra'}`,
     'END:VEVENT',
     'END:VCALENDAR',
@@ -289,7 +289,7 @@ function downloadIcs(reg, programDisplay) {
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href     = url;
-  a.download = `dnyanpith-${(reg.batch.name ?? 'event').toLowerCase().replace(/\s+/g, '-')}.ics`;
+  a.download = `badlaav-${(reg.batch.name ?? 'event').toLowerCase().replace(/\s+/g, '-')}.ics`;
   a.click();
   URL.revokeObjectURL(url);
 }
