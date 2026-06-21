@@ -49,12 +49,24 @@ The Razorpay webhook is intentionally **not** rate-limited (Razorpay retries on 
 
 Every `/api/v1/admin/*` route inherits `authenticate → requireAuth → requireStaff` (any staff tier may read). Writes layer on:
 
-- `requireEditor` (ADMIN or CONTRIBUTOR) for content/ops writes — enquiries, volunteers, registrations status, stories, gallery, blog, events, invoice resend, waitlist invite.
-- `requireAdmin` for money and structure — manual mark-paid/refunded, refunds, batches, coupons, and all staff-user management (create/role/reset-password/anonymize).
+- `requireEditor` (admin tier or CONTRIBUTOR) for content/ops writes — enquiries (status), volunteers (status), registration status, stories, gallery, blog, events, invoice resend, waitlist invite, and coupon hard-delete.
+- `requireAdmin` (= admin tier, ADMIN **or** SUPERADMIN) for money and structure — manual mark-paid/refunded, refunds, batch create/update/delete, coupon create/update, registration/enquiry/volunteer deletes, and all staff-user management (create/role/reset-password/delete/anonymize).
 
-Revenue/amounts are additionally gated **inside** controllers via `canSeeFinancials` (ADMIN only) — Contributors and Viewers get counts without money. RBAC is enforced at the route level, never only in the UI.
+Two deletes are restricted **further inside the controller** beyond their route gate:
 
-Role matrix: **ADMIN** = full (financials, batches, users, refunds). **CONTRIBUTOR** = ops/content, no money/batches/users. **VIEWER** = read-only, no financials.
+- `DELETE /admin/batches/:id` — route is `requireAdmin`, but the controller enforces **SUPERADMIN only** and refuses (409) if the batch already has registrations.
+- `DELETE /admin/users/:id` — soft-delete; the controller refuses to delete yourself, refuses to delete a SUPERADMIN, and allows deleting an ADMIN only when the actor is a SUPERADMIN.
+
+Revenue/amounts are additionally gated **inside** controllers via `canSeeFinancials` (admin tier only) and contact PII via `canSeeContact` (admin tier + Contributor) — Contributors get rows without money, Viewers get rows without money **or** contact details. CSV exports apply the same column stripping. RBAC is enforced at the route level, never only in the UI.
+
+Role helpers (`middleware/auth.js`): `isAdminTier` (ADMIN or SUPERADMIN), `isSuperAdmin`, `STAFF_ROLES = [SUPERADMIN, ADMIN, CONTRIBUTOR, VIEWER]`.
+
+Role matrix:
+
+- **SUPERADMIN** — superset of ADMIN; the only role that can delete an ADMIN or delete a batch. The seeded founder account is SUPERADMIN.
+- **ADMIN** — full (financials, batches, users, refunds, deletes).
+- **CONTRIBUTOR** — ops/content + coupon delete; no money, no batch create, no user management. Can see contact PII.
+- **VIEWER** — read-only; no financials and no contact PII.
 
 ## Passwords — bcrypt cost 12
 

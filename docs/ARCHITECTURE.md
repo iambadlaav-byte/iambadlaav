@@ -82,7 +82,7 @@ Entry point: `backend/src/server.js` → builds the app in `backend/src/app.js`.
 | **Refresh tokens** | JWT, 7 day expiry, stored in httpOnly+secure+sameSite cookie. Rotated on each refresh. Old tokens are invalidated. |
 | **OTP** | 6-digit codes, valid for 10 minutes, stored as SHA-256 hashes |
 | **Input validation** | Every user-input endpoint validates with Zod schemas + rate limiting |
-| **Admin routes** | Protected by `authenticate → requireAuth → requireAdmin` middleware chain |
+| **Admin routes** | Protected by `authenticate → requireAuth → requireStaff`; writes layer `requireEditor` / `requireAdmin` per the role matrix (see SECURITY.md) |
 | **Webhook** | Razorpay signature verification + replay protection (stores processed event IDs) |
 | **Uploads** | MIME type allowlist + magic-byte verification + size limit → uploaded to Cloudinary |
 
@@ -92,10 +92,10 @@ The main tables Badlaav uses:
 
 | Table | What it stores |
 |---|---|
-| `User` | User accounts with roles (GUEST/REGISTERED/ENROLLED/VOLUNTEER/ADMIN) |
+| `User` | User accounts with roles. Public tiers: GUEST/REGISTERED/ENROLLED/VOLUNTEER. Staff tiers: SUPERADMIN/ADMIN/CONTRIBUTOR/VIEWER |
 | `Batch` | Retreat dates: program, dates, venue, seats, pricing, status |
 | `Registration` | Bookings: user, batch, plan type, amount, coupon, payment status, Razorpay IDs, invoice |
-| `Coupon` | Discount codes with usage caps, validity dates, and program scoping |
+| `Coupon` | Discount codes with usage caps, validity dates, programme scoping, and optional per-batch scoping (`applicableBatches`) |
 | `RefreshToken` | Hashed refresh tokens for rotation and reuse detection |
 | `OTP` | Hashed one-time codes for login |
 | `ProcessedWebhook` | Razorpay event IDs already handled (prevents duplicate processing) |
@@ -103,7 +103,7 @@ The main tables Badlaav uses:
 | `AuditLog` | Records of admin actions |
 | `Enquiry` | Corporate/college enquiry form submissions |
 
-> `Volunteer`, `GalleryItem`, and `Story` back the volunteer application and the gallery/story CMS. `CommunityMember` backs the community join flow. A few tables (`BlogPost`, `Event`) are carried over from the parent project and aren't surfaced in the current build.
+> `Volunteer`, `GalleryItem`, and `Story` back the volunteer application and the gallery/story CMS. `GalleryItem` and `Story` each carry a `category` (programme vertical: `BADLAAV` / `FUTURE_READINESS` / `GENERAL`) that drives the public filters. `Volunteer` is deduped per batch — `@@unique([userId, batchAttended])` — so the same person can re-apply for a different batch. `CommunityMember` backs the community join flow. A few tables (`BlogPost`, `Event`) are carried over from the parent project and aren't surfaced in the current build.
 
 ### Dedup guards (duplicate submission protection)
 
@@ -159,9 +159,9 @@ The site has one fixed theme (no dark mode or theme switcher):
 
 ### Pages and routes
 
-All public pages: `/` (home), `/retreat`, `/pricing`, `/about`, `/gallery`, `/contact`, `/register`, `/payment-success`, `/login`, `/privacy`, `/terms`, `/refund`, and a `*` catch-all 404.
+All public pages: `/` (home), `/retreat`, `/badlaav-experience`, `/pricing`, `/about`, `/gallery`, `/stories`, `/stories/:id`, `/contact`, `/register`, `/payment-success`, `/login`, `/privacy`, `/terms`, `/refund`, and a `*` catch-all 404. The top nav collapses "The Retreat" and "The Badlaav Experience" into a single "Programmes" dropdown and adds a "Stories" link.
 
-Admin pages (lazy-loaded, role-gated): `/admin/dashboard`, `/admin/batches`, `/admin/registrations`, `/admin/coupons`, `/admin/enquiries`, `/admin/invoices`, `/admin/settings`.
+Admin pages (lazy-loaded, role-gated): `/admin/dashboard`, `/admin/batches`, `/admin/registrations`, `/admin/coupons`, `/admin/enquiries`, `/admin/volunteers`, `/admin/invoices`, `/admin/reports`, `/admin/stories`, `/admin/gallery`, `/admin/audit`, `/admin/settings`.
 
 ### How API calls work
 
@@ -213,12 +213,13 @@ There's also password login for admins: `POST /auth/login` (email + password).
 
 > A cron job (`jobs/failedPaymentReminder.js`) emails users whose registrations are stuck PENDING for more than ~15 minutes.
 
-### How enquiries work
+### How enquiries & messages work
+
+The `/contact` page has a **Personal / Corporate** toggle (`?type=corporate` deep-links straight to the corporate side):
 
 ```
-1. User fills out the /contact form
-2. Frontend sends: POST /api/v1/enquiries/corporate
-3. Backend creates an Enquiry row + sends an admin notification email
+Personal:   POST /api/v1/messages           → Message row + admin "new message" email
+Corporate:  POST /api/v1/enquiries/corporate → Enquiry row + admin "new enquiry" email
 ```
 
 ---
