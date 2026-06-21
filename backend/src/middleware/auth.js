@@ -7,7 +7,7 @@
  * authenticate:             Verifies JWT from Authorization header; attaches req.user.
  *                           Does NOT reject on missing/invalid token (use requireAuth for that).
  * requireAuth:              401 if no req.user (guest).
- * requireAdmin:             403 if req.user.role !== 'ADMIN'.
+ * requireAdmin:             403 unless req.user is ADMIN-tier (ADMIN or SUPERADMIN).
  * requireEnrolled:          403 if no paid Registration for req.user.
  * requireVolunteerEligible: 403 if req.user.coursesCompleted < 1.
  */
@@ -61,7 +61,7 @@ export function requireAuth(req, res, next) {
 
 /**
  * requireAdmin — must be used AFTER authenticate + requireAuth.
- * Returns 403 if req.user.role !== 'ADMIN'.
+ * Returns 403 unless req.user is ADMIN-tier (ADMIN or SUPERADMIN). See isAdminTier.
  */
 export function requireAdmin(req, res, next) {
   if (!isAdminTier(req.user)) {

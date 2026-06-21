@@ -4,7 +4,7 @@
  * ARCHITECTURE.md §9.2 field-by-field spec.
  */
 import { z } from 'zod';
-import { email, indianPhone } from './shared.js';
+import { businessEmail, indianPhone } from './shared.js';
 
 export const registrationCreateSchema = z
   .strictObject({
@@ -17,7 +17,9 @@ export const registrationCreateSchema = z
       .max(120)
       .optional()
       .nullable(),
-    email,
+    // Accept any real email — personal, corporate, or organization domains.
+    // businessEmail still blocks known throwaway/temp domains (anti-dummy).
+    email: businessEmail,
     phone: indianPhone,
     city: z.string().trim().min(2, 'City is required.').max(80),
     state: z.string().trim().min(2).max(80).optional().nullable(),

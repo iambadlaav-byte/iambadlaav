@@ -74,6 +74,16 @@ Morning: a specific plan for the next 90 days. Group debrief. Check-out by 2pm. 
 | **Couple** (most popular) | ₹30,000 | Everything in Individual · partner attends together · shared room · couples-specific session |
 | **Corporate** | Custom quote | Exclusive batch for your team · custom session design · pre-retreat team assessment · post-retreat leadership debrief |
 
+### The Badlaav Experience
+
+A lighter, more accessible second programme, also listed on the Pricing page.
+
+| Plan | Price | What's included |
+|---|---|---|
+| **The Badlaav Experience** | ₹999 | Full-day guided experience · interactive learning sessions · practical frameworks and tools · action planning and goal setting |
+
+> Programme labels used in code and admin: **The Retreat** = `BADLAAV`, **The Badlaav Experience** = `FUTURE_READINESS`. Copy for the Experience lives in `EXPERIENCE` / `EXPERIENCE_PLANS` in `content.js`; the page is at `/badlaav-experience`.
+
 ---
 
 ## Testimonials

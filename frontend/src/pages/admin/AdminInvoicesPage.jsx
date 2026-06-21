@@ -1,31 +1,65 @@
 /**
  * AdminInvoicesPage — /admin/invoices
  *
- * Read-mostly list of paid + refunded registrations. Two row actions:
- *   - View: fetches a fresh signed Cloudinary URL and opens it in a new tab.
- *   - Resend: POSTs /admin/invoices/:id/resend (server re-sends the confirmation email).
+ * Read-mostly list of paid + refunded registrations. Row actions:
+ *   - View:     opens a fresh signed Cloudinary URL in a new tab.
+ *   - Download: fetches the signed URL and triggers a file download.
+ *   - Resend:   POSTs /admin/invoices/:id/resend (re-sends the confirmation email).
+ *   - Delete:   admin-tier only — removes the underlying registration.
  *
- * Refund is intentionally out of scope for phase 1 (sits in RefundConfirmDialog;
- * phase 2 will surface it via this page).
+ * Bulk: row checkboxes + a toolbar "Download selected" button that fetches each
+ * invoice's signed URL and downloads them sequentially (client-side, no server zip).
+ * "Export CSV" streams the filtered list via the authenticated download helper.
  */
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { ExternalLink, Mail } from 'lucide-react';
+import { ExternalLink, Mail, Download, Trash2 } from 'lucide-react';
 import { AdminPageHeader } from '../../components/admin/AdminPageHeader.jsx';
 import { DataTable } from '../../components/admin/DataTable.jsx';
 import { Pagination, usePaginator } from '../../components/admin/Pagination.jsx';
 import { StatusBadge } from '../../components/admin/StatusBadge.jsx';
+import { ConfirmDialog } from '../../components/admin/ConfirmDialog.jsx';
+import { Button } from '../../components/ui/Button.jsx';
 import { useToast } from '../../components/ui/Toast.jsx';
-import { listInvoices, viewInvoice, resendInvoice } from '../../api/admin.js';
+import { useAuth } from '../../context/AuthContext.jsx';
+import {
+  listInvoices,
+  viewInvoice,
+  resendInvoice,
+  deleteRegistration,
+  downloadCsv,
+} from '../../api/admin.js';
 import { cn } from '../../lib/cn.js';
+import { programLabel } from '../../lib/constants.js';
 
 const STATUSES = ['ALL', 'PAID', 'REFUNDED'];
 const fmtDate = (iso) =>
   new Date(iso).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 const fmtINR = (n) => `₹${Number(n ?? 0).toLocaleString('en-IN')}`;
 
+// Admin-tier (ADMIN or SUPERADMIN) may hard-delete the underlying registration.
+const isAdminTier = (role) => role === 'ADMIN' || role === 'SUPERADMIN';
+
+// Fetch a signed URL and trigger a browser download. Reuses the invoice view endpoint.
+async function downloadInvoiceFile(id) {
+  const { url, invoiceNumber } = await viewInvoice(id);
+  if (!url) throw new Error('NO_URL');
+  const a = document.createElement('a');
+  a.href = url;
+  // Cloudinary serves the PDF; suggest a filename. Cross-origin downloads may still
+  // open in a tab depending on response headers, but the intent is explicit.
+  a.download = invoiceNumber ? `${String(invoiceNumber).replace(/\//g, '-')}.pdf` : 'invoice.pdf';
+  a.target = '_blank';
+  a.rel = 'noopener noreferrer';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
 export default function AdminInvoicesPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const canDelete = isAdminTier(user?.role);
 
   const [status, setStatus] = useState('ALL');
   const [rows, setRows]     = useState([]);
@@ -33,7 +67,12 @@ export default function AdminInvoicesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(null);
   const [opening, setOpening] = useState(null);
+  const [downloading, setDownloading] = useState(null);
   const [resending, setResending] = useState(null);
+  const [exporting, setExporting] = useState(false);
+  const [bulkBusy, setBulkBusy]   = useState(false);
+  const [selected, setSelected]   = useState(() => new Set());
+  const [confirmDelete, setConfirmDelete] = useState(null); // { id, label }
   const paginator = usePaginator();
 
   useEffect(() => { paginator.reset(); }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -48,6 +87,7 @@ export default function AdminInvoicesPage() {
       const data = await listInvoices(params);
       setRows(data.rows ?? []);
       setNextCursor(data.nextCursor ?? null);
+      setSelected(new Set()); // clear selection when the page changes
     } catch (err) {
       setError(err.response?.data?.error || 'Could not load invoices.');
     } finally {
@@ -56,6 +96,23 @@ export default function AdminInvoicesPage() {
   }
 
   useEffect(() => { load(); }, [status, paginator.cursor]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function toggleRow(id) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  // Only rows with an actual invoice PDF can be selected for download.
+  const downloadableRows = rows.filter((r) => r.invoiceUrl);
+  const allSelected = downloadableRows.length > 0 && downloadableRows.every((r) => selected.has(r.id));
+
+  function toggleAll() {
+    setSelected(() => (allSelected ? new Set() : new Set(downloadableRows.map((r) => r.id))));
+  }
 
   async function handleView(id) {
     setOpening(id);
@@ -70,6 +127,35 @@ export default function AdminInvoicesPage() {
     }
   }
 
+  async function handleDownload(id) {
+    setDownloading(id);
+    try {
+      await downloadInvoiceFile(id);
+    } catch (err) {
+      toast(err.response?.data?.error || 'Could not download invoice.', 'danger');
+    } finally {
+      setDownloading(null);
+    }
+  }
+
+  async function handleBulkDownload() {
+    const ids = [...selected];
+    if (ids.length === 0) return;
+    setBulkBusy(true);
+    let failures = 0;
+    // Sequential — each needs a fresh signed URL; spacing avoids popup-blocker churn.
+    for (const id of ids) {
+      try {
+        await downloadInvoiceFile(id);
+      } catch {
+        failures += 1;
+      }
+    }
+    setBulkBusy(false);
+    if (failures === 0) toast(`Downloading ${ids.length} invoice${ids.length > 1 ? 's' : ''}.`, 'success');
+    else toast(`Downloaded ${ids.length - failures} of ${ids.length}; ${failures} failed.`, 'danger');
+  }
+
   async function handleResend(id) {
     setResending(id);
     try {
@@ -82,7 +168,57 @@ export default function AdminInvoicesPage() {
     }
   }
 
+  async function handleExport() {
+    setExporting(true);
+    try {
+      const params = status !== 'ALL' ? { paymentStatus: status } : {};
+      await downloadCsv('/admin/invoices/export.csv', params, 'invoices.csv');
+    } catch (err) {
+      toast(err.response?.data?.error || 'Export failed.', 'danger');
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!confirmDelete) return;
+    try {
+      await deleteRegistration(confirmDelete.id);
+      toast('Registration deleted.', 'success');
+      setRows((rs) => rs.filter((r) => r.id !== confirmDelete.id));
+      setSelected((prev) => {
+        const next = new Set(prev);
+        next.delete(confirmDelete.id);
+        return next;
+      });
+    } catch (err) {
+      toast(err.response?.data?.error || 'Delete failed.', 'danger');
+    }
+  }
+
   const columns = [
+    {
+      key: 'select',
+      header: (
+        <input
+          type="checkbox"
+          checked={allSelected}
+          onChange={toggleAll}
+          aria-label="Select all downloadable invoices"
+          className="accent-ink w-4 h-4 align-middle"
+        />
+      ),
+      render: (r) => (
+        <input
+          type="checkbox"
+          checked={selected.has(r.id)}
+          disabled={!r.invoiceUrl}
+          onChange={() => toggleRow(r.id)}
+          aria-label="Select invoice"
+          className={cn('accent-ink w-4 h-4 align-middle', !r.invoiceUrl && 'opacity-30 cursor-not-allowed')}
+        />
+      ),
+    },
     {
       key: 'invoiceNumber',
       header: 'Invoice #',
@@ -98,7 +234,7 @@ export default function AdminInvoicesPage() {
         </div>
       ),
     },
-    { key: 'program', header: 'Program', render: (r) => <span className="font-mono text-xs">{r.program}</span> },
+    { key: 'program', header: 'Program', render: (r) => <span className="font-mono text-xs">{programLabel(r.program)}</span> },
     {
       key: 'amount',
       header: 'Amount',
@@ -132,6 +268,19 @@ export default function AdminInvoicesPage() {
           </button>
           <button
             type="button"
+            onClick={() => handleDownload(r.id)}
+            disabled={downloading === r.id || !r.invoiceUrl}
+            className={cn(
+              'p-1.5 rounded text-muted hover:text-charcoal hover:bg-soft transition-colors',
+              (downloading === r.id || !r.invoiceUrl) && 'opacity-30 cursor-not-allowed'
+            )}
+            aria-label="Download invoice"
+            title={r.invoiceUrl ? 'Download invoice PDF' : 'Invoice PDF not generated yet'}
+          >
+            <Download size={14} />
+          </button>
+          <button
+            type="button"
             onClick={() => handleResend(r.id)}
             disabled={resending === r.id}
             className="p-1.5 rounded text-muted hover:text-charcoal hover:bg-soft transition-colors"
@@ -139,6 +288,17 @@ export default function AdminInvoicesPage() {
           >
             <Mail size={14} />
           </button>
+          {canDelete && (
+            <button
+              type="button"
+              onClick={() => setConfirmDelete({ id: r.id, label: r.invoiceNumber || r.user?.name || 'this registration' })}
+              className="p-1.5 rounded text-danger hover:bg-danger/10 transition-colors"
+              aria-label="Delete registration"
+              title="Delete registration"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
         </div>
       ),
     },
@@ -152,7 +312,12 @@ export default function AdminInvoicesPage() {
 
       <AdminPageHeader
         title="Invoices"
-        subtitle="Generated invoices for paid registrations. Refund flow lives in phase 2."
+        subtitle="Generated invoices for paid registrations."
+        actions={
+          <Button size="sm" variant="secondary" onClick={handleExport} loading={exporting}>
+            <Download size={14} /> Export CSV
+          </Button>
+        }
       />
 
       <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -171,6 +336,17 @@ export default function AdminInvoicesPage() {
             {opt}
           </button>
         ))}
+
+        {selected.size > 0 && (
+          <div className="ml-auto flex items-center gap-2">
+            <span className="font-mono text-[11px] uppercase tracking-widest text-muted">
+              {selected.size} selected
+            </span>
+            <Button size="sm" onClick={handleBulkDownload} loading={bulkBusy}>
+              <Download size={14} /> Download selected
+            </Button>
+          </div>
+        )}
       </div>
 
       <DataTable
@@ -188,6 +364,16 @@ export default function AdminInvoicesPage() {
         nextCursor={nextCursor}
         onNext={() => paginator.next(nextCursor)}
         onPrev={paginator.prev}
+      />
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        onOpenChange={(v) => !v && setConfirmDelete(null)}
+        title={`Delete “${confirmDelete?.label}”?`}
+        message="This permanently removes the underlying registration (and frees its seat if it had one). The deletion is recorded in the audit log, but the registration cannot be recovered."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={handleDelete}
       />
     </>
   );

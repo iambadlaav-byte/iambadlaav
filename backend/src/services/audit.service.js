@@ -23,6 +23,7 @@ import { logger } from '../lib/logger.js';
 export const AUDIT_ACTIONS = Object.freeze({
   // Enquiries
   ENQUIRY_STATUS_CHANGED:   'enquiry.status_changed',
+  ENQUIRY_DELETED:          'enquiry.deleted',
 
   // Registrations
   REGISTRATION_COMPLETED:   'registration.completed',
@@ -32,10 +33,20 @@ export const AUDIT_ACTIONS = Object.freeze({
 
   // Volunteers
   VOLUNTEER_STATUS_CHANGED: 'volunteer.status_changed',
+  VOLUNTEER_DELETED:        'volunteer.deleted',
 
   // Batches
   BATCH_CREATED:            'batch.created',
   BATCH_UPDATED:            'batch.updated',
+  BATCH_DELETED:            'batch.deleted',
+
+  // Coupons
+  COUPON_DELETED:           'coupon.deleted',
+
+  // Exports
+  ENQUIRIES_EXPORTED:       'enquiry.csv_exported',
+  VOLUNTEERS_EXPORTED:      'volunteer.csv_exported',
+  INVOICES_EXPORTED:        'invoice.csv_exported',
 
   // Blog
   BLOG_PUBLISHED:           'blog.published',

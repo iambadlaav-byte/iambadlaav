@@ -5,6 +5,7 @@
  */
 import { Helmet } from 'react-helmet-async';
 import { ProgramHero } from '../../components/sections/ProgramHero.jsx';
+import { UpcomingBatches } from '../../components/sections/UpcomingBatches.jsx';
 import { CtaBand } from '../../components/sections/CtaBand.jsx';
 import { FadeIn } from '../../components/animations/FadeIn.jsx';
 import { NumberBadge } from '../../components/ui/NumberBadge.jsx';
@@ -136,6 +137,8 @@ export default function BadlaavExperiencePage() {
           </FadeIn>
         </div>
       </section>
+
+      <UpcomingBatches program="FUTURE_READINESS" title="Upcoming Experience dates" />
 
       <CtaBand
         eyebrow="Ready when you are"

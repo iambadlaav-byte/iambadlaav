@@ -43,6 +43,7 @@ export async function listStories(req, res, next) {
         date:      true,
         passage:   true,
         photos:    true,
+        category:  true,
         status:    true,
         createdAt: true,
         updatedAt: true,

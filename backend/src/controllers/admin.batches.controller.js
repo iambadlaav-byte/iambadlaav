@@ -9,6 +9,7 @@
  */
 import { prisma }    from '../lib/prisma.js';
 import { writeAudit, AUDIT_ACTIONS } from '../services/audit.service.js';
+import { isSuperAdmin } from '../middleware/auth.js';
 
 // ── listBatches ────────────────────────────────────────────────────────────────
 
@@ -108,6 +109,58 @@ export async function updateBatch(req, res, next) {
     return res.json({ batch: result });
   } catch (err) {
     if (err.statusCode === 404) return res.status(404).json({ error: 'NOT_FOUND' });
+    next(err);
+  }
+}
+
+// ── deleteBatch ────────────────────────────────────────────────────────────────
+// SUPERADMIN-only HARD delete. Refuses if the batch has any registrations (to avoid
+// orphaning paid/waitlisted records). The route is gated requireAdmin; the
+// superadmin check is enforced here so the 403 reason is explicit.
+
+export async function deleteBatch(req, res, next) {
+  try {
+    if (!isSuperAdmin(req.user)) {
+      return res.status(403).json({ error: 'FORBIDDEN', message: 'Only a super admin can delete batches.' });
+    }
+
+    const { id } = req.params;
+
+    const result = await prisma.$transaction(async (tx) => {
+      const current = await tx.batch.findUnique({
+        where:  { id },
+        select: { id: true, name: true, program: true, _count: { select: { registrations: true } } },
+      });
+      if (!current) throw Object.assign(new Error('NOT_FOUND'), { statusCode: 404 });
+
+      if (current._count.registrations > 0) {
+        throw Object.assign(
+          new Error('Batch has registrations and cannot be deleted.'),
+          { statusCode: 409, code: 'BATCH_HAS_REGISTRATIONS' }
+        );
+      }
+
+      await tx.batch.delete({ where: { id } });
+
+      await writeAudit({
+        tx,
+        actorId:     req.user.id,
+        action:      AUDIT_ACTIONS.BATCH_DELETED,
+        subjectType: 'Batch',
+        subjectId:   id,
+        meta:        { name: current.name, program: current.program },
+        req,
+      });
+
+      return current;
+    });
+
+    return res.json({ ok: true, deletedId: result.id });
+  } catch (err) {
+    if (err.statusCode === 404) return res.status(404).json({ error: 'NOT_FOUND' });
+    if (err.statusCode === 409) {
+      return res.status(409).json({ error: err.code ?? 'CONFLICT', message: err.message });
+    }
     next(err);
   }
 }

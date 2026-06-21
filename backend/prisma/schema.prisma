@@ -156,7 +156,7 @@ model User {
 
   registrations    Registration[]
   communityJoins   CommunityMember[]
-  volunteerApp     Volunteer?
+  volunteerApps    Volunteer[]
   refreshTokens    RefreshToken[]
   passwordResetTokens PasswordResetToken[]
 }
@@ -284,7 +284,7 @@ model CommunityMember {
 // ============================================================
 model Volunteer {
   id              String          @id @default(cuid())
-  userId          String          @unique
+  userId          String
   user            User            @relation(fields: [userId], references: [id])
   batchAttended   String
   whyVolunteer    String          @db.Text
@@ -298,7 +298,11 @@ model Volunteer {
   approvedAt      DateTime?
   createdAt       DateTime        @default(now())
 
+  // Dedup per batch: a volunteer may re-apply for a different/next batch, but not
+  // the same one twice. P2002 on this constraint → 409 in the controller.
+  @@unique([userId, batchAttended])
   @@index([status])
+  @@index([userId])
 }
 
 // ============================================================
@@ -392,7 +396,9 @@ model GalleryItem {
   id        String    @id @default(cuid())
   url       String    // Cloudinary URL
   caption   String?
-  category  String    // 'badlaav' | 'abhyasika' | 'community' | 'gallery'
+  // Programme vertical this photo belongs to — drives the public gallery filter.
+  // 'BADLAAV' (The Retreat) | 'FUTURE_READINESS' (The Badlaav Experience) | 'GENERAL'
+  category  String    @default("GENERAL")
   type      MediaType @default(PHOTO)
   altText   String    @default("") // mandatory per CONSTRAINT-MEDIA-001
   sortOrder Int       @default(0)
@@ -426,6 +432,9 @@ model Coupon {
   discountPct        Int?
   discountAmount     Decimal?
   applicablePrograms Program[]
+  // Optional per-batch scoping. Empty = applies to all batches (program-level only).
+  // String[] of Batch cuids — mirrors applicablePrograms but references Batch rows by id.
+  applicableBatches  String[]  @default([])
   maxUses            Int?
   currentUses        Int       @default(0)
   validUntil         DateTime?
@@ -525,6 +534,9 @@ model Story {
   date      DateTime?
   passage   String     @db.Text
   photos    String[]   // Cloudinary URLs
+  // Programme vertical this story belongs to — drives the public stories filter.
+  // 'BADLAAV' (The Retreat) | 'FUTURE_READINESS' (The Badlaav Experience) | 'GENERAL'
+  category  String     @default("GENERAL")
   status    PostStatus @default(DRAFT)
   authorId  String?
   createdAt DateTime   @default(now())

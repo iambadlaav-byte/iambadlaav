@@ -10,6 +10,29 @@
  */
 import { apiClient } from './client.js';
 
+// ── Authenticated CSV download ────────────────────────────────────────────────
+//
+// Protected GET endpoints (e.g. /admin/*/export.csv) require the Authorization
+// header injected by the apiClient request interceptor. A plain <a href> link
+// navigation does NOT carry that header, so it 401s. This helper fetches the file
+// as a blob (auth header attached) and saves it via a temporary anchor.
+//
+// @param {string} path     — apiClient-relative path (e.g. '/admin/reports/export.csv')
+// @param {object} params   — query params object
+// @param {string} filename — suggested download filename
+export async function downloadCsv(path, params = {}, filename = 'export.csv') {
+  const res = await apiClient.get(path, { params, responseType: 'blob' });
+  const url = window.URL.createObjectURL(res.data);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  // Revoke on the next tick so the click has a chance to start the download.
+  setTimeout(() => window.URL.revokeObjectURL(url), 0);
+}
+
 // ── Dashboard ────────────────────────────────────────────────────────────────
 
 export async function fetchDashboardStats() {
@@ -39,6 +62,12 @@ export async function createBatch(body) {
 export async function updateBatch(id, body) {
   const { data } = await apiClient.patch(`/admin/batches/${id}`, body);
   return data.batch;
+}
+
+// SUPERADMIN-only hard delete (server enforces). 409 if the batch has registrations.
+export async function deleteBatch(id) {
+  const { data } = await apiClient.delete(`/admin/batches/${id}`);
+  return data; // { ok: true, deletedId }
 }
 
 // ── Registrations ────────────────────────────────────────────────────────────
@@ -119,6 +148,12 @@ export async function updateCoupon(id, body) {
 
 export async function deactivateCoupon(id) {
   return updateCoupon(id, { active: false });
+}
+
+// Hard delete (Editor tier). Distinct from deactivate — frees the code for reuse.
+export async function deleteCoupon(id) {
+  const { data } = await apiClient.delete(`/admin/coupons/${id}`);
+  return data; // { ok: true }
 }
 
 // ── Stories (retreat stories CMS) ────────────────────────────────────────────
@@ -208,6 +243,12 @@ export async function updateEnquiryStatus(id, body) {
   return data.enquiry;
 }
 
+// Admin-tier hard delete.
+export async function deleteEnquiry(id) {
+  const { data } = await apiClient.delete(`/admin/enquiries/${id}`);
+  return data; // { ok: true }
+}
+
 // ── Volunteers ───────────────────────────────────────────────────────────────
 
 export async function listVolunteers(params = {}) {
@@ -223,6 +264,12 @@ export async function getVolunteerDetail(id) {
 export async function updateVolunteerStatus(id, status) {
   const { data } = await apiClient.patch(`/admin/volunteers/${id}`, { status });
   return data.volunteer;
+}
+
+// Admin-tier hard delete.
+export async function deleteVolunteer(id) {
+  const { data } = await apiClient.delete(`/admin/volunteers/${id}`);
+  return data; // { ok: true }
 }
 
 // ── Staff users (Admin only) ─────────────────────────────────────────────────

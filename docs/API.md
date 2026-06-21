@@ -13,7 +13,7 @@ In the frontend code, the Vite proxy (dev) or `VITE_API_URL` (prod) handles the 
 |---|---|
 | **Public** | No login needed |
 | **User** | Must send a valid access token: `Authorization: Bearer <token>` |
-| **Admin** | Must be a User with role `ADMIN` |
+| **Staff** | Must be a User with a staff role (`SUPERADMIN` / `ADMIN` / `CONTRIBUTOR` / `VIEWER`). Reading the admin panel needs any staff tier; specific writes need a higher tier (see the admin section). |
 | **Cookie** | Refresh token sent automatically in an httpOnly cookie |
 
 Endpoints **this frontend actually uses** are marked with ⭐.
@@ -37,6 +37,9 @@ Endpoints **this frontend actually uses** are marked with ⭐.
 | POST | `/enquiries/college` | Public | College enquiry. Returns **409** if same email submitted within 5 minutes. |
 | POST | `/community/join` | Public | Community sign-up. Returns **409** `ALREADY_JOINED` + WhatsApp link if `phone + initiative` already exists. |
 | POST | `/messages` | Public | Generic contact message. Returns **409** if same email submitted within 5 minutes. |
+| GET | `/stories` ⭐ | Public | Lists **published** stories (paginated). Frontend filters by category on `/stories`. |
+| GET | `/stories/:id` ⭐ | Public | One **published** story by id (full read at `/stories/:id`). |
+| GET | `/gallery` ⭐ | Public | Lists gallery items; optional `?category=` (BADLAAV / FUTURE_READINESS / GENERAL). |
 | GET | `/blog`, `/blog/:slug` | Public | Blog list/post (unused by Badlaav). |
 | GET | `/events`, `/events/:id` | Public | Events (unused by Badlaav). |
 
@@ -51,7 +54,7 @@ Endpoints **this frontend actually uses** are marked with ⭐.
 | POST | `/payments/create-order` | User | Re-creates a Razorpay order for an abandoned checkout. |
 | POST | `/payments/verify` ⭐ | User | Client-side payment callback (for UX only — does NOT change payment status). |
 | POST | `/payments/webhook` | Public* | Razorpay webhook — **the real source of truth** for whether payment succeeded. |
-| POST | `/coupons/validate` ⭐ | Public | Checks if a coupon code is valid and calculates the discount. Rate-limited: 20 per minute per IP. |
+| POST | `/coupons/validate` ⭐ | Public | Checks if a coupon code is valid and calculates the discount. Accepts an optional `batchId` and returns **`NOT_APPLICABLE`** if the coupon is batch-scoped and the batch isn't in scope. Rate-limited: 20 per minute per IP. |
 
 > *The webhook is technically "public" but is protected by Razorpay HMAC **signature verification** + replay protection. It must receive the raw request body (configured in `app.js`).
 
@@ -84,54 +87,113 @@ Endpoints **this frontend actually uses** are marked with ⭐.
 
 ## Admin endpoints (`/admin/*`)
 
-All admin endpoints require the `ADMIN` role. The admin panel is at `/admin/*` in the frontend (lazy-loaded, role-gated).
+Every `/admin/*` route inherits `authenticate → requireAuth → requireStaff`, so **any staff tier** can read. Write routes layer on a higher gate, shown in the **Gate** column:
+
+- **requireEditor** = Contributor or admin tier (Admin / Superadmin).
+- **requireAdmin** = admin tier only (Admin / Superadmin).
+- Some endpoints further restrict *inside the controller* — noted in "What it does".
+
+Financial amounts/revenue and contact PII are additionally gated inside controllers (`canSeeFinancials`, `canSeeContact`) — Viewers and Contributors get rows with those columns stripped. CSV exports apply the same stripping. The admin panel is at `/admin/*` in the frontend (lazy-loaded, role-gated).
 
 ### Dashboard & registrations
 
-| Method | Path | What it does |
-|---|---|---|
-| GET | `/admin/dashboard` | Aggregate stats (total registrations, revenue, etc.) |
-| GET | `/admin/registrations` | List all registrations |
-| GET | `/admin/registrations/:id` | Get one registration |
-| PATCH | `/admin/registrations/:id` | Update a registration's status |
-| GET | `/admin/registrations/export.csv` | Download registrations as CSV |
-| GET | `/admin/registrations/reconciliation` | Payment reconciliation report |
-| POST | `/admin/registrations/:id/resend-email` | Resend confirmation email |
+| Method | Path | Gate | What it does |
+|---|---|---|---|
+| GET | `/admin/dashboard` | staff | Aggregate stats (total registrations, revenue for admin tier, etc.) |
+| GET | `/admin/registrations` | staff | List all registrations |
+| GET | `/admin/registrations/:id` | staff | Get one registration |
+| GET | `/admin/registrations/export.csv` | staff | Download registrations as CSV (auth blob) |
+| GET | `/admin/registrations/reconciliation` | staff | Payment reconciliation report |
+| PATCH | `/admin/registrations/:id` | editor | Update a registration's status |
+| POST | `/admin/registrations/:id/resend-email` | editor | Resend confirmation email |
+| POST | `/admin/registrations/:id/waitlist-invite` | editor | Send a waitlisted candidate a payment link |
+| POST | `/admin/registrations/:id/mark-paid` | admin | Mark an offline payment as paid |
+| POST | `/admin/registrations/:id/mark-refunded` | admin | Mark a payment as refunded manually |
+| DELETE | `/admin/registrations/:id` | admin | Delete a registration |
 
 ### Batches
 
-| Method | Path | What it does |
-|---|---|---|
-| GET | `/admin/batches` | List all batches |
-| POST | `/admin/batches` | Create a new batch |
-| PATCH | `/admin/batches/:id` | Update a batch |
+| Method | Path | Gate | What it does |
+|---|---|---|---|
+| GET | `/admin/batches` | staff | List all batches |
+| POST | `/admin/batches` | admin | Create a new batch |
+| PATCH | `/admin/batches/:id` | admin | Update a batch |
+| DELETE | `/admin/batches/:id` | admin | Delete a batch. Controller further restricts to **SUPERADMIN** and refuses (409) if the batch already has registrations. |
+
+### Coupons
+
+| Method | Path | Gate | What it does |
+|---|---|---|---|
+| GET | `/admin/coupons` | staff | List coupons |
+| POST | `/admin/coupons` | admin | Create a coupon (supports `applicableBatches`) |
+| PATCH | `/admin/coupons/:id` | admin | Edit a coupon, or deactivate via `{ active: false }` |
+| DELETE | `/admin/coupons/:id` | editor | Hard-delete a coupon |
 
 ### Invoices
 
-| Method | Path | What it does |
-|---|---|---|
-| GET | `/admin/invoices` | List all invoices |
-| GET | `/admin/invoices/:id` | View one invoice |
-| POST | `/admin/invoices/:id/resend` | Resend an invoice email |
-| POST | `/admin/invoices/:id/refund` | Issue a refund (rate-limited: 10 per hour) |
+| Method | Path | Gate | What it does |
+|---|---|---|---|
+| GET | `/admin/invoices` | staff | List all invoices |
+| GET | `/admin/invoices/export.csv` | staff | Export invoices as CSV (auth blob) |
+| GET | `/admin/invoices/:id` | staff | View one invoice |
+| POST | `/admin/invoices/:id/resend` | editor | Resend an invoice email |
+| POST | `/admin/invoices/:id/refund` | admin | Issue a refund (rate-limited: 10 per hour) |
 
 ### Enquiries
 
-| Method | Path | What it does |
-|---|---|---|
-| GET | `/admin/enquiries` | List all enquiries |
-| PATCH | `/admin/enquiries/:id` | Update an enquiry |
+| Method | Path | Gate | What it does |
+|---|---|---|---|
+| GET | `/admin/enquiries` | staff | List all enquiries |
+| GET | `/admin/enquiries/export.csv` | staff | Export enquiries as CSV (auth blob) |
+| PATCH | `/admin/enquiries/:id` | editor | Update an enquiry |
+| DELETE | `/admin/enquiries/:id` | admin | Delete an enquiry |
 
-### Other admin endpoints
+### Volunteers
 
-| Method | Path | What it does |
-|---|---|---|
-| GET | `/admin/community` | List community members |
-| GET | `/admin/community/export.csv` | Export community as CSV |
-| GET/POST/PATCH | `/admin/blog/*` | Blog CRUD |
-| GET/POST/PATCH | `/admin/events/*` | Events CRUD |
-| GET | `/admin/audit` | View audit log |
-| POST | `/admin/users/:id/anonymize` | Anonymize a user (GDPR-style) |
+| Method | Path | Gate | What it does |
+|---|---|---|---|
+| GET | `/admin/volunteers` | staff | List all volunteer applications |
+| GET | `/admin/volunteers/export.csv` | staff | Export volunteers as CSV (auth blob) |
+| PATCH | `/admin/volunteers/:id` | editor | Approve / reject a volunteer |
+| DELETE | `/admin/volunteers/:id` | admin | Delete a volunteer |
+
+### Stories & Gallery (CMS)
+
+| Method | Path | Gate | What it does |
+|---|---|---|---|
+| GET | `/admin/stories` | staff | List all stories (any status) |
+| POST | `/admin/stories` | editor | Create a story (with `category`) |
+| POST | `/admin/stories/upload` | editor | Upload a story photo (magic-byte verified) |
+| PATCH | `/admin/stories/:id` | editor | Edit a story |
+| POST | `/admin/stories/:id/archive` | editor | Archive a story |
+| GET | `/admin/gallery` | staff | List all gallery items |
+| POST | `/admin/gallery` | editor | Create a gallery item (with `category`) |
+| POST | `/admin/gallery/upload` | editor | Upload a gallery image (magic-byte verified) |
+| PATCH | `/admin/gallery/:id` | editor | Edit a gallery item |
+| DELETE | `/admin/gallery/:id` | editor | Delete a gallery item |
+
+### Reports & other admin endpoints
+
+| Method | Path | Gate | What it does |
+|---|---|---|---|
+| GET | `/admin/reports` | staff | Summary reports (revenue gated to admin tier) |
+| GET | `/admin/reports/export.csv` | staff | Export reports as CSV (auth blob) |
+| GET | `/admin/community` | staff | List community members |
+| GET | `/admin/community/export.csv` | staff | Export community as CSV |
+| GET/POST/PATCH | `/admin/blog/*` | editor (writes) | Blog CRUD |
+| GET/POST/PATCH | `/admin/events/*` | editor (writes) | Events CRUD |
+| GET | `/admin/audit` | staff | View audit log |
+
+### Staff users (admin tier only)
+
+| Method | Path | Gate | What it does |
+|---|---|---|---|
+| GET | `/admin/users` | admin | List staff users + login activity |
+| POST | `/admin/users` | admin | Create a staff user |
+| PATCH | `/admin/users/:id/role` | admin | Change a user's role |
+| POST | `/admin/users/:id/reset-password` | admin | Reset another user's password |
+| DELETE | `/admin/users/:id` | admin | Soft-delete a staff user. Controller rules: can't delete self, can't delete a SUPERADMIN, only a SUPERADMIN can delete an ADMIN. |
+| POST | `/admin/users/:id/anonymize` | admin | Anonymize a user (GDPR-style) |
 
 ---
 

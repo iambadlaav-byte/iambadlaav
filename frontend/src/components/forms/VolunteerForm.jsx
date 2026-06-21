@@ -93,14 +93,18 @@ export function VolunteerForm() {
     onDuplicate: () => setSuccessData({ duplicate: true }),
   });
 
-  const { control, formState: { errors } } = methods;
+  const { control, reset, formState: { errors } } = methods;
 
   if (successData) {
     return successData.duplicate ? (
       <SuccessCard
         accent="ochre"
-        title="You're already on the list."
-        body="We have your earlier application. Arjun's team will reach out about the next batch you can help with — no need to apply again."
+        title="Already applied for this batch."
+        body="We have your application for this batch. Want to help with a different one? Apply again and pick that batch."
+        primaryAction={{
+          label: 'Apply for another batch',
+          onClick: () => { reset(); setSuccessData(null); },
+        }}
         secondaryAction={{ label: '← Back to home', href: '/' }}
       />
     ) : (

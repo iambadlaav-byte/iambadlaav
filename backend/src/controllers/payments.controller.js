@@ -187,6 +187,7 @@ async function onPaymentCaptured(payload) {
             tx,
             code:    registration.couponCode,
             program: registration.program,
+            batchId: registration.batchId,
             amount:  Number(registration.amount),
           });
         } catch (couponErr) {

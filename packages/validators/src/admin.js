@@ -11,6 +11,10 @@ import { email } from './shared.js';
 // ── Program enum (mirrors Prisma) ──────────────────────────────────────────────
 const programEnum = z.enum(['BADLAAV', 'MISSION_UDAAN', 'FUTURE_READINESS', 'ANTRANG']);
 
+// ── Content category (programme vertical for Stories + Gallery) ────────────────
+// BADLAAV = The Retreat, FUTURE_READINESS = The Badlaav Experience, GENERAL = catch-all.
+const contentCategoryEnum = z.enum(['BADLAAV', 'FUTURE_READINESS', 'GENERAL']);
+
 // ── Staff roles (mirrors Prisma UserRole staff tiers) ──────────────────────────
 const staffRoleEnum = z.enum(['ADMIN', 'CONTRIBUTOR', 'VIEWER']);
 
@@ -80,6 +84,7 @@ export const storyCreateSchema = z.strictObject({
   date:      z.coerce.date().optional(),
   passage:   z.string().trim().min(20).max(20000),
   photos:    z.array(z.string().url()).max(20).optional().default([]),
+  category:  contentCategoryEnum.optional().default('GENERAL'),
   status:    z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).optional().default('DRAFT'),
 });
 
@@ -91,7 +96,7 @@ export const storyUpdateSchema = storyCreateSchema.partial();
 export const galleryCreateSchema = z.strictObject({
   url:       z.string().url(),
   caption:   z.string().trim().max(300).optional(),
-  category:  z.enum(['badlaav', 'abhyasika', 'community', 'gallery']),
+  category:  contentCategoryEnum.optional().default('GENERAL'),
   altText:   z.string().trim().min(1, 'Alt text is required.').max(300),
   type:      z.enum(['PHOTO', 'VIDEO']).optional().default('PHOTO'),
   sortOrder: z.coerce.number().int().min(0).optional().default(0),
@@ -130,6 +135,8 @@ export const couponCreateSchema = z.strictObject({
   discountPct:        z.coerce.number().int().min(1).max(100).optional().nullable(),
   discountAmount:     z.coerce.number().int().min(1).optional().nullable(),
   applicablePrograms: z.array(programEnum).max(4).optional().default([]),
+  // Optional per-batch scoping (Batch cuids). Empty = all batches.
+  applicableBatches:  z.array(z.string().trim().min(1).max(40)).max(50).optional().default([]),
   maxUses:            z.coerce.number().int().min(1).optional().nullable(),
   validUntil:         z.coerce.date().optional().nullable(),
   active:             z.boolean().optional().default(true),
@@ -143,6 +150,7 @@ export const couponUpdateSchema = z.strictObject({
   discountPct:        z.coerce.number().int().min(1).max(100).optional().nullable(),
   discountAmount:     z.coerce.number().int().min(1).optional().nullable(),
   applicablePrograms: z.array(programEnum).max(4).optional(),
+  applicableBatches:  z.array(z.string().trim().min(1).max(40)).max(50).optional(),
   maxUses:            z.coerce.number().int().min(1).optional().nullable(),
   validUntil:         z.coerce.date().optional().nullable(),
   active:             z.boolean().optional(),

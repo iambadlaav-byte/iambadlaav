@@ -91,6 +91,7 @@ If a new file doesn't fit clearly, ask before creating it.
 ## SCOPE NOTES (this build)
 - First build = **marketing site + online registration with Razorpay + admin panel**.
 - Admin panel is live at `/admin/*` (lazy-loaded, role-gated via `AdminProtectedRoute`). Login at `/login` with email + password.
+- **Staff role tiers** (RBAC helpers in `backend/src/middleware/auth.js`): `SUPERADMIN` ⊃ `ADMIN` (full: financials, batches, users, refunds, deletes; only SUPERADMIN deletes an ADMIN or a batch) · `CONTRIBUTOR` (ops: registrations/enquiries/volunteers/stories/gallery/coupons — no financial amounts, no batch create, no user management) · `VIEWER` (read-only, no financial figures, no contact PII). `requireAdmin` = admin-tier (`isAdminTier`); `requireEditor` = CONTRIBUTOR + admin-tier; `requireStaff` = any staff. The seeded founder is `SUPERADMIN`. See `docs/SECURITY.md` / `docs/ADMIN_GUIDE.md` for the full matrix.
 - The site needs its **own Supabase database** (separate from Dnyanpith).
 - Legacy non-Badlaav page files copied from the parent project are **unrouted** — do not link to them; they can be deleted in a cleanup pass.
 

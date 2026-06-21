@@ -9,7 +9,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Plus, Edit3 } from 'lucide-react';
+import { Plus, Edit3, Trash2 } from 'lucide-react';
 import { AdminPageHeader } from '../../components/admin/AdminPageHeader.jsx';
 import { DataTable } from '../../components/admin/DataTable.jsx';
 import { SearchInput } from '../../components/admin/SearchInput.jsx';
@@ -18,7 +18,8 @@ import { StatusBadge } from '../../components/admin/StatusBadge.jsx';
 import { ConfirmDialog } from '../../components/admin/ConfirmDialog.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { useToast } from '../../components/ui/Toast.jsx';
-import { listBatches, updateBatch } from '../../api/admin.js';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { listBatches, updateBatch, deleteBatch } from '../../api/admin.js';
 import { cn } from '../../lib/cn.js';
 
 const PROGRAMS = ['ALL', 'BADLAAV', 'FUTURE_READINESS', 'MISSION_UDAAN', 'ANTRANG'];
@@ -37,6 +38,9 @@ const fmtINR = (n) => `₹${Number(n).toLocaleString('en-IN')}`;
 export default function AdminBatchesPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
+  // Deleting a batch is destructive and irreversible — SUPERADMIN only (server enforces too).
+  const canDelete = user?.role === 'SUPERADMIN';
 
   const [program, setProgram] = useState('ALL');
   const [status, setStatus]   = useState('ALL');
@@ -48,6 +52,7 @@ export default function AdminBatchesPage() {
 
   const paginator = usePaginator();
   const [confirm, setConfirm] = useState(null); // { id, action: 'CLOSED'|'FULL'|'OPEN', name }
+  const [confirmDelete, setConfirmDelete] = useState(null); // { id, name, count }
 
   // Reset cursor stack when filters change
   useEffect(() => {
@@ -86,6 +91,18 @@ export default function AdminBatchesPage() {
       load();
     } catch (err) {
       toast(err.response?.data?.error || 'Update failed.', 'danger');
+    }
+  }
+
+  async function handleDelete() {
+    if (!confirmDelete) return;
+    try {
+      await deleteBatch(confirmDelete.id);
+      toast('Batch deleted.', 'success');
+      setRows((rs) => rs.filter((r) => r.id !== confirmDelete.id));
+    } catch (err) {
+      // 409 = batch still has registrations; surface the server message.
+      toast(err.response?.data?.message || err.response?.data?.error || 'Delete failed.', 'danger');
     }
   }
 
@@ -180,6 +197,17 @@ export default function AdminBatchesPage() {
               Reopen
             </button>
           )}
+          {canDelete && (
+            <button
+              type="button"
+              onClick={() => setConfirmDelete({ id: b.id, name: b.name, count: b._count?.registrations ?? 0 })}
+              className="p-1.5 rounded text-danger hover:bg-danger/10 transition-colors"
+              aria-label={`Delete ${b.name}`}
+              title="Delete batch (super admin)"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
         </div>
       ),
     },
@@ -254,6 +282,20 @@ export default function AdminBatchesPage() {
         }
         variant={confirm?.action === 'OPEN' ? 'primary' : 'danger'}
         onConfirm={() => applyStatus(confirm.id, confirm.action)}
+      />
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        onOpenChange={(v) => !v && setConfirmDelete(null)}
+        title={`Delete “${confirmDelete?.name}”?`}
+        message={
+          confirmDelete?.count > 0
+            ? `This batch has ${confirmDelete.count} registration${confirmDelete.count > 1 ? 's' : ''} and cannot be deleted. Close or mark it past instead.`
+            : 'This permanently removes the batch. Deletion is only possible while the batch has no registrations, and is recorded in the audit log.'
+        }
+        confirmLabel="Delete batch"
+        variant="danger"
+        onConfirm={handleDelete}
       />
     </>
   );

@@ -2,7 +2,7 @@
 
 How visitors use the site, and how you (the operator) manage it day to day.
 
-Since this build has **no admin UI yet**, you'll use **Prisma Studio** (a visual database editor) or the admin API for management tasks.
+Most day-to-day management happens in the **admin panel** at `/admin/*` — see [ADMIN_GUIDE.md](ADMIN_GUIDE.md). This page covers what visitors do plus the lower-level operator tasks (and the **Prisma Studio** / admin-API fallbacks for anything the panel doesn't surface).
 
 ---
 
@@ -12,10 +12,12 @@ Since this build has **no admin UI yet**, you'll use **Prisma Studio** (a visual
 |---|---|---|
 | **Home** | `/` | Visitor sees the retreat concept, 3-day arc, who it's for, pricing, upcoming batches, FAQ |
 | **The Retreat** | `/retreat` | Detailed day-by-day breakdown, what's included, the location |
-| **Pricing** | `/pricing` | Compare Individual / Couple / Corporate plans, see refund terms |
+| **The Badlaav Experience** | `/badlaav-experience` | The lighter second programme (₹999) |
+| **Pricing** | `/pricing` | Compare Individual / Couple / Corporate plans + the ₹999 Experience, see refund terms |
 | **About** | `/about` | Learn about Arjun and the philosophy |
-| **Gallery** | `/gallery` | Photos from past batches |
-| **Contact** | `/contact` | Submit a corporate/team enquiry, or reach out by email/WhatsApp |
+| **Gallery** | `/gallery` | Photos from past batches, filterable by programme, full-screen lightbox |
+| **Stories** | `/stories` | Published stories, filterable by programme; each opens a full read at `/stories/:id` |
+| **Contact** | `/contact` | Personal / Corporate toggle — send a message (personal) or a team enquiry (corporate) |
 | **Register** | `/register?program=badlaav&plan=…` | Book a seat and pay via Razorpay |
 | **Payment success** | `/payment-success` | Confirmation page; email + invoice sent automatically |
 
@@ -81,6 +83,8 @@ The home page shows batches where `program = BADLAAV` AND `status = OPEN`.
 
 ### How to create or manage a coupon
 
+> The easiest way is the admin panel — **`/admin/coupons`** — which has a batch multi-select for per-batch scoping and supports edit, deactivate, and delete. The Prisma Studio route below still works as a fallback.
+
 1. Open Prisma Studio → click on the **Coupon** table → **Add record**
 2. Fill in:
    | Field | What to enter |
@@ -88,6 +92,7 @@ The home page shows batches where `program = BADLAAV` AND `status = OPEN`.
    | `code` | e.g., `EARLYBIRD20` |
    | `discountPct` | Percentage off (e.g., 20) — OR use `discountAmount` for a fixed amount |
    | `applicablePrograms` | Include `BADLAAV` |
+   | `applicableBatches` | Optional batch ids to scope the coupon to specific batches — leave empty for all batches |
    | `maxUses` | How many times it can be used |
    | `validUntil` | Expiry date |
    | `active` | `true` |
@@ -122,7 +127,7 @@ You also get an email notification for each new enquiry.
 
 ---
 
-### Using the admin API (until a UI is built)
+### Using the admin API directly (the panel covers most of this)
 
 1. **Log in:**
    ```bash
@@ -185,5 +190,5 @@ All emails are sent via Brevo SMTP. Templates are in `backend/src/templates/`.
 | **How do I change a price on the site?** | Edit `content.js` `PLANS` (what's displayed) + the Batch record (what's charged) |
 | **How do I change the hero line / tagline?** | Edit `content.js` → `SITE.tagline` / `SITE.oneLiner` |
 | **How do I re-skin the colors?** | Change values in `themes.js` — every component follows automatically |
-| **How do I build an admin dashboard?** | Build pages under `frontend/src/pages/` against the existing `/admin/*` API |
-| **How do I refund a payment?** | `POST /api/v1/admin/invoices/:id/refund` (admin token), or via the Razorpay dashboard |
+| **How do I manage day to day?** | Use the admin panel at `/admin/*` — see [ADMIN_GUIDE.md](ADMIN_GUIDE.md) |
+| **How do I refund a payment?** | Admin panel → `/admin/invoices` → Refund (admin tier), or `POST /api/v1/admin/invoices/:id/refund`, or the Razorpay dashboard |

@@ -11,20 +11,27 @@
  */
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Eye } from 'lucide-react';
+import { Eye, Download, Trash2 } from 'lucide-react';
 import { AdminPageHeader } from '../../components/admin/AdminPageHeader.jsx';
 import { DataTable } from '../../components/admin/DataTable.jsx';
 import { SearchInput } from '../../components/admin/SearchInput.jsx';
 import { StatusBadge } from '../../components/admin/StatusBadge.jsx';
 import { Modal } from '../../components/admin/Modal.jsx';
+import { ConfirmDialog } from '../../components/admin/ConfirmDialog.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { useToast } from '../../components/ui/Toast.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
 import {
   listVolunteers,
   getVolunteerDetail,
   updateVolunteerStatus,
+  deleteVolunteer,
+  downloadCsv,
 } from '../../api/admin.js';
 import { cn } from '../../lib/cn.js';
+
+// Admin-tier (ADMIN or SUPERADMIN) may hard-delete records.
+const isAdminTier = (role) => role === 'ADMIN' || role === 'SUPERADMIN';
 
 const STATUSES = ['ALL', 'PENDING', 'APPROVED', 'REJECTED'];
 
@@ -37,6 +44,8 @@ const fmtDate = (iso) =>
 
 export default function AdminVolunteersPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const canDelete = isAdminTier(user?.role);
 
   const [status, setStatus] = useState('ALL');
   const [search, setSearch] = useState('');
@@ -45,9 +54,43 @@ export default function AdminVolunteersPage() {
   const [byBatch, setByBatch] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(null);
+  const [exporting, setExporting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(null); // { id, name }
 
   const [active, setActive]   = useState(null);
   const [saving, setSaving]   = useState(false);
+
+  async function handleExport() {
+    setExporting(true);
+    try {
+      const params = status !== 'ALL' ? { status } : {};
+      await downloadCsv('/admin/volunteers/export.csv', params, 'volunteers.csv');
+    } catch (err) {
+      toast(err.response?.data?.error || 'Export failed.', 'danger');
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!confirmDelete) return;
+    try {
+      await deleteVolunteer(confirmDelete.id);
+      toast('Volunteer application deleted.', 'success');
+      setRows((rs) => {
+        const nextRows = rs.filter((r) => r.id !== confirmDelete.id);
+        setCounts({
+          pending:  nextRows.filter((r) => r.status === 'PENDING').length,
+          approved: nextRows.filter((r) => r.status === 'APPROVED').length,
+          rejected: nextRows.filter((r) => r.status === 'REJECTED').length,
+        });
+        return nextRows;
+      });
+      if (active?.id === confirmDelete.id) setActive(null);
+    } catch (err) {
+      toast(err.response?.data?.error || 'Delete failed.', 'danger');
+    }
+  }
 
   async function load() {
     setLoading(true);
@@ -159,14 +202,27 @@ export default function AdminVolunteersPage() {
       header: '',
       align: 'right',
       render: (v) => (
-        <button
-          type="button"
-          onClick={() => openDetail(v)}
-          className="p-1.5 rounded text-muted hover:text-charcoal hover:bg-soft transition-colors"
-          aria-label="Open volunteer"
-        >
-          <Eye size={14} />
-        </button>
+        <div className="flex items-center justify-end gap-1">
+          <button
+            type="button"
+            onClick={(ev) => { ev.stopPropagation(); openDetail(v); }}
+            className="p-1.5 rounded text-muted hover:text-charcoal hover:bg-soft transition-colors"
+            aria-label="Open volunteer"
+          >
+            <Eye size={14} />
+          </button>
+          {canDelete && (
+            <button
+              type="button"
+              onClick={(ev) => { ev.stopPropagation(); setConfirmDelete({ id: v.id, name: v.user?.name || 'this applicant' }); }}
+              className="p-1.5 rounded text-danger hover:bg-danger/10 transition-colors"
+              aria-label="Delete volunteer"
+              title="Delete volunteer application"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
+        </div>
       ),
     },
   ];
@@ -180,6 +236,11 @@ export default function AdminVolunteersPage() {
       <AdminPageHeader
         title="Volunteers"
         subtitle="People who applied to help hold a batch — via the public volunteer form."
+        actions={
+          <Button size="sm" variant="secondary" onClick={handleExport} loading={exporting}>
+            <Download size={14} /> Export CSV
+          </Button>
+        }
       />
 
       {/* Counts summary strip */}
@@ -303,6 +364,16 @@ export default function AdminVolunteersPage() {
           </div>
         )}
       </Modal>
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        onOpenChange={(v) => !v && setConfirmDelete(null)}
+        title={`Delete ${confirmDelete?.name}'s application?`}
+        message="This permanently removes the volunteer application. The deletion is recorded in the audit log, but the application itself cannot be recovered."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={handleDelete}
+      />
     </>
   );
 }

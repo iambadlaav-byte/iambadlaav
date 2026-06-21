@@ -9,6 +9,7 @@
  * - Re-enables after success/failure
  * NO inline styles (CONSTRAINT-CODE-001). No animations (CONSTRAINT-CODE-004).
  */
+import { useRef, useState } from 'react';
 import { FormProvider } from 'react-hook-form';
 import { Button } from '../ui/Button.jsx';
 import { ErrorBanner } from '../ui/ErrorBanner.jsx';
@@ -38,13 +39,35 @@ export function FormSkeleton({
 }) {
   const { handleSubmit, formState } = methods;
   const { isSubmitting, errors } = formState;
+  const formRef = useRef(null);
+  // Some fields (chip groups, choice tiles) aren't focusable inputs, so RHF can't
+  // auto-focus them on a failed submit — the click then looks like it "did nothing".
+  // Surface a banner + scroll the first error into view so feedback is always visible.
+  const [showInvalidHint, setShowInvalidHint] = useState(false);
 
-  // Root error: explicit prop takes priority, then RHF root error
-  const rootError = error || errors.root?.message || null;
+  function onInvalid() {
+    setShowInvalidHint(true);
+    // Wait a tick for the error nodes to render, then scroll to the first one.
+    setTimeout(() => {
+      const el = formRef.current?.querySelector('[aria-invalid="true"], .text-danger');
+      (el ?? formRef.current)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
+  }
+
+  function onValid(data) {
+    setShowInvalidHint(false);
+    return onSubmit(data);
+  }
+
+  // Root error: explicit prop takes priority, then RHF root error, then the invalid hint.
+  const rootError =
+    error ||
+    errors.root?.message ||
+    (showInvalidHint ? 'Please complete the highlighted fields below.' : null);
 
   return (
     <FormProvider {...methods}>
-      <form noValidate onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form ref={formRef} noValidate onSubmit={handleSubmit(onValid, onInvalid)} className="space-y-6">
         {(eyebrow || title) && (
           <div>
             {eyebrow && (

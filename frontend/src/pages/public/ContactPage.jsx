@@ -1,19 +1,29 @@
 /**
  * ContactPage — /contact. Corporate / team enquiry form plus direct ways to reach us.
  */
+import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { Mail, MessageCircle, MapPin } from 'lucide-react';
 import { getSeoForRoute } from '../../lib/seo.js';
 import { ProgramHero } from '../../components/sections/ProgramHero.jsx';
 import { CorporateEnquiryForm } from '../../components/forms/CorporateEnquiryForm.jsx';
+import { GenericContactForm } from '../../components/forms/GenericContactForm.jsx';
 import { FadeIn } from '../../components/animations/FadeIn.jsx';
+import { cn } from '../../lib/cn.js';
 import { CONTACT_EMAIL, WHATSAPP_NUMBER, CONTACT_ADDRESS } from '../../lib/constants.js';
 
 export default function ContactPage() {
   const { pathname } = useLocation();
   const seo = getSeoForRoute(pathname);
   const waLink = `https://wa.me/${WHATSAPP_NUMBER.replace(/\D/g, '')}`;
+
+  // Two audiences, one page: an individual reaching out vs. a company bringing a team.
+  // ?type=corporate (e.g. from a pricing CTA) opens straight on the corporate tab.
+  const [searchParams] = useSearchParams();
+  const [mode, setMode] = useState(
+    searchParams.get('type') === 'corporate' ? 'corporate' : 'personal',
+  );
 
   return (
     <>
@@ -30,7 +40,7 @@ export default function ContactPage() {
       <ProgramHero
         program="Contact"
         headline="Talk to Arjun Dada"
-        subHeadline="Bringing a team or a whole company? Tell us a little and we will design the retreat around you."
+        subHeadline="Reaching out for yourself, or bringing a whole team? Pick what fits and we'll take it from there."
       />
 
       {/* Direct contact strip */}
@@ -66,11 +76,35 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* Enquiry form */}
+      {/* Enquiry form — personal message or corporate enquiry */}
       <section className="bg-cream py-[var(--section-y)] px-[var(--section-x)]" id="enquire">
         <div className="max-w-narrow mx-auto">
-          <FadeIn>
-            <CorporateEnquiryForm />
+          {/* Audience toggle */}
+          <div className="flex justify-center mb-8">
+            <div className="inline-flex rounded-full border border-charcoal/15 bg-soft p-1" role="tablist" aria-label="Who is contacting us">
+              {[
+                { key: 'personal',  label: 'Personal' },
+                { key: 'corporate', label: 'Corporate / team' },
+              ].map((t) => (
+                <button
+                  key={t.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={mode === t.key}
+                  onClick={() => setMode(t.key)}
+                  className={cn(
+                    'rounded-full px-5 py-2 font-sans text-sm font-semibold transition-colors min-h-[40px]',
+                    mode === t.key ? 'bg-ochre text-on-ochre shadow-sm' : 'text-charcoal hover:text-ink',
+                  )}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <FadeIn key={mode}>
+            {mode === 'corporate' ? <CorporateEnquiryForm /> : <GenericContactForm />}
           </FadeIn>
         </div>
       </section>

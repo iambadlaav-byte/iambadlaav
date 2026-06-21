@@ -9,6 +9,7 @@ import { ProgramHero } from '../../components/sections/ProgramHero.jsx';
 import { RetreatDays } from '../../components/sections/RetreatDays.jsx';
 import { Inclusions } from '../../components/sections/Inclusions.jsx';
 import { Highlights } from '../../components/sections/Highlights.jsx';
+import { UpcomingBatches } from '../../components/sections/UpcomingBatches.jsx';
 import { CtaBand } from '../../components/sections/CtaBand.jsx';
 import { FadeIn } from '../../components/animations/FadeIn.jsx';
 import { SITE, HERO_IMAGE } from '../../lib/content.js';
@@ -64,6 +65,8 @@ export default function RetreatPage() {
           </FadeIn>
         </div>
       </section>
+
+      <UpcomingBatches program="BADLAAV" title="Upcoming retreat dates" />
 
       <CtaBand
         eyebrow="Ready when you are"

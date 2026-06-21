@@ -21,9 +21,15 @@ import {
   archiveStory,
   uploadStoryPhoto,
 } from '../../api/admin.js';
+import {
+  CONTENT_CATEGORY_OPTIONS,
+  DEFAULT_CONTENT_CATEGORY,
+  contentCategoryLabel,
+} from '../../lib/contentCategory.js';
 
 const COLUMNS = [
   { key: 'title',     header: 'Title' },
+  { key: 'category',  header: 'Category', render: (v) => contentCategoryLabel(v) },
   { key: 'batchName', header: 'Batch', render: (v) => v || '—' },
   { key: 'date',      header: 'Date', render: (v) => (v ? new Date(v).toLocaleDateString('en-IN') : '—') },
   {
@@ -35,7 +41,8 @@ const COLUMNS = [
 ];
 
 const EMPTY_FORM = {
-  title: '', subtitle: '', batchName: '', date: '', passage: '', status: 'DRAFT', photos: [],
+  title: '', subtitle: '', batchName: '', date: '', passage: '',
+  category: DEFAULT_CONTENT_CATEGORY, status: 'DRAFT', photos: [],
 };
 
 // Format an ISO/Date value into a yyyy-mm-dd string for <input type="date">.
@@ -90,6 +97,7 @@ export default function AdminStoriesPage() {
       batchName: row.batchName ?? '',
       date:      toDateInput(row.date),
       passage:   row.passage ?? '',
+      category:  row.category ?? DEFAULT_CONTENT_CATEGORY,
       status:    row.status ?? 'DRAFT',
       photos:    Array.isArray(row.photos) ? row.photos : [],
     });
@@ -124,10 +132,11 @@ export default function AdminStoriesPage() {
     setFormError('');
     try {
       const payload = {
-        title:   form.title,
-        passage: form.passage,
-        status:  form.status,
-        photos:  form.photos,
+        title:    form.title,
+        passage:  form.passage,
+        category: form.category,
+        status:   form.status,
+        photos:   form.photos,
       };
       if (form.subtitle)  payload.subtitle  = form.subtitle;
       if (form.batchName) payload.batchName = form.batchName;
@@ -313,17 +322,31 @@ export default function AdminStoriesPage() {
                   {uploadError && <p className="text-xs text-danger mt-1">{uploadError}</p>}
                 </div>
 
-                <div>
-                  <label className="block font-mono text-xs text-muted uppercase tracking-widest mb-1">Status</label>
-                  <select
-                    className="w-full border border-ink/20 rounded px-3 py-2 text-charcoal bg-pearl"
-                    value={form.status}
-                    onChange={(e) => setForm({ ...form, status: e.target.value })}
-                  >
-                    {['DRAFT', 'PUBLISHED', 'ARCHIVED'].map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-mono text-xs text-muted uppercase tracking-widest mb-1">Category</label>
+                    <select
+                      className="w-full border border-ink/20 rounded px-3 py-2 text-charcoal bg-pearl"
+                      value={form.category}
+                      onChange={(e) => setForm({ ...form, category: e.target.value })}
+                    >
+                      {CONTENT_CATEGORY_OPTIONS.map((c) => (
+                        <option key={c.value} value={c.value}>{c.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block font-mono text-xs text-muted uppercase tracking-widest mb-1">Status</label>
+                    <select
+                      className="w-full border border-ink/20 rounded px-3 py-2 text-charcoal bg-pearl"
+                      value={form.status}
+                      onChange={(e) => setForm({ ...form, status: e.target.value })}
+                    >
+                      {['DRAFT', 'PUBLISHED', 'ARCHIVED'].map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 {formError && <ErrorBanner message={formError} />}

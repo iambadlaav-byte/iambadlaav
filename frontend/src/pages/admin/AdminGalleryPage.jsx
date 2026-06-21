@@ -18,9 +18,13 @@ import {
   deleteGalleryItem,
   uploadGalleryImage,
 } from '../../api/admin.js';
+import {
+  CONTENT_CATEGORY_OPTIONS,
+  DEFAULT_CONTENT_CATEGORY,
+  contentCategoryLabel,
+} from '../../lib/contentCategory.js';
 
-const CATEGORIES = ['badlaav', 'abhyasika', 'community', 'gallery'];
-const EMPTY_NEW = { url: '', altText: '', caption: '', category: 'badlaav', sortOrder: 0 };
+const EMPTY_NEW = { url: '', altText: '', caption: '', category: DEFAULT_CONTENT_CATEGORY, sortOrder: 0 };
 
 export default function AdminGalleryPage() {
   const [items, setItems] = useState([]);
@@ -141,7 +145,7 @@ export default function AdminGalleryPage() {
             </Field>
             <Field label="Category">
               <select value={draft.category} onChange={(e) => setDraft({ ...draft, category: e.target.value })} className={inputCls}>
-                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                {CONTENT_CATEGORY_OPTIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
               </select>
             </Field>
             <Field label="Sort order">
@@ -165,9 +169,9 @@ export default function AdminGalleryPage() {
       {/* Filter */}
       <div className="flex items-center gap-2 mb-4">
         <span className="text-xs uppercase tracking-widest text-muted">Filter</span>
-        <select value={filter} onChange={(e) => setFilter(e.target.value)} className={inputCls + ' max-w-[200px]'}>
+        <select value={filter} onChange={(e) => setFilter(e.target.value)} className={inputCls + ' max-w-[240px]'}>
           <option value="">All categories</option>
-          {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+          {CONTENT_CATEGORY_OPTIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
         </select>
       </div>
 
@@ -237,7 +241,7 @@ function GalleryCard({ item, onChanged, onError }) {
             <input value={form.caption} onChange={(e) => setForm({ ...form, caption: e.target.value })} placeholder="Caption" className={inputCls} maxLength={300} />
             <div className="flex gap-2">
               <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className={inputCls}>
-                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                {CONTENT_CATEGORY_OPTIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
               </select>
               <input type="number" min={0} value={form.sortOrder} onChange={(e) => setForm({ ...form, sortOrder: e.target.value })} className={inputCls + ' w-20'} />
             </div>
@@ -251,7 +255,7 @@ function GalleryCard({ item, onChanged, onError }) {
             <p className="text-sm text-charcoal line-clamp-2">{item.caption || <span className="text-muted">No caption</span>}</p>
             <p className="text-[11px] text-muted">{item.altText}</p>
             <div className="flex items-center justify-between text-[11px] text-muted">
-              <span className="uppercase tracking-wide">{item.category}</span>
+              <span className="uppercase tracking-wide">{contentCategoryLabel(item.category)}</span>
               <span>#{item.sortOrder}</span>
             </div>
             <div className="flex gap-2 pt-1">

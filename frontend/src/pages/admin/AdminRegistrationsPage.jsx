@@ -28,7 +28,7 @@ import {
   markPaidManually,
   markRefundedManually,
   deleteRegistration,
-  registrationsCsvUrl,
+  downloadCsv,
 } from '../../api/admin.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { cn } from '../../lib/cn.js';
@@ -59,6 +59,7 @@ export default function AdminRegistrationsPage() {
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPERADMIN';
   // Contact PII (email / phone / address) is hidden from Viewer — server strips it too.
   const showContact = isAdmin || user?.role === 'CONTRIBUTOR';
+  const [exporting, setExporting] = useState(false);
   const [acting, setActing] = useState(false);
 
   const [program, setProgram] = useState('ALL');
@@ -273,14 +274,23 @@ export default function AdminRegistrationsPage() {
         title="Registrations"
         subtitle="Every booking, paid or pending. Use the CSV export for accounting handoffs."
         actions={
-          <a
-            href={registrationsCsvUrl(csvParams)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-3 py-2 rounded text-sm font-sans bg-ink text-pearl hover:bg-ink/90 transition-colors"
+          <Button
+            variant="secondary"
+            size="sm"
+            loading={exporting}
+            onClick={async () => {
+              setExporting(true);
+              try {
+                await downloadCsv('/admin/registrations/export.csv', csvParams, 'registrations.csv');
+              } catch {
+                toast('Export failed.', 'danger');
+              } finally {
+                setExporting(false);
+              }
+            }}
           >
             <Download size={14} /> Export CSV
-          </a>
+          </Button>
         }
       />
 

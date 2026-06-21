@@ -14,6 +14,7 @@ import { registrationCreateSchema } from '@dnyanpith/validators';
 import { apiClient } from '../../api/client.js';
 import { openCheckout } from '../../lib/razorpay.js';
 import { FormField } from '../ui/FormField.jsx';
+import { CouponField } from './CouponField.jsx';
 import { Button } from '../ui/Button.jsx';
 import { Spinner } from '../ui/Spinner.jsx';
 
@@ -41,6 +42,7 @@ export function ExperienceRegistrationForm() {
   const navigate = useNavigate();
   const [batches, setBatches] = useState([]);
   const [razorpayLoading, setRazorpayLoading] = useState(false);
+  const [couponApplied, setCouponApplied] = useState(null);
 
   const methods = useForm({
     resolver: zodResolver(clientRegistrationSchema),
@@ -60,6 +62,11 @@ export function ExperienceRegistrationForm() {
       })
       .catch(() => setBatches([]));
   }, []);
+
+  // A coupon is validated against a specific price — drop it if the batch changes.
+  useEffect(() => {
+    if (couponApplied) { setCouponApplied(null); setValue('couponCode', null); }
+  }, [batchId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectedBatch = batches.find((b) => b.id === batchId);
   const price = selectedBatch ? Number(selectedBatch.priceIndividual) : null;
@@ -148,18 +155,31 @@ export function ExperienceRegistrationForm() {
             )}
           </div>
 
+          <CouponField
+            program={PROGRAM}
+            amount={price}
+            batchId={batchId}
+            applied={couponApplied}
+            disabled={price == null}
+            onApply={(r) => { setValue('couponCode', r.code); setCouponApplied(r); }}
+            onClear={() => { setValue('couponCode', null); setCouponApplied(null); }}
+          />
+
           {price != null && (
-            <div className="rounded-2xl border border-charcoal/10 bg-soft p-5 flex justify-between items-center">
-              <span className="font-sans text-sm text-charcoal">Total</span>
-              <span className="font-display text-2xl font-semibold text-ink">₹{price.toLocaleString('en-IN')}</span>
+            <div className="rounded-2xl border border-charcoal/10 bg-soft p-5">
+              <div className="flex justify-between items-center">
+                <span className="font-sans text-sm text-charcoal">Total</span>
+                <span className="font-display text-2xl font-semibold text-ink">
+                  ₹{(couponApplied ? couponApplied.finalAmount : price).toLocaleString('en-IN')}
+                </span>
+              </div>
+              {couponApplied && (
+                <p className="font-sans text-xs text-sage mt-1 text-right">
+                  ₹{price.toLocaleString('en-IN')} − ₹{Number(couponApplied.discountAmount).toLocaleString('en-IN')} ({couponApplied.code})
+                </p>
+              )}
             </div>
           )}
-
-          <div>
-            <label className="block font-sans text-sm text-charcoal mb-1">Coupon code (optional)</label>
-            <input {...register('couponCode')} placeholder="Enter a code if you have one"
-              className="w-full rounded-lg border border-charcoal/20 bg-pearl px-3 py-2.5 font-sans text-sm uppercase placeholder:normal-case" />
-          </div>
 
           <label className="flex items-start gap-3 cursor-pointer">
             <input type="checkbox" {...register('consent')} className="mt-1 accent-ochre w-4 h-4" />

@@ -1,28 +1,35 @@
 /**
  * AdminSettingsPage — /admin/settings
  *
- * System health view plus staff administration:
- *   - Health/Build/Signed-in/Notes (read-only, auto-refreshing).
- *   - Team (Admin only): list staff, change roles, reset passwords, add members.
- *   - Change your password (all staff).
- *   - Login activity (Admin only): merged success/failed sign-in audit log.
+ * One panel, three clearly-labelled sections:
+ *   1. System health — read-only operational snapshot the frontend can determine
+ *      without new backend endpoints: API reachability, base URL, build mode, and
+ *      the signed-in session. When the backend /health endpoint returns its richer
+ *      payload (database / razorpay / uptime / version) those are surfaced too, but
+ *      the panel never depends on them — a failed ping degrades gracefully to
+ *      "Unreachable" instead of crashing.
+ *   2. Team (Admin only) — list staff, change roles, reset passwords, add members.
+ *      SUPERADMIN rules enforced client- and server-side.
+ *   3. Your account — your name/email/role plus the change-your-password flow.
  *
- * The health pane auto-refreshes every 30 seconds while the page is visible so
- * the on-call admin can leave it open as a "is the system alive?" pane.
+ * The health pane auto-refreshes every 30 seconds while the page is visible so the
+ * on-call admin can leave it open as an "is the system alive?" pane.
  */
 import { useEffect, useState, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import {
-  HeartPulse, Database, CreditCard, Activity, Tag, RefreshCw,
-  UserPlus, KeyRound, Users, ShieldCheck, Trash2,
+  HeartPulse, Database, CreditCard, Activity, Tag, RefreshCw, Wifi, Server,
+  UserPlus, KeyRound, Users, ShieldCheck, Trash2, UserCircle,
 } from 'lucide-react';
 import { AdminPageHeader } from '../../components/admin/AdminPageHeader.jsx';
 import { StatusBadge } from '../../components/admin/StatusBadge.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { Spinner } from '../../components/ui/Spinner.jsx';
 import { Input } from '../../components/ui/Input.jsx';
+import { cn } from '../../lib/cn.js';
+import { API_BASE } from '../../lib/constants.js';
+import { apiClient } from '../../api/client.js';
 import {
-  fetchHealth,
   listStaffUsers,
   createStaffUser,
   updateStaffUserRole,
@@ -34,6 +41,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 
 const ROLES = ['ADMIN', 'CONTRIBUTOR', 'VIEWER'];
 const MIN_PASSWORD = 8;
+const HEALTH_REFRESH_MS = 30_000;
 
 function formatUptime(seconds) {
   if (seconds == null) return '—';
@@ -48,34 +56,34 @@ function formatUptime(seconds) {
 
 const fmtDateTime = (iso) => (iso ? new Date(iso).toLocaleString('en-IN') : '—');
 
+/**
+ * Resilient connectivity probe against the public GET /api/v1/health endpoint.
+ * Resolves to { ok, payload } and never throws — a dead API is a normal state
+ * this panel is meant to report, not crash on.
+ *
+ * "Reachable" means the server answered at all. /health returns 200 when healthy
+ * and 503 (with a JSON body of the same shape) when the database is down — both
+ * still prove the API is up, so we surface the richer payload in both cases and
+ * only fall back to "Unreachable" on a transport failure (no response received).
+ */
+async function probeApi() {
+  try {
+    const { data } = await apiClient.get('/health');
+    return { ok: true, payload: data };
+  } catch (err) {
+    const body = err.response?.data;
+    // Any HTTP response (incl. 503 degraded) means we reached the server.
+    if (err.response) {
+      return { ok: true, payload: body && typeof body === 'object' ? body : null };
+    }
+    // No response → network/DNS/server-down: genuinely unreachable.
+    return { ok: false, payload: null };
+  }
+}
+
 export default function AdminSettingsPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPERADMIN';
-  const [health, setHealth] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [lastRefresh, setLastRefresh] = useState(null);
-  const timer = useRef(null);
-
-  async function load(silent = false) {
-    if (!silent) setLoading(true);
-    setError('');
-    try {
-      const data = await fetchHealth();
-      setHealth(data);
-      setLastRefresh(new Date());
-    } catch (err) {
-      setError(err.response?.data?.error || 'Could not reach health endpoint.');
-    } finally {
-      if (!silent) setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    load();
-    timer.current = setInterval(() => load(true), 30_000);
-    return () => clearInterval(timer.current);
-  }, []);
 
   return (
     <>
@@ -85,108 +93,194 @@ export default function AdminSettingsPage() {
 
       <AdminPageHeader
         title="Settings"
-        subtitle="System health, team, and your account. Health auto-refreshes every 30 seconds."
+        subtitle="System health, team, and your account, all in one place."
         actions={
-          <Button size="sm" variant="ghost" onClick={() => load()} disabled={loading}>
-            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refresh
-          </Button>
+          <nav className="hidden sm:flex items-center gap-1 text-xs font-mono uppercase tracking-widest">
+            <AnchorLink href="#system-health">Health</AnchorLink>
+            {isAdmin && <AnchorLink href="#team">Team</AnchorLink>}
+            <AnchorLink href="#your-account">Account</AnchorLink>
+          </nav>
         }
       />
 
-      {loading && !health ? (
-        <div className="flex items-center justify-center py-20">
-          <Spinner size={20} />
-        </div>
-      ) : error && !health ? (
-        <div className="bg-danger/10 border border-danger/30 text-danger rounded-lg p-4 text-sm">
-          {error}
-        </div>
-      ) : health && (
-        <>
-          {/* Health summary */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <HealthTile
-              label="System"
-              value={health.status?.toUpperCase()}
-              icon={HeartPulse}
-              tone={health.status === 'ok' ? 'positive' : 'danger'}
-            />
-            <HealthTile
-              label="Database"
-              value={health.database?.toUpperCase()}
-              icon={Database}
-              tone={health.database === 'connected' ? 'positive' : 'danger'}
-            />
-            <HealthTile
-              label="Razorpay"
-              value={health.razorpay?.toUpperCase()}
-              icon={CreditCard}
-              tone={health.razorpay === 'reachable' ? 'positive' : 'warn'}
-            />
-            <HealthTile
-              label="Uptime"
-              value={formatUptime(health.uptime)}
-              icon={Activity}
-              tone="info"
-            />
-          </div>
+      <div className="space-y-12">
+        <SystemHealthSection user={user} />
 
-          {/* Build info */}
-          <div className="bg-cream rounded-lg border border-muted/20 shadow-sm p-5 mb-6">
-            <h2 className="font-display text-lg font-light text-charcoal mb-3">Build</h2>
-            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-6 text-sm">
-              <KV k="Version" v={<span className="font-mono text-xs">{health.version || 'dev'}</span>} />
-              <KV k="Server time" v={new Date(health.timestamp).toLocaleString('en-IN')} />
-              <KV k="Last refresh" v={lastRefresh?.toLocaleString('en-IN') ?? '—'} />
-              <KV
-                k="Build tag"
-                v={<span className="font-mono text-xs">{health.version === 'dev' ? 'development' : `prod · ${health.version}`}</span>}
-              />
-            </dl>
-          </div>
+        {/* Team — Admin only. Role gating preserved exactly. */}
+        {isAdmin && (
+          <Section
+            id="team"
+            eyebrow="Access"
+            icon={Users}
+            title="Team"
+            description="Who can sign in to this admin panel, and what each member is allowed to do. Roles gate every action across the panel."
+          >
+            <TeamSection />
+            <LoginActivitySection />
+          </Section>
+        )}
 
-          {/* Signed-in admin */}
-          <div className="bg-cream rounded-lg border border-muted/20 shadow-sm p-5 mb-6">
-            <h2 className="font-display text-lg font-light text-charcoal mb-3">Signed in as</h2>
-            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-6 text-sm">
-              <KV k="Name"  v={user?.name || '—'} />
-              <KV k="Email" v={user?.email} />
-              <KV k="Role"  v={<StatusBadge status={user?.role} tone="info" />} />
-              <KV
-                k="Session"
-                v={<span className="text-muted text-xs">Auto-renews via httpOnly refresh cookie every 50 minutes.</span>}
-              />
-            </dl>
-          </div>
-
-          {/* Team — Admin only */}
-          {isAdmin && <TeamSection />}
-
-          {/* Change your password — all staff */}
+        <Section
+          id="your-account"
+          eyebrow="You"
+          icon={UserCircle}
+          title="Your account"
+          description="Your profile and sign-in security."
+        >
+          <YourAccountCard user={user} />
           <ChangePasswordSection />
-
-          {/* Login activity — Admin only */}
-          {isAdmin && <LoginActivitySection />}
-
-          {/* Notes */}
-          <div className="bg-soft rounded-lg p-5 text-sm text-muted leading-relaxed">
-            <h3 className="font-mono text-[10px] uppercase tracking-widest text-muted mb-2 flex items-center gap-2">
-              <Tag size={12} /> Notes
-            </h3>
-            <ul className="list-disc list-inside space-y-1">
-              <li>Database = Supabase pooler · runtime queries use transaction-pooler (port 6543).</li>
-              <li>Razorpay = test mode unless RAZORPAY_KEY_ID starts with <code className="font-mono">rzp_live_</code>.</li>
-              <li>Refresh cookie = httpOnly + sameSite. Access tokens never leave memory.</li>
-              <li>All admin mutations are audit-logged. See the parent project's audit log for details.</li>
-            </ul>
-          </div>
-        </>
-      )}
+        </Section>
+      </div>
     </>
   );
 }
 
-// ── Team (Admin only) ──────────────────────────────────────────────────────────
+// ── 1. System health ────────────────────────────────────────────────────────────
+
+function SystemHealthSection({ user }) {
+  const [reachable, setReachable] = useState(null); // null = probing, true/false once known
+  const [payload, setPayload] = useState(null);     // rich /health body when available
+  const [checking, setChecking] = useState(true);
+  const [lastChecked, setLastChecked] = useState(null);
+  const timer = useRef(null);
+
+  async function check(silent = false) {
+    if (!silent) setChecking(true);
+    const { ok, payload: body } = await probeApi();
+    setReachable(ok);
+    setPayload(body);
+    setLastChecked(new Date());
+    if (!silent) setChecking(false);
+  }
+
+  useEffect(() => {
+    check();
+    timer.current = setInterval(() => check(true), HEALTH_REFRESH_MS);
+    return () => clearInterval(timer.current);
+  }, []);
+
+  const mode = import.meta.env.MODE;
+  const isProd = import.meta.env.PROD;
+
+  return (
+    <Section
+      id="system-health"
+      eyebrow="Operations"
+      icon={HeartPulse}
+      title="System health"
+      description="A read-only snapshot of what the panel can see from here. Auto-refreshes every 30 seconds."
+      actions={
+        <Button size="sm" variant="ghost" onClick={() => check()} disabled={checking}>
+          <RefreshCw size={14} className={checking ? 'animate-spin' : ''} /> Refresh
+        </Button>
+      }
+    >
+      <Card>
+        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8 text-sm">
+          <KV
+            k="API connection"
+            icon={Wifi}
+            v={
+              reachable === null ? (
+                <span className="inline-flex items-center gap-2 text-muted">
+                  <Spinner size={12} /> Checking…
+                </span>
+              ) : (
+                <StatusBadge
+                  status={reachable ? 'Connected' : 'Unreachable'}
+                  tone={reachable ? 'positive' : 'danger'}
+                />
+              )
+            }
+          />
+          <KV
+            k="API base URL"
+            icon={Server}
+            v={<span className="font-mono text-xs break-all text-charcoal">{API_BASE}</span>}
+          />
+          <KV
+            k="Build mode"
+            icon={Tag}
+            v={
+              <StatusBadge
+                status={isProd ? 'Production' : mode || 'development'}
+                tone={isProd ? 'info' : 'warn'}
+              />
+            }
+          />
+          <KV
+            k="Last checked"
+            icon={Activity}
+            v={<span className="text-charcoal">{lastChecked?.toLocaleString('en-IN') ?? '—'}</span>}
+          />
+          <KV
+            k="Signed-in role"
+            icon={ShieldCheck}
+            v={<StatusBadge status={user?.role || 'UNKNOWN'} tone="info" />}
+          />
+          <KV
+            k="Session"
+            icon={UserCircle}
+            v={
+              <span className="text-muted text-xs">
+                Auto-renews via httpOnly refresh cookie every 50 minutes.
+              </span>
+            }
+          />
+
+          {/* Richer fields only when the backend /health endpoint provides them. */}
+          {payload && (
+            <>
+              <KV
+                k="Database"
+                icon={Database}
+                v={
+                  <StatusBadge
+                    status={(payload.database || 'unknown').toUpperCase()}
+                    tone={payload.database === 'connected' ? 'positive' : 'danger'}
+                  />
+                }
+              />
+              <KV
+                k="Razorpay"
+                icon={CreditCard}
+                v={
+                  <StatusBadge
+                    status={(payload.razorpay || 'unknown').toUpperCase()}
+                    tone={payload.razorpay === 'reachable' ? 'positive' : 'warn'}
+                  />
+                }
+              />
+              {payload.uptime != null && (
+                <KV
+                  k="Server uptime"
+                  icon={Activity}
+                  v={<span className="text-charcoal">{formatUptime(payload.uptime)}</span>}
+                />
+              )}
+              {payload.version && (
+                <KV
+                  k="Backend version"
+                  icon={Tag}
+                  v={<span className="font-mono text-xs text-charcoal">{payload.version}</span>}
+                />
+              )}
+            </>
+          )}
+        </dl>
+
+        {reachable === false && (
+          <p className="mt-4 text-xs text-danger flex items-center gap-2" role="status">
+            <Wifi size={12} /> The API did not respond. The site may be deploying or offline —
+            this view will keep retrying.
+          </p>
+        )}
+      </Card>
+    </Section>
+  );
+}
+
+// ── 2. Team (Admin only) ────────────────────────────────────────────────────────
 
 function TeamSection() {
   const { user: me } = useAuth();
@@ -218,13 +312,8 @@ function TeamSection() {
   }
 
   return (
-    <div className="bg-cream rounded-lg border border-muted/20 shadow-sm p-5 mb-6">
-      <h2 className="font-display text-lg font-light text-charcoal mb-1 flex items-center gap-2">
-        <Users size={16} className="text-muted" /> Team
-      </h2>
-      <p className="text-sm text-muted mb-4">
-        Manage who can sign in. Roles gate what each member can do across the admin panel.
-      </p>
+    <Card>
+      <h3 className="font-display text-lg font-light text-charcoal mb-4">Members</h3>
 
       {loading ? (
         <div className="flex items-center justify-center py-10"><Spinner size={18} /></div>
@@ -261,7 +350,7 @@ function TeamSection() {
       )}
 
       <AddTeamMemberForm onCreated={handleCreated} />
-    </div>
+    </Card>
   );
 }
 
@@ -538,7 +627,98 @@ function AddTeamMemberForm({ onCreated }) {
   );
 }
 
-// ── Change your password (all staff) ───────────────────────────────────────────
+// Login activity — Admin only (lives inside the Team section).
+function LoginActivitySection() {
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  async function load() {
+    setLoading(true);
+    setError('');
+    try {
+      setRows(await fetchLoginLogs(50));
+    } catch (err) {
+      setError(err.response?.data?.error || 'Could not load login activity.');
+    } finally {
+      setLoading(false);
+    }
+  }
+  useEffect(() => { load(); }, []);
+
+  return (
+    <Card>
+      <div className="flex items-center justify-between mb-1">
+        <h3 className="font-display text-lg font-light text-charcoal flex items-center gap-2">
+          <ShieldCheck size={16} className="text-muted" /> Login activity
+        </h3>
+        <Button size="sm" variant="ghost" onClick={load} disabled={loading}>
+          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refresh
+        </Button>
+      </div>
+      <p className="text-sm text-muted mb-4">Recent admin sign-in attempts, newest first.</p>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-10"><Spinner size={18} /></div>
+      ) : error ? (
+        <div className="bg-danger/10 border border-danger/30 text-danger rounded p-3 text-sm">{error}</div>
+      ) : rows.length === 0 ? (
+        <p className="text-sm text-muted">No login activity recorded yet.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-muted/20 text-left">
+                <Th>When</Th>
+                <Th>Who</Th>
+                <Th>Result</Th>
+                <Th>IP</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => {
+                const success = r.action === 'admin.login.success';
+                const who = r.actor?.email || r.meta?.email || '—';
+                return (
+                  <tr key={r.id} className="border-b border-muted/10">
+                    <Td className="text-muted text-xs whitespace-nowrap">{fmtDateTime(r.createdAt)}</Td>
+                    <Td className="text-charcoal">{who}</Td>
+                    <Td>
+                      <StatusBadge
+                        status={success ? 'Success' : 'Failed'}
+                        tone={success ? 'positive' : 'danger'}
+                      />
+                    </Td>
+                    <Td className="font-mono text-xs text-muted">{r.ipAddress || '—'}</Td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+// ── 3. Your account ─────────────────────────────────────────────────────────────
+
+function YourAccountCard({ user }) {
+  return (
+    <Card>
+      <h3 className="font-display text-lg font-light text-charcoal mb-4">Profile</h3>
+      <dl className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-8 text-sm">
+        <KV k="Name" v={<span className="text-charcoal">{user?.name || '—'}</span>} />
+        <KV k="Email" v={<span className="text-charcoal break-all">{user?.email || '—'}</span>} />
+        <KV k="Role" v={<StatusBadge status={user?.role || 'UNKNOWN'} tone="info" />} />
+        <KV
+          k="Session"
+          v={<span className="text-muted text-xs">Refresh cookie is httpOnly + sameSite. Access tokens never leave memory.</span>}
+        />
+      </dl>
+    </Card>
+  );
+}
 
 function ChangePasswordSection() {
   const { changePassword } = useAuth();
@@ -588,10 +768,10 @@ function ChangePasswordSection() {
   }
 
   return (
-    <div className="bg-cream rounded-lg border border-muted/20 shadow-sm p-5 mb-6">
-      <h2 className="font-display text-lg font-light text-charcoal mb-1 flex items-center gap-2">
+    <Card>
+      <h3 className="font-display text-lg font-light text-charcoal mb-1 flex items-center gap-2">
         <KeyRound size={16} className="text-muted" /> Change your password
-      </h2>
+      </h3>
       <p className="text-sm text-muted mb-4">Choose a new password for your own account.</p>
 
       {serverError && (
@@ -637,86 +817,55 @@ function ChangePasswordSection() {
           </Button>
         </div>
       </form>
-    </div>
+    </Card>
   );
 }
 
-// ── Login activity (Admin only) ────────────────────────────────────────────────
+// ── Layout + presentational helpers ─────────────────────────────────────────────
 
-function LoginActivitySection() {
-  const [rows, setRows] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  async function load() {
-    setLoading(true);
-    setError('');
-    try {
-      setRows(await fetchLoginLogs(50));
-    } catch (err) {
-      setError(err.response?.data?.error || 'Could not load login activity.');
-    } finally {
-      setLoading(false);
-    }
-  }
-  useEffect(() => { load(); }, []);
-
+/**
+ * Section — the shared pattern: anchor target, eyebrow label + heading, optional
+ * action slot, short description, then one or more cards. Keeps the three areas
+ * visually distinct with consistent spacing.
+ */
+function Section({ id, eyebrow, icon: Icon, title, description, actions, children }) {
   return (
-    <div className="bg-cream rounded-lg border border-muted/20 shadow-sm p-5 mb-6">
-      <div className="flex items-center justify-between mb-1">
-        <h2 className="font-display text-lg font-light text-charcoal flex items-center gap-2">
-          <ShieldCheck size={16} className="text-muted" /> Login activity
-        </h2>
-        <Button size="sm" variant="ghost" onClick={load} disabled={loading}>
-          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refresh
-        </Button>
-      </div>
-      <p className="text-sm text-muted mb-4">Recent admin sign-in attempts, newest first.</p>
-
-      {loading ? (
-        <div className="flex items-center justify-center py-10"><Spinner size={18} /></div>
-      ) : error ? (
-        <div className="bg-danger/10 border border-danger/30 text-danger rounded p-3 text-sm">{error}</div>
-      ) : rows.length === 0 ? (
-        <p className="text-sm text-muted">No login activity recorded yet.</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-muted/20 text-left">
-                <Th>When</Th>
-                <Th>Who</Th>
-                <Th>Result</Th>
-                <Th>IP</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => {
-                const success = r.action === 'admin.login.success';
-                const who = r.actor?.email || r.meta?.email || '—';
-                return (
-                  <tr key={r.id} className="border-b border-muted/10">
-                    <Td className="text-muted text-xs whitespace-nowrap">{fmtDateTime(r.createdAt)}</Td>
-                    <Td className="text-charcoal">{who}</Td>
-                    <Td>
-                      <StatusBadge
-                        status={success ? 'Success' : 'Failed'}
-                        tone={success ? 'positive' : 'danger'}
-                      />
-                    </Td>
-                    <Td className="font-mono text-xs text-muted">{r.ipAddress || '—'}</Td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+    <section id={id} className="scroll-mt-24">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between mb-4">
+        <div className="min-w-0">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-ochre flex items-center gap-2 mb-1">
+            {Icon && <Icon size={12} aria-hidden="true" />} {eyebrow}
+          </p>
+          <h2 className="font-display text-xl sm:text-2xl font-light text-charcoal leading-tight">
+            {title}
+          </h2>
+          {description && <p className="text-sm text-muted mt-1 max-w-2xl">{description}</p>}
         </div>
-      )}
+        {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
+      </div>
+      <div className="space-y-6">{children}</div>
+    </section>
+  );
+}
+
+function Card({ children, className }) {
+  return (
+    <div className={cn('bg-cream rounded-lg border border-muted/20 shadow-sm p-5', className)}>
+      {children}
     </div>
   );
 }
 
-// ── Small presentational helpers ───────────────────────────────────────────────
+function AnchorLink({ href, children }) {
+  return (
+    <a
+      href={href}
+      className="px-2 py-1 rounded text-muted hover:text-teal hover:bg-teal/10 transition-colors"
+    >
+      {children}
+    </a>
+  );
+}
 
 function Th({ children, className = '' }) {
   return (
@@ -730,30 +879,13 @@ function Td({ children, className = '' }) {
   return <td className={`py-2 pr-3 align-top ${className}`}>{children}</td>;
 }
 
-function HealthTile({ label, value, icon: Icon, tone }) {
-  const toneClass = {
-    positive: 'border-sage/30 text-sage',
-    warn:     'border-gold/30 text-gold',
-    danger:   'border-danger/30 text-danger',
-    info:     'border-teal/30 text-teal',
-  }[tone] || 'border-muted/30 text-muted';
-
-  return (
-    <div className={`bg-cream rounded-lg border-2 shadow-sm p-5 flex flex-col gap-2 ${toneClass}`}>
-      <div className="flex items-center justify-between">
-        <p className="font-mono text-[10px] uppercase tracking-widest text-muted">{label}</p>
-        <Icon size={14} aria-hidden="true" />
-      </div>
-      <p className="font-display text-2xl font-light leading-tight">{value}</p>
-    </div>
-  );
-}
-
-function KV({ k, v }) {
+function KV({ k, v, icon: Icon }) {
   return (
     <div>
-      <dt className="font-mono text-[10px] uppercase tracking-widest text-muted">{k}</dt>
-      <dd className="text-charcoal">{v}</dd>
+      <dt className="font-mono text-[10px] uppercase tracking-widest text-muted flex items-center gap-1.5">
+        {Icon && <Icon size={11} aria-hidden="true" />} {k}
+      </dt>
+      <dd className="text-charcoal mt-0.5">{v}</dd>
     </div>
   );
 }

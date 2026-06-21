@@ -68,21 +68,27 @@ import {
   listEnquiries,
   getEnquiry,
   updateEnquiryStatus,
+  exportEnquiriesCsv,
+  deleteEnquiry,
 } from '../../controllers/admin.enquiries.controller.js';
 import {
   listVolunteers,
   getVolunteer,
   updateVolunteerStatus,
+  exportVolunteersCsv,
+  deleteVolunteer,
 } from '../../controllers/admin.volunteers.controller.js';
 import {
   listBatches,
   createBatch,
   updateBatch,
+  deleteBatch,
 } from '../../controllers/admin.batches.controller.js';
 import {
   listCoupons,
   createCoupon,
   updateCoupon,
+  deleteCoupon,
 } from '../../controllers/admin.coupons.controller.js';
 import {
   listCommunity,
@@ -93,6 +99,7 @@ import {
   viewInvoice,
   resendInvoice,
   refundPayment,
+  exportInvoicesCsv,
 } from '../../controllers/admin.invoices.controller.js';
 import {
   listBlog,
@@ -144,15 +151,20 @@ const refundLimiter = rateLimit({
 router.get('/dashboard', dashboardStats);
 
 // ── Enquiries ─────────────────────────────────────────────────────────────────
+// Static '/enquiries/export.csv' must come BEFORE '/enquiries/:id'.
+router.get('/enquiries/export.csv', exportEnquiriesCsv);
 router.get('/enquiries',       listEnquiries);
 router.get('/enquiries/:id',   getEnquiry);
 router.patch('/enquiries/:id', requireEditor, validate(enquiryStatusSchema), updateEnquiryStatus);
+router.delete('/enquiries/:id', requireAdmin, deleteEnquiry);
 
 // ── Volunteers ────────────────────────────────────────────────────────────────
-// Static '/volunteers' GET must come BEFORE '/volunteers/:id'.
+// Static '/volunteers/...' GETs must come BEFORE '/volunteers/:id'.
+router.get('/volunteers/export.csv', exportVolunteersCsv);
 router.get('/volunteers',      listVolunteers);
 router.get('/volunteers/:id',  getVolunteer);
 router.patch('/volunteers/:id', requireEditor, validate(volunteerStatusSchema), updateVolunteerStatus);
+router.delete('/volunteers/:id', requireAdmin, deleteVolunteer);
 
 // ── Registrations ─────────────────────────────────────────────────────────────
 // NOTE: static sub-paths (export.csv, reconciliation) must come BEFORE /:id
@@ -168,22 +180,28 @@ router.post('/registrations/:id/mark-refunded',   requireAdmin, markRefundedManu
 router.delete('/registrations/:id',               requireAdmin, deleteRegistration);
 
 // ── Batches ───────────────────────────────────────────────────────────────────
+// DELETE is route-gated requireAdmin but the controller further restricts it to
+// SUPERADMIN and refuses batches that already have registrations.
 router.get('/batches',        listBatches);
 router.post('/batches',       requireAdmin, validate(batchCreateSchema), createBatch);
 router.patch('/batches/:id',  requireAdmin, validate(batchUpdateSchema), updateBatch);
+router.delete('/batches/:id', requireAdmin, deleteBatch);
 
 // ── Coupons ───────────────────────────────────────────────────────────────────
-// PATCH supports both updating fields and deactivating (active: false) — no
-// hard-delete route to preserve audit history. Soft-delete is a one-field PATCH.
+// PATCH supports both updating fields and deactivating (active: false). DELETE is
+// a hard-delete (Editor tier) — distinct from the soft-deactivate PATCH.
 router.get('/coupons',        listCoupons);
 router.post('/coupons',       requireAdmin, validate(couponCreateSchema), createCoupon);
 router.patch('/coupons/:id',  requireAdmin, validate(couponUpdateSchema), updateCoupon);
+router.delete('/coupons/:id', requireEditor, deleteCoupon);
 
 // ── Community ─────────────────────────────────────────────────────────────────
 router.get('/community',            listCommunity);
 router.get('/community/export.csv', exportCommunityCsv);
 
 // ── Invoices ──────────────────────────────────────────────────────────────────
+// Static '/invoices/export.csv' must come BEFORE '/invoices/:id'.
+router.get('/invoices/export.csv',   exportInvoicesCsv);
 router.get('/invoices',              listInvoices);
 router.get('/invoices/:id',          viewInvoice);
 router.post('/invoices/:id/resend',  requireEditor, resendInvoice);

@@ -10,4 +10,7 @@ export const couponValidateSchema = z.strictObject({
   program: z.enum(['BADLAAV', 'MISSION_UDAAN', 'FUTURE_READINESS', 'ANTRANG']),
   // Baseline amount in INR (before discount) — used to compute finalAmount server-side
   amount: z.coerce.number().int().positive('Amount must be a positive integer.'),
+  // Optional batch the user is registering for — checked against the coupon's
+  // applicableBatches scope (empty scope = applies to any batch).
+  batchId: z.string().trim().min(1).max(40).optional(),
 });

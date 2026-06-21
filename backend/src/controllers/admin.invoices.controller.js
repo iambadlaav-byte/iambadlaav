@@ -23,6 +23,8 @@ import * as razorpayService from '../services/razorpay.service.js';
 import { signedInvoiceUrl } from '../services/cloudinary.service.js';
 import { sendEmail }        from '../services/email.service.js';
 import { writeAudit, AUDIT_ACTIONS } from '../services/audit.service.js';
+import { buildInvoicesCsv, streamCsv } from '../services/csvExport.service.js';
+import { canSeeFinancials, canSeeContact } from '../middleware/auth.js';
 
 // ── listInvoices ──────────────────────────────────────────────────────────────
 
@@ -56,6 +58,52 @@ export async function listInvoices(req, res, next) {
       : null;
 
     return res.json({ rows, nextCursor });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ── exportInvoicesCsv ──────────────────────────────────────────────────────────
+// Streams a CSV of paid + refunded registrations honouring the paymentStatus
+// filter from the list endpoint. Financial / contact columns drop per RBAC.
+
+export async function exportInvoicesCsv(req, res, next) {
+  try {
+    const { paymentStatus } = req.query;
+
+    const rows = await prisma.registration.findMany({
+      where: {
+        paymentStatus: paymentStatus
+          ? paymentStatus
+          : { in: ['PAID', 'REFUNDED'] },
+      },
+      select: {
+        id:            true,
+        invoiceNumber: true,
+        finalAmount:   true,
+        paymentStatus: true,
+        createdAt:     true,
+        program:       true,
+        user: { select: { name: true, email: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const { columns, rows: csvRows } = buildInvoicesCsv(rows, {
+      showFinancials: canSeeFinancials(req.user),
+      showContact:    canSeeContact(req.user),
+    });
+
+    await writeAudit({
+      actorId:     req.user.id,
+      action:      AUDIT_ACTIONS.INVOICES_EXPORTED,
+      subjectType: 'Export',
+      subjectId:   null,
+      meta:        { count: csvRows.length },
+      req,
+    });
+
+    streamCsv(res, { filename: 'invoices.csv', columns, rows: csvRows });
   } catch (err) {
     next(err);
   }

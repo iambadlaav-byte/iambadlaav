@@ -5,8 +5,9 @@
  *   1. Upsert shell user by email (mirrors registrations: update sets name ONLY,
  *      so an unauthenticated form can't overwrite an existing user's profile).
  *   2. Create the Volunteer row (status PENDING).
- *   3. Dedup: Volunteer.userId is @unique → a second application from the same
- *      person throws Prisma P2002 → 409 ALREADY_APPLIED.
+ *   3. Dedup: Volunteer has a composite @@unique([userId, batchAttended]) → a second
+ *      application for the SAME batch throws Prisma P2002 → 409 ALREADY_APPLIED.
+ *      A different batch is allowed (volunteers can help with more than one batch).
  *   4. Best-effort admin notification email (never fails the request).
  */
 import { prisma } from '../lib/prisma.js';
@@ -61,12 +62,13 @@ export async function applyVolunteer(req, res, next) {
       });
     } catch (dbErr) {
       // ── Duplicate application ───────────────────────────────────────────────
-      // Volunteer.userId is @unique — P2002 means this person already applied.
+      // Composite unique (userId, batchAttended) — P2002 means this person already
+      // applied for THIS batch. Applying for a different batch is allowed.
       if (dbErr.code === 'P2002') {
-        log.info({ userId: user.id }, 'volunteer.apply.duplicate_skipped');
+        log.info({ userId: user.id, batchAttended }, 'volunteer.apply.duplicate_skipped');
         return res.status(409).json({
           error:   'ALREADY_APPLIED',
-          message: 'You have already applied to volunteer. We will reach out about the next batch.',
+          message: "You've already applied to volunteer for this batch. To help with a different batch, apply again and pick that one.",
         });
       }
       throw dbErr;

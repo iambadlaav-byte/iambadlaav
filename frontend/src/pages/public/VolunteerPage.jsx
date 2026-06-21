@@ -2,15 +2,28 @@
  * VolunteerPage — /volunteer
  * Pitch + roles + application form. Copy lives in content.js (VOLUNTEER).
  */
+import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { ProgramHero } from '../../components/sections/ProgramHero.jsx';
 import { VolunteerForm } from '../../components/forms/VolunteerForm.jsx';
+import { Button } from '../../components/ui/Button.jsx';
 import { FadeIn } from '../../components/animations/FadeIn.jsx';
 import { Highlight } from '../../components/ui/Highlight.jsx';
 import { VOLUNTEER } from '../../lib/content.js';
 
 export default function VolunteerPage() {
   const { hero, intro, roles, lookingFor } = VOLUNTEER;
+  // The form stays hidden until the visitor opts in — a calmer first impression
+  // than dropping a long form on the page.
+  const [showForm, setShowForm] = useState(false);
+
+  function openForm() {
+    setShowForm(true);
+    // Bring the freshly-revealed form into view on the next paint.
+    setTimeout(() => {
+      document.getElementById('apply')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  }
 
   return (
     <>
@@ -86,7 +99,7 @@ export default function VolunteerPage() {
         </div>
       </section>
 
-      {/* Application form */}
+      {/* Application form — revealed on demand */}
       <section id="apply" className="bg-soft py-[var(--section-y)] px-[var(--section-x)] scroll-mt-20">
         <div className="max-w-narrow mx-auto">
           <FadeIn>
@@ -94,9 +107,20 @@ export default function VolunteerPage() {
             <h2 className="font-display font-semibold text-ink mb-8" style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)' }}>
               Put your name forward
             </h2>
-            <div className="bg-pearl rounded-2xl p-6 sm:p-8 border border-charcoal/5 shadow-sm">
-              <VolunteerForm />
-            </div>
+            {showForm ? (
+              <div className="bg-pearl rounded-2xl p-6 sm:p-8 border border-charcoal/5 shadow-sm">
+                <VolunteerForm />
+              </div>
+            ) : (
+              <div className="bg-pearl rounded-2xl p-8 border border-charcoal/5 shadow-sm text-center">
+                <p className="font-sans text-charcoal leading-body mb-6 max-w-[440px] mx-auto">
+                  Takes about two minutes. Tell us where you can help and which batch you have in mind.
+                </p>
+                <Button type="button" size="lg" onClick={openForm}>
+                  Apply to volunteer
+                </Button>
+              </div>
+            )}
           </FadeIn>
         </div>
       </section>

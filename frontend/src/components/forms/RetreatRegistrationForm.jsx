@@ -23,6 +23,7 @@ import { openCheckout } from '../../lib/razorpay.js';
 import { ProgressIndicator } from './ProgressIndicator.jsx';
 import { FormField } from '../ui/FormField.jsx';
 import { ChoiceField } from './ChoiceField.jsx';
+import { CouponField } from './CouponField.jsx';
 import { Button } from '../ui/Button.jsx';
 import { Spinner } from '../ui/Spinner.jsx';
 import {
@@ -61,6 +62,20 @@ function fmtRange(start, end) {
   }
 }
 
+// Completed years between a YYYY-MM-DD date of birth and today. null if unparseable.
+function ageFromDob(dob) {
+  const d = new Date(dob);
+  if (Number.isNaN(d.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - d.getFullYear();
+  const m = now.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
+  return age;
+}
+
+// A 10-digit Indian mobile number (matches the shared indianPhone primitive).
+const TEN_DIGIT_PHONE = /^[6-9]\d{9}$/;
+
 export function RetreatRegistrationForm({ program = 'BADLAAV', programLabel = 'The Retreat' }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -69,6 +84,7 @@ export function RetreatRegistrationForm({ program = 'BADLAAV', programLabel = 'T
   const [localErrors, setLocalErrors] = useState({});
   const [batches, setBatches] = useState([]);
   const [razorpayLoading, setRazorpayLoading] = useState(false);
+  const [couponApplied, setCouponApplied] = useState(null);
 
   const methods = useForm({
     resolver: zodResolver(clientRegistrationSchema),
@@ -81,9 +97,16 @@ export function RetreatRegistrationForm({ program = 'BADLAAV', programLabel = 'T
   const batchId = watch('batchId');
   const consent = watch('consent');
   const set = (k, v) => setAnswers((a) => ({ ...a, [k]: v }));
+  // DOB picker can't reach into the future.
+  const todayStr = new Date().toISOString().slice(0, 10);
 
   // Each step is a full screen — jump back to the top when it changes.
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, [step]);
+
+  // A coupon is validated against a specific price — drop it if the plan/batch changes.
+  useEffect(() => {
+    if (couponApplied) { setCouponApplied(null); setValue('couponCode', null); }
+  }, [plan, batchId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     apiClient
@@ -130,11 +153,21 @@ export function RetreatRegistrationForm({ program = 'BADLAAV', programLabel = 'T
     const e = {};
     if (step === 1) {
       const ok = await trigger(['fullName', 'email', 'phone', 'city']);
-      if (!answers.dob) e.dob = 'Date of birth is required.';
+      if (!answers.dob) {
+        e.dob = 'Date of birth is required.';
+      } else if (answers.dob > todayStr) {
+        e.dob = "Date of birth can't be in the future.";
+      } else if ((ageFromDob(answers.dob) ?? 99) < 13) {
+        e.dob = 'You must be at least 13 years old to register.';
+      }
       if (!answers.maritalStatus) e.maritalStatus = 'Select one.';
       if (!answers.profession) e.profession = 'Select one.';
       if (!answers.emergencyName) e.emergencyName = 'Emergency contact name is required.';
-      if (!answers.emergencyPhone) e.emergencyPhone = 'Emergency contact number is required.';
+      if (!answers.emergencyPhone) {
+        e.emergencyPhone = 'Emergency contact number is required.';
+      } else if (!TEN_DIGIT_PHONE.test(String(answers.emergencyPhone).trim())) {
+        e.emergencyPhone = 'Enter a valid 10-digit number (starting 6-9).';
+      }
       setLocalErrors(e);
       return ok && Object.keys(e).length === 0;
     }
@@ -253,7 +286,7 @@ export function RetreatRegistrationForm({ program = 'BADLAAV', programLabel = 'T
               <FormField name="fullName" label="Full name" required />
               <div>
                 <label className="block font-sans text-sm text-charcoal mb-1">Date of birth <span className="text-ochre">*</span></label>
-                <input type="date" value={answers.dob ?? ''} onChange={(e) => set('dob', e.target.value)}
+                <input type="date" value={answers.dob ?? ''} max={todayStr} min="1920-01-01" onChange={(e) => set('dob', e.target.value)}
                   className="w-full rounded-lg border border-charcoal/20 bg-pearl px-3 py-2.5 font-sans text-sm" />
                 {localErrors.dob && <p className="text-danger text-xs mt-1">{localErrors.dob}</p>}
               </div>
@@ -284,7 +317,8 @@ export function RetreatRegistrationForm({ program = 'BADLAAV', programLabel = 'T
                 </div>
                 <div>
                   <label className="block font-sans text-sm text-charcoal mb-1">Emergency number <span className="text-ochre">*</span></label>
-                  <input value={answers.emergencyPhone ?? ''} onChange={(e) => set('emergencyPhone', e.target.value)}
+                  <input value={answers.emergencyPhone ?? ''} onChange={(e) => set('emergencyPhone', e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    type="tel" inputMode="numeric" maxLength={10} placeholder="10-digit number"
                     className="w-full rounded-lg border border-charcoal/20 bg-pearl px-3 py-2.5 font-sans text-sm" />
                   {localErrors.emergencyPhone && <p className="text-danger text-xs mt-1">{localErrors.emergencyPhone}</p>}
                 </div>
@@ -399,22 +433,35 @@ export function RetreatRegistrationForm({ program = 'BADLAAV', programLabel = 'T
                     )}
                   </div>
 
-                  {price != null && (
-                    <div className="rounded-2xl border border-charcoal/10 bg-soft p-5 flex justify-between items-center">
-                      <span className="font-sans text-sm text-charcoal">Total</span>
-                      <span className="font-display text-2xl font-semibold text-ink">₹{price.toLocaleString('en-IN')}</span>
-                    </div>
-                  )}
-
                   {plan === 'COUPLE' && (
                     <FormField name="partner2Name" label="Partner’s full name" required />
                   )}
 
-                  <div>
-                    <label className="block font-sans text-sm text-charcoal mb-1">Coupon code (optional)</label>
-                    <input {...register('couponCode')} placeholder="Enter a code if you have one"
-                      className="w-full rounded-lg border border-charcoal/20 bg-pearl px-3 py-2.5 font-sans text-sm uppercase placeholder:normal-case" />
-                  </div>
+                  <CouponField
+                    program={program}
+                    amount={price}
+                    batchId={batchId}
+                    applied={couponApplied}
+                    disabled={price == null}
+                    onApply={(r) => { setValue('couponCode', r.code); setCouponApplied(r); }}
+                    onClear={() => { setValue('couponCode', null); setCouponApplied(null); }}
+                  />
+
+                  {price != null && (
+                    <div className="rounded-2xl border border-charcoal/10 bg-soft p-5">
+                      <div className="flex justify-between items-center">
+                        <span className="font-sans text-sm text-charcoal">Total</span>
+                        <span className="font-display text-2xl font-semibold text-ink">
+                          ₹{(couponApplied ? couponApplied.finalAmount : price).toLocaleString('en-IN')}
+                        </span>
+                      </div>
+                      {couponApplied && (
+                        <p className="font-sans text-xs text-sage mt-1 text-right">
+                          ₹{price.toLocaleString('en-IN')} − ₹{Number(couponApplied.discountAmount).toLocaleString('en-IN')} ({couponApplied.code})
+                        </p>
+                      )}
+                    </div>
+                  )}
 
                   <label className="flex items-start gap-3 cursor-pointer">
                     <input type="checkbox" {...register('consent')} className="mt-1 accent-ochre w-4 h-4" />

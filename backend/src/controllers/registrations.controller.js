@@ -97,6 +97,7 @@ export async function createRegistration(req, res, next) {
         code: couponCode,
         program,
         amount: baselineAmount,
+        batchId: batchId ?? undefined,
       });
       if (!couponResult.valid) {
         const reasonMap = {
