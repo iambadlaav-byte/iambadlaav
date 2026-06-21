@@ -25,6 +25,7 @@ import { writeAudit, AUDIT_ACTIONS } from '../services/audit.service.js';
 import { buildRegistrationsCsv, buildReconciliationCsv, streamCsv } from '../services/csvExport.service.js';
 import { signedInvoiceUrl } from '../services/cloudinary.service.js';
 import { generateInvoicePdf, generateRegistrationPass } from '../services/invoice.service.js';
+import { sendSms, sendWhatsApp } from '../services/notification.service.js';
 import { canSeeFinancials } from '../middleware/auth.js';
 import { nextInvoiceNumber } from '../utils/invoiceNumber.js';
 
@@ -397,13 +398,24 @@ export async function inviteFromWaitlist(req, res, next) {
     const slug = reg.program === 'FUTURE_READINESS' ? 'badlaav-experience' : 'badlaav';
     const link = `${base}/register?program=${slug}`;
 
-    // Best-effort — the endpoint succeeds even if email delivery fails.
+    // Best-effort — the endpoint succeeds even if a channel fails.
     sendEmail({
       to:       reg.user.email,
       subject:  'A seat has opened — complete your Badlaav registration',
       template: 'waitlist-invite',
       data:     { name: reg.user.name, batchName: reg.batch?.name ?? 'your batch', link },
     }).catch(() => { /* logged by the email service */ });
+
+    // SMS + WhatsApp — feature-flagged, no-op without MSG91 keys.
+    sendSms({
+      to:     reg.user.phone,
+      flowId: process.env.MSG91_SMS_WAITLIST_FLOW_ID,
+      vars:   { name: reg.user.name, batch: reg.batch?.name ?? 'your batch', link },
+    }).catch(() => { /* logged by service */ });
+    sendWhatsApp({
+      to:           reg.user.phone,
+      templateName: process.env.MSG91_WA_WAITLIST_TEMPLATE,
+    }).catch(() => { /* logged by service */ });
 
     await writeAudit({
       actorId:     req.user.id,

@@ -29,6 +29,12 @@ JWT_REFRESH_SECRET="REPLACE_WITH_DIFFERENT_64_CHAR_RANDOM_STRING"
 # Source: Brevo Dashboard → SMTP & API → SMTP
 BREVO_SMTP_USER="your-smtp-user@smtp-brevo.com"
 BREVO_SMTP_PASS="your-brevo-smtp-key"
+# Sender identity. EMAIL_FROM_ADDRESS MUST be a Brevo-verified sender (a free
+# @gmail.com address will fail DMARC and land in spam). Verify a sender on the
+# brand domain in Brevo → Senders, then set it here. Replies route to EMAIL_REPLY_TO.
+EMAIL_FROM_NAME="Badlaav"
+EMAIL_FROM_ADDRESS="noreply@iambadlaav.com"
+EMAIL_REPLY_TO="iambadlaav@gmail.com"
 
 # --- PAYMENTS (Razorpay) ---
 # Source: Razorpay Dashboard → Settings → API Keys
@@ -71,6 +77,10 @@ MSG91_SENDER_ID=""
 MSG91_SMS_FLOW_ID=""
 MSG91_WA_INTEGRATED_NUMBER=""
 MSG91_WA_CONFIRM_TEMPLATE=""
+# Optional per-event overrides. Waitlist-invite falls back to MSG91_SMS_FLOW_ID
+# for SMS if its own flow is unset; WhatsApp needs its own approved template.
+MSG91_SMS_WAITLIST_FLOW_ID=""
+MSG91_WA_WAITLIST_TEMPLATE=""
 
 # --- ANALYTICS ---
 # Frontend only — set in frontend/.env: VITE_GA_MEASUREMENT_ID="G-XXXXXXXXXX"

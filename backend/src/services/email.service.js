@@ -12,6 +12,18 @@ import { logger } from '../lib/logger.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// ── Sender identity ──────────────────────────────────────────────────────────
+// Brevo can't reliably send "from" a free @gmail.com address (DMARC/spam), so the
+// envelope-from must be a Brevo-VERIFIED sender. Configure these at deploy:
+//   EMAIL_FROM_ADDRESS — a sender verified in Brevo (ideally on the brand domain)
+//   EMAIL_FROM_NAME    — display name (default "Badlaav")
+//   EMAIL_REPLY_TO     — where human replies should land (the founder's inbox)
+// Until a domain sender is verified, set EMAIL_FROM_ADDRESS to whatever Brevo sender
+// you have; replies still reach iambadlaav@gmail.com via Reply-To.
+const FROM_NAME    = process.env.EMAIL_FROM_NAME    || 'Badlaav';
+const FROM_ADDRESS = process.env.EMAIL_FROM_ADDRESS || 'noreply@iambadlaav.com';
+const REPLY_TO     = process.env.EMAIL_REPLY_TO     || 'iambadlaav@gmail.com';
+
 // ============================================================
 // Transport singleton
 // ============================================================
@@ -62,7 +74,8 @@ export async function sendEmail({ to, subject, template, data, attachments }) {
   const html = render(data);
 
   const info = await transporter.sendMail({
-    from: '"Dnyanpith" <hello@dnyanpith.org>',
+    from: `"${FROM_NAME}" <${FROM_ADDRESS}>`,
+    replyTo: REPLY_TO,
     to,
     subject,
     html,
