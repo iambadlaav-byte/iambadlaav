@@ -2,7 +2,7 @@
 
 The website for **Badlaav** — a 3-day residential retreat in Ambajogai for professionals and teams who need a real reset, not another workshop. *"Trip नाही — Turning Point."*
 
-A **Dnyanpith Abhyasika Pvt. Ltd.** initiative. Founder: Arjun Thoratt.
+Operated from Ambajogai, Maharashtra. Founder: Arjun Thoratt.
 
 ---
 
@@ -10,12 +10,12 @@ A **Dnyanpith Abhyasika Pvt. Ltd.** initiative. Founder: Arjun Thoratt.
 
 A full-stack web app:
 
-- **Marketing site** — Home, The Retreat (3-day arc), Pricing, About, Gallery, Contact.
-- **Lead capture** — a corporate/team enquiry form.
-- **Online registration + payment** — Individual / Couple booking with Razorpay checkout, auto-confirmation email, and a PDF invoice.
-- **Admin panel** — dashboard, batches, registrations, invoices, coupons, enquiries management (at `/admin`, role-gated).
+- **Marketing site** — Home, The Retreat, The Badlaav Experience, Pricing, About, Gallery, Stories, Volunteer, Contact.
+- **Lead capture** — corporate/team enquiry + volunteer application forms.
+- **Online registration + payment** — Individual / Couple / Corporate booking with Razorpay checkout, a waiting list when a batch is full, candidate IDs, a PDF registration pass + invoice, and email (plus feature-flagged SMS/WhatsApp) confirmations.
+- **Admin panel** (`/admin`, role-gated — Admin / Contributor / Viewer) — dashboard, batches, registrations (with manual mark-paid/refund and waitlist→pay invites), reports + CSV, enquiries, volunteers, invoices, coupons, Story & Gallery CMS, and settings (staff users, password reset, login activity).
 
-It is a **standalone monorepo**. The backend was copied from the parent Dnyanpith ecosystem project; the frontend is a new, warm-premium retreat build.
+It is a **standalone monorepo**. The backend was copied from a parent ecosystem project; the frontend is a new, warm-premium retreat build.
 
 ## Tech stack
 
