@@ -26,16 +26,20 @@ export const registrationStatusSchema = z.strictObject({
 // ── Batch ─────────────────────────────────────────────────────────────────────
 
 export const batchCreateSchema = z.strictObject({
-  program:          programEnum,
-  name:             z.string().trim().min(2).max(200),
-  startDate:        z.coerce.date(),
-  endDate:          z.coerce.date(),
-  venue:            z.string().trim().min(2).max(200),
-  totalSeats:       z.coerce.number().int().min(1).max(500),
-  priceIndividual:  z.coerce.number().int().min(0),
-  priceCouple:      z.coerce.number().int().min(0).optional(),
-  priceCorporate:   z.coerce.number().int().min(0).optional(),
-  status:           z.enum(['OPEN', 'FULL', 'CLOSED', 'PAST']).optional().default('OPEN'),
+  program:              programEnum,
+  name:                 z.string().trim().min(2).max(200),
+  startDate:            z.coerce.date(),
+  endDate:              z.coerce.date(),
+  venue:                z.string().trim().min(2).max(200),
+  address:              z.string().trim().max(300).optional(),
+  mapLink:              z.string().trim().max(1000).optional(),
+  totalSeats:           z.coerce.number().int().min(1).max(500),
+  waitlistCapacity:     z.coerce.number().int().min(0).max(1000).optional().default(0),
+  priceIndividual:      z.coerce.number().int().min(0),
+  priceCouple:          z.coerce.number().int().min(0).optional(),
+  priceCorporate:       z.coerce.number().int().min(0).optional(),
+  priceCorporateAnnual: z.coerce.number().int().min(0).optional(),
+  status:               z.enum(['OPEN', 'FULL', 'CLOSED', 'PAST']).optional().default('OPEN'),
 });
 
 export const batchUpdateSchema = batchCreateSchema.partial();

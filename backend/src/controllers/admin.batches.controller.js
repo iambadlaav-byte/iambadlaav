@@ -28,11 +28,22 @@ export async function listBatches(req, res, next) {
       include: { _count: { select: { registrations: true } } },
     });
 
+    // Attach per-batch waiting-list counts.
+    const waitlistCounts = rows.length
+      ? await prisma.registration.groupBy({
+          by:     ['batchId'],
+          where:  { status: 'WAITLISTED', batchId: { in: rows.map((r) => r.id) } },
+          _count: { _all: true },
+        })
+      : [];
+    const waitMap = Object.fromEntries(waitlistCounts.map((w) => [w.batchId, w._count._all]));
+    const rowsWithWait = rows.map((r) => ({ ...r, waitlistCount: waitMap[r.id] ?? 0 }));
+
     const nextCursor = rows.length === Math.min(Number(limit) || 25, 100)
       ? rows[rows.length - 1].id
       : null;
 
-    return res.json({ rows, nextCursor });
+    return res.json({ rows: rowsWithWait, nextCursor });
   } catch (err) {
     next(err);
   }
