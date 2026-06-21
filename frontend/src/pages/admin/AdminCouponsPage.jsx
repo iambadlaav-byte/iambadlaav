@@ -33,9 +33,11 @@ import {
   deactivateCoupon,
 } from '../../api/admin.js';
 import { cn } from '../../lib/cn.js';
+import { programLabel } from '../../lib/constants.js';
 
 const ACTIVE_FILTER = ['ALL', 'ACTIVE', 'INACTIVE'];
-const PROGRAMS = ['BADLAAV', 'MISSION_UDAAN', 'FUTURE_READINESS', 'ANTRANG'];
+// Live programmes first; the last two are future placeholders.
+const PROGRAMS = ['BADLAAV', 'FUTURE_READINESS', 'MISSION_UDAAN', 'ANTRANG'];
 
 const INR = (n) => `₹${Number(n).toLocaleString('en-IN')}`;
 const fmtDate = (iso) =>
@@ -120,7 +122,7 @@ export default function AdminCouponsPage() {
         <div className="flex flex-wrap gap-1">
           {(c.applicablePrograms?.length ? c.applicablePrograms : ['ALL']).map((p) => (
             <span key={p} className="font-mono text-[10px] uppercase tracking-widest text-muted bg-soft px-1.5 py-0.5 rounded">
-              {p === 'ALL' ? 'All programs' : p}
+              {p === 'ALL' ? 'All programs' : programLabel(p)}
             </span>
           ))}
         </div>
@@ -404,7 +406,7 @@ function CreateCouponModal({ open, onOpenChange, onCreated }) {
             {PROGRAMS.map((p) => (
               <Checkbox
                 key={p}
-                label={p}
+                label={programLabel(p)}
                 checked={selectedPrograms.includes(p)}
                 onCheckedChange={() => toggleProgram(p)}
               />

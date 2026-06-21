@@ -3,7 +3,7 @@
  * Writes to messages table (separate from enquiries per REQ-form-09 + ARCH §9.9).
  */
 import { z } from 'zod';
-import { indianPhone, email } from './shared.js';
+import { indianPhone, popularEmail } from './shared.js';
 
 export const GENERIC_CONTACT_TYPES = [
   'GENERAL',
@@ -22,7 +22,7 @@ export const GENERIC_CONTACT_TYPES = [
  */
 export const genericContactSchema = z.strictObject({
   name:        z.string().trim().min(2, 'Name is too short.').max(120, 'Name must be 120 characters or fewer.'),
-  email,
+  email:       popularEmail,
   enquiryType: z.enum(GENERIC_CONTACT_TYPES, {
     errorMap: () => ({ message: 'Select an enquiry type.' }),
   }),

@@ -4,7 +4,7 @@
  * Both use z.strictObject() to reject unknown fields (CONSTRAINT-API-002).
  */
 import { z } from 'zod';
-import { indianPhone, email, mhDistrict } from './shared.js';
+import { indianPhone, businessEmail, mhDistrict } from './shared.js';
 
 /**
  * FORM-01 — Corporate Enquiry
@@ -16,7 +16,7 @@ export const corporateEnquirySchema = z.strictObject({
   contactName:    z.string().trim().min(2, 'Name is too short.').max(120, 'Name must be 120 characters or fewer.'),
   designation:    z.string().trim().min(2, 'Designation is too short.').max(80, 'Designation must be 80 characters or fewer.'),
   phone:          indianPhone,
-  email,
+  email:          businessEmail,
   teamSize:       z.enum(['5-10', '11-20', '21-30', '30+'], {
     errorMap: () => ({ message: 'Select a team size.' }),
   }),
@@ -43,7 +43,7 @@ export const collegeAssociationSchema = z.strictObject({
   collegeName:        z.string().trim().min(2, 'College name is too short.').max(160, 'College name must be 160 characters or fewer.'),
   district:           mhDistrict,
   principalName:      z.string().trim().min(2, 'Name is too short.').max(120, 'Name must be 120 characters or fewer.'),
-  officialEmail:      email,
+  officialEmail:      businessEmail,
   officialPhone:      indianPhone,
   finalYearStudents:  z.coerce.number().int().min(1, 'Enter at least 1 student.').max(10000, 'Value too large.'),
   hasPlacementCell:   z.boolean().optional(),

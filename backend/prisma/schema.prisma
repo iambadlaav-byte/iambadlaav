@@ -156,7 +156,7 @@ model User {
 
   registrations    Registration[]
   communityJoins   CommunityMember[]
-  volunteerApp     Volunteer?
+  volunteerApps    Volunteer[]
   refreshTokens    RefreshToken[]
   passwordResetTokens PasswordResetToken[]
 }
@@ -284,7 +284,7 @@ model CommunityMember {
 // ============================================================
 model Volunteer {
   id              String          @id @default(cuid())
-  userId          String          @unique
+  userId          String
   user            User            @relation(fields: [userId], references: [id])
   batchAttended   String
   whyVolunteer    String          @db.Text
@@ -298,7 +298,11 @@ model Volunteer {
   approvedAt      DateTime?
   createdAt       DateTime        @default(now())
 
+  // Dedup per batch: a volunteer may re-apply for a different/next batch, but not
+  // the same one twice. P2002 on this constraint → 409 in the controller.
+  @@unique([userId, batchAttended])
   @@index([status])
+  @@index([userId])
 }
 
 // ============================================================

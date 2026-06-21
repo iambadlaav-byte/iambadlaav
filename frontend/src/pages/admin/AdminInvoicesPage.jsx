@@ -18,6 +18,7 @@ import { StatusBadge } from '../../components/admin/StatusBadge.jsx';
 import { useToast } from '../../components/ui/Toast.jsx';
 import { listInvoices, viewInvoice, resendInvoice } from '../../api/admin.js';
 import { cn } from '../../lib/cn.js';
+import { programLabel } from '../../lib/constants.js';
 
 const STATUSES = ['ALL', 'PAID', 'REFUNDED'];
 const fmtDate = (iso) =>
@@ -98,7 +99,7 @@ export default function AdminInvoicesPage() {
         </div>
       ),
     },
-    { key: 'program', header: 'Program', render: (r) => <span className="font-mono text-xs">{r.program}</span> },
+    { key: 'program', header: 'Program', render: (r) => <span className="font-mono text-xs">{programLabel(r.program)}</span> },
     {
       key: 'amount',
       header: 'Amount',

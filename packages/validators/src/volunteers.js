@@ -8,11 +8,11 @@
  * volunteer form validates phone numbers exactly like registration.
  */
 import { z } from 'zod';
-import { email, indianPhone } from './shared.js';
+import { popularEmail, indianPhone } from './shared.js';
 
 export const volunteerCreateSchema = z.strictObject({
   name:           z.string().trim().min(2, 'Name is too short.').max(120),
-  email,
+  email:          popularEmail,
   phone:          indianPhone,
   city:           z.string().trim().min(2, 'City is required.').max(120),
   // "which Badlaav batch have you attended / are interested in"

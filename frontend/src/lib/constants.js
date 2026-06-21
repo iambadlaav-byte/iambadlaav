@@ -42,6 +42,42 @@ export const MAP_LINK =
   'https://www.google.com/maps/place/Dnyanpitt+Abhyasika/@18.7177129,76.3777553,21z/data=!4m6!3m5!1s0x3bc55e6e57308101:0x3b8347cf8562ad45!8m2!3d18.7176969!4d76.3778593!16s%2Fg%2F11c1p9s0nh';
 
 // ============================================================
+// PROGRAMMES
+// The Prisma Program enum is repurposed: BADLAAV = The Retreat,
+// FUTURE_READINESS = The Badlaav Experience. The remaining two are
+// future placeholders (no public tab yet). One label map, used by the
+// public batch lists and the admin panel so nobody sees raw enum values.
+// ============================================================
+export const PROGRAM_LABELS = {
+  BADLAAV:          'The Retreat',
+  FUTURE_READINESS: 'The Badlaav Experience',
+  MISSION_UDAAN:    'Future programme 1',
+  ANTRANG:          'Future programme 2',
+};
+
+// Selectable programmes for admin dropdowns/filters (value + label), live ones first.
+export const PROGRAM_OPTIONS = [
+  { value: 'BADLAAV',          label: 'The Retreat' },
+  { value: 'FUTURE_READINESS', label: 'The Badlaav Experience' },
+  { value: 'MISSION_UDAAN',    label: 'Future programme 1' },
+  { value: 'ANTRANG',          label: 'Future programme 2' },
+];
+
+export const programLabel = (program) =>
+  PROGRAM_LABELS[String(program).toUpperCase()] ?? program;
+
+// enum value → the /register slug that opens the matching form.
+const PROGRAM_REGISTER_SLUG = {
+  BADLAAV:          'badlaav',
+  FUTURE_READINESS: 'badlaav-experience',
+};
+
+export function programRegisterHref(program, batchId) {
+  const slug = PROGRAM_REGISTER_SLUG[String(program).toUpperCase()] ?? 'badlaav';
+  return `/register?program=${slug}${batchId ? `&batch=${batchId}` : ''}`;
+}
+
+// ============================================================
 // CORS (for dev-only reference — enforced server-side)
 // ============================================================
 export const ALLOWED_ORIGINS = [

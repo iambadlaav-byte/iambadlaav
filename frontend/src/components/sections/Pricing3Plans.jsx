@@ -49,18 +49,8 @@ function PlanCard({ name, price, features, cta, isPopular, isFree }) {
         </ul>
       )}
 
-      {/* Coupon input slot — visual only Phase 1 */}
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder="Coupon code"
-          readOnly
-          title="Coupon wiring arrives in Plan 05"
-          className="w-full border border-muted/30 rounded px-3 py-2 font-sans text-sm bg-cream text-muted
-                     cursor-not-allowed"
-        />
-        <p className="font-mono text-xs text-muted mt-1">Coupon support coming soon</p>
-      </div>
+      {/* Have a coupon? It's applied at checkout, on the registration form. */}
+      <p className="font-mono text-xs text-muted mb-4">Got a coupon? Apply it at checkout.</p>
 
       <a
         href={cta?.href || '#'}
