@@ -14,6 +14,7 @@ import { validate } from '../../middleware/validate.js';
 import {
   enquiryStatusSchema,
   registrationStatusSchema,
+  volunteerStatusSchema,
   batchCreateSchema,
   batchUpdateSchema,
   blogCreateSchema,
@@ -62,6 +63,11 @@ import {
   getEnquiry,
   updateEnquiryStatus,
 } from '../../controllers/admin.enquiries.controller.js';
+import {
+  listVolunteers,
+  getVolunteer,
+  updateVolunteerStatus,
+} from '../../controllers/admin.volunteers.controller.js';
 import {
   listBatches,
   createBatch,
@@ -120,6 +126,12 @@ router.get('/dashboard', dashboardStats);
 router.get('/enquiries',       listEnquiries);
 router.get('/enquiries/:id',   getEnquiry);
 router.patch('/enquiries/:id', requireEditor, validate(enquiryStatusSchema), updateEnquiryStatus);
+
+// ── Volunteers ────────────────────────────────────────────────────────────────
+// Static '/volunteers' GET must come BEFORE '/volunteers/:id'.
+router.get('/volunteers',      listVolunteers);
+router.get('/volunteers/:id',  getVolunteer);
+router.patch('/volunteers/:id', requireEditor, validate(volunteerStatusSchema), updateVolunteerStatus);
 
 // ── Registrations ─────────────────────────────────────────────────────────────
 // NOTE: static sub-paths (export.csv, reconciliation) must come BEFORE /:id

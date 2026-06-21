@@ -27,6 +27,12 @@ export const registrationStatusSchema = z.strictObject({
   status: z.enum(['ACTIVE', 'COMPLETED', 'CANCELLED']),
 });
 
+// ── Volunteer ─────────────────────────────────────────────────────────────────
+
+export const volunteerStatusSchema = z.strictObject({
+  status: z.enum(['PENDING', 'APPROVED', 'REJECTED']),
+});
+
 // ── Batch ─────────────────────────────────────────────────────────────────────
 
 export const batchCreateSchema = z.strictObject({

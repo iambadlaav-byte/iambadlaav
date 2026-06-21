@@ -9,6 +9,7 @@ import blogRoutes from './blog.routes.js';
 import eventsRoutes from './events.routes.js';
 import enquiriesRoutes from './enquiries.routes.js';
 import communityRoutes from './community.routes.js';
+import volunteersRoutes from './volunteers.routes.js';
 import messagesRoutes from './messages.routes.js';
 import registrationsRoutes from './registrations.routes.js';
 import paymentsRoutes from './payments.routes.js';
@@ -32,6 +33,7 @@ router.use(eventsRoutes);
 // Form submission endpoints (Plan 04)
 router.use(enquiriesRoutes);   // POST /enquiries/corporate, POST /enquiries/college
 router.use(communityRoutes);   // POST /community/join
+router.use(volunteersRoutes);  // POST /volunteers
 router.use(messagesRoutes);    // POST /messages
 
 // Registration + Payment + Coupon + Batch endpoints (Plan 05)

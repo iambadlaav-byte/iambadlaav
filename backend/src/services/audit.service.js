@@ -30,6 +30,9 @@ export const AUDIT_ACTIONS = Object.freeze({
   REGISTRATION_REFUNDED:    'registration.refunded',
   RECONCILIATION_EXPORTED:  'registration.reconciliation_exported',
 
+  // Volunteers
+  VOLUNTEER_STATUS_CHANGED: 'volunteer.status_changed',
+
   // Batches
   BATCH_CREATED:            'batch.created',
   BATCH_UPDATED:            'batch.updated',
