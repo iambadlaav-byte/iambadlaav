@@ -30,8 +30,6 @@ function getNextSixMonths() {
   return months;
 }
 
-const MONTHS = getNextSixMonths();
-
 const SOURCE_OPTIONS = [
   { value: 'instagram',  label: 'Instagram' },
   { value: 'referral',   label: 'Referral' },
@@ -41,6 +39,9 @@ const SOURCE_OPTIONS = [
 
 export function CorporateEnquiryForm() {
   const [successData, setSuccessData] = useState(null);
+  // Recompute on each mount so the list always starts at the current month
+  // (a module-level constant would go stale if the tab stayed open across a month).
+  const MONTHS = getNextSixMonths();
 
   const { methods, submit } = useFormSubmit({
     schema: corporateEnquirySchema,

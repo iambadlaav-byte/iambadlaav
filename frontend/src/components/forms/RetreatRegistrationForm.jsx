@@ -23,19 +23,25 @@ import { openCheckout } from '../../lib/razorpay.js';
 import { ProgressIndicator } from './ProgressIndicator.jsx';
 import { FormField } from '../ui/FormField.jsx';
 import { ChoiceField } from './ChoiceField.jsx';
-import { SliderField } from './SliderField.jsx';
 import { Button } from '../ui/Button.jsx';
 import { Spinner } from '../ui/Spinner.jsx';
 import {
-  MARITAL_OPTIONS, PROFESSION_OPTIONS, LIFE_STATE_QUESTIONS, HEALTH_OPTIONS,
+  MARITAL_OPTIONS, PROFESSION_OPTIONS, PROGRAMS_ATTENDED_OPTIONS, LIFE_STATE_QUESTIONS,
+  POTENTIAL_OPTIONS, COMMITMENT_SCALE_OPTIONS, HEALTH_OPTIONS,
   SUCCESS_OPTIONS, HUNGER_OPTIONS, BADLAAV_OPTIONS, FREQUENCY_OPTIONS,
   COMMITMENT_LEVEL_OPTIONS, COMMITMENT_CONFIRM, RETREAT_PLANS,
 } from '../../lib/retreatQuestions.js';
 
+// Optional fields where an empty input must become null (so Zod's coercion /
+// min-length checks don't reject a left-blank field).
+const OPTIONAL_BLANK_TO_NULL = ['state', 'age', 'occupation', 'dietaryNote', 'couponCode', 'partner2Name', 'batchId'];
+
 // registrationCreateSchema is strict; strip display-only _fields before validating.
 const clientRegistrationSchema = z.preprocess((d) => {
   if (typeof d !== 'object' || !d) return d;
-  return Object.fromEntries(Object.entries(d).filter(([k]) => !k.startsWith('_')));
+  const cleaned = Object.fromEntries(Object.entries(d).filter(([k]) => !k.startsWith('_')));
+  for (const k of OPTIONAL_BLANK_TO_NULL) if (cleaned[k] === '') cleaned[k] = null;
+  return cleaned;
 }, registrationCreateSchema);
 
 const STEP_TITLES = [
@@ -75,6 +81,9 @@ export function RetreatRegistrationForm({ program = 'BADLAAV', programLabel = 'T
   const batchId = watch('batchId');
   const consent = watch('consent');
   const set = (k, v) => setAnswers((a) => ({ ...a, [k]: v }));
+
+  // Each step is a full screen — jump back to the top when it changes.
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, [step]);
 
   useEffect(() => {
     apiClient
@@ -132,13 +141,13 @@ export function RetreatRegistrationForm({ program = 'BADLAAV', programLabel = 'T
     if (step === 2) {
       LIFE_STATE_QUESTIONS.forEach((q) => { if (!answers[q.key]) e[q.key] = 'Pick one.'; });
     } else if (step === 3) {
-      if (!answers.potential) e.potential = 'Move the slider.';
+      if (!answers.potential) e.potential = 'Pick one.';
       if (!answers.health) e.health = 'Pick one.';
       if (answers.health && answers.health !== 'None' && !answers.healthDetails) e.healthDetails = 'Please add a few details.';
       if (!answers.success) e.success = 'Pick one.';
       if (!answers.hunger) e.hunger = 'Pick one.';
       if (!answers.badlaav) e.badlaav = 'Pick one.';
-      if (!answers.commitmentScale) e.commitmentScale = 'Move the slider.';
+      if (!answers.commitmentScale) e.commitmentScale = 'Pick one.';
     } else if (step === 4) {
       if (!answers.frequency) e.frequency = 'Pick one.';
       if (!answers.commitmentLevel) e.commitmentLevel = 'Pick one.';
@@ -159,7 +168,8 @@ export function RetreatRegistrationForm({ program = 'BADLAAV', programLabel = 'T
       const questionnaire = {
         personal: {
           dob: answers.dob, maritalStatus: answers.maritalStatus, company: answers.company ?? null,
-          profession: answers.profession, emergencyName: answers.emergencyName,
+          profession: answers.profession, programsAttended: answers.programsAttended ?? null,
+          emergencyName: answers.emergencyName,
           emergencyPhone: answers.emergencyPhone, emergencyRelation: answers.emergencyRelation ?? null,
         },
         lifeState: {
@@ -176,7 +186,14 @@ export function RetreatRegistrationForm({ program = 'BADLAAV', programLabel = 'T
         },
       };
       const { _b, ...rest } = data;
-      const payload = { ...rest, dietaryNote: answers.healthDetails ?? null, questionnaire };
+      // Mirror the chosen profession into the structured `occupation` column so it
+      // shows in the admin registrations view, not only inside the questionnaire.
+      const payload = {
+        ...rest,
+        occupation: rest.occupation ?? (answers.profession ? String(answers.profession).slice(0, 80) : null),
+        dietaryNote: answers.healthDetails ?? null,
+        questionnaire,
+      };
 
       const res = await apiClient.post('/registrations', payload);
       if (res.data?.waitlisted) {
@@ -245,6 +262,10 @@ export function RetreatRegistrationForm({ program = 'BADLAAV', programLabel = 'T
               <FormField name="email" label="Email" type="email" required />
               <FormField name="phone" label="WhatsApp number" type="tel" required />
               <FormField name="city" label="City / town you’re travelling from" required />
+              <div className="grid sm:grid-cols-2 gap-3">
+                <FormField name="state" label="State" />
+                <FormField name="age" label="Age" type="number" />
+              </div>
               <div>
                 <label className="block font-sans text-sm text-charcoal mb-1">Company / organisation</label>
                 <input value={answers.company ?? ''} onChange={(e) => set('company', e.target.value)}
@@ -252,6 +273,8 @@ export function RetreatRegistrationForm({ program = 'BADLAAV', programLabel = 'T
               </div>
               <ChoiceField question="Current profession / role" options={PROFESSION_OPTIONS} value={answers.profession}
                 onChange={(v) => set('profession', v)} required error={localErrors.profession} />
+              <ChoiceField question="Badlaav programmes you’ve attended before" options={PROGRAMS_ATTENDED_OPTIONS}
+                value={answers.programsAttended} onChange={(v) => set('programsAttended', v)} columns={2} />
               <div className="grid sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block font-sans text-sm text-charcoal mb-1">Emergency name <span className="text-ochre">*</span></label>
@@ -287,9 +310,9 @@ export function RetreatRegistrationForm({ program = 'BADLAAV', programLabel = 'T
           {/* STEP 3 — Self-assessment */}
           {step === 3 && (
             <div className="space-y-7">
-              <SliderField question="How much of your true potential are you using right now?"
-                value={answers.potential} onChange={(v) => set('potential', v)}
-                minLabel="1 · Barely surviving" maxLabel="10 · Crushing it" required error={localErrors.potential} />
+              <ChoiceField question="How much of your true potential are you using right now?"
+                options={POTENTIAL_OPTIONS} value={answers.potential} onChange={(v) => set('potential', v)}
+                required columns={2} error={localErrors.potential} />
               <ChoiceField question="Any health conditions or dietary requirements?" options={HEALTH_OPTIONS}
                 value={answers.health} onChange={(v) => set('health', v)} required error={localErrors.health} />
               {answers.health && answers.health !== 'None' && (
@@ -306,15 +329,16 @@ export function RetreatRegistrationForm({ program = 'BADLAAV', programLabel = 'T
                 value={answers.hunger} onChange={(v) => set('hunger', v)} required columns={2} error={localErrors.hunger} />
               <ChoiceField question="The #1 Badlaav you want to take home" options={BADLAAV_OPTIONS}
                 value={answers.badlaav} onChange={(v) => set('badlaav', v)} required columns={2} error={localErrors.badlaav} />
-              <SliderField question="Commitment scale" value={answers.commitmentScale} onChange={(v) => set('commitmentScale', v)}
-                minLabel="1 · Not ready" maxLabel="10 · Fully committed" required error={localErrors.commitmentScale} />
+              <ChoiceField question="How committed are you to doing the inner work?"
+                options={COMMITMENT_SCALE_OPTIONS} value={answers.commitmentScale} onChange={(v) => set('commitmentScale', v)}
+                required columns={2} error={localErrors.commitmentScale} />
             </div>
           )}
 
           {/* STEP 4 — Energy & commitment */}
           {step === 4 && (
             <div className="space-y-7">
-              <ChoiceField question="Which frequency best represents your average daily energy?"
+              <ChoiceField question="Which best describes your average daily energy?"
                 options={FREQUENCY_OPTIONS} value={answers.frequency} onChange={(v) => set('frequency', v)} required columns={2} error={localErrors.frequency} />
               <ChoiceField question="What is your commitment level for this retreat?" options={COMMITMENT_LEVEL_OPTIONS}
                 value={answers.commitmentLevel} onChange={(v) => set('commitmentLevel', v)} required columns={2} error={localErrors.commitmentLevel} />
@@ -381,6 +405,16 @@ export function RetreatRegistrationForm({ program = 'BADLAAV', programLabel = 'T
                       <span className="font-display text-2xl font-semibold text-ink">₹{price.toLocaleString('en-IN')}</span>
                     </div>
                   )}
+
+                  {plan === 'COUPLE' && (
+                    <FormField name="partner2Name" label="Partner’s full name" required />
+                  )}
+
+                  <div>
+                    <label className="block font-sans text-sm text-charcoal mb-1">Coupon code (optional)</label>
+                    <input {...register('couponCode')} placeholder="Enter a code if you have one"
+                      className="w-full rounded-lg border border-charcoal/20 bg-pearl px-3 py-2.5 font-sans text-sm uppercase placeholder:normal-case" />
+                  </div>
 
                   <label className="flex items-start gap-3 cursor-pointer">
                     <input type="checkbox" {...register('consent')} className="mt-1 accent-ochre w-4 h-4" />

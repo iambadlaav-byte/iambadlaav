@@ -12,7 +12,7 @@ import MobileNav from './MobileNav.jsx';
 
 const NAV_LINKS = [
   { label: 'The Retreat', href: '/retreat' },
-  { label: 'Experience',  href: '/badlaav-experience' },
+  { label: 'The Badlaav Experience', href: '/badlaav-experience' },
   { label: 'Pricing',     href: '/pricing' },
   { label: 'About',       href: '/about' },
   { label: 'Gallery',     href: '/gallery' },

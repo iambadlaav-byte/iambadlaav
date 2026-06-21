@@ -9,10 +9,14 @@ export const MARITAL_OPTIONS = ['Single', 'Married', 'Divorced', 'Widowed'];
 export const PROFESSION_OPTIONS = [
   'Business Owner / Entrepreneur',
   'Corporate Professional / Employee',
+  'Government Job',
   'Freelancer / Consultant',
   'Student / Preparing for Next Phase',
   'Transitioning / Looking for a New Path',
 ];
+
+// How many Badlaav programmes the person has attended before (self-reported).
+export const PROGRAMS_ATTENDED_OPTIONS = ['This is my first', 'One before', 'Two or three', 'More than three'];
 
 // Section 2 — Current life state (single-select each)
 export const LIFE_STATE_QUESTIONS = [
@@ -49,7 +53,22 @@ export const LIFE_STATE_QUESTIONS = [
   },
 ];
 
-// Section 3 — Self-assessment
+// Section 3 — Self-assessment (simple single-selects — no numeric scales)
+export const POTENTIAL_OPTIONS = [
+  'Barely surviving',
+  'Getting by',
+  'Doing okay',
+  'Performing well',
+  'At my very best',
+];
+
+export const COMMITMENT_SCALE_OPTIONS = [
+  'Just exploring',
+  'Interested but unsure',
+  'Ready',
+  'Fully committed',
+];
+
 export const HEALTH_OPTIONS = [
   'None',
   'Dietary restrictions / allergies',
@@ -75,11 +94,13 @@ export const HUNGER_OPTIONS = [
 
 export const BADLAAV_OPTIONS = ['Absolute lightness', 'Absolute clarity', 'Unstoppable energy', 'Powerful tribe'];
 
-// Section 4 — Energy & commitment
-// Hawkins-style daily energy scale (high → low)
+// Section 4 — Energy & commitment (simple single-select — no Hawkins scale)
 export const FREQUENCY_OPTIONS = [
-  'Enlightenment', 'Peace', 'Joy', 'Love', 'Reason', 'Acceptance', 'Willingness',
-  'Neutrality', 'Courage', 'Pride', 'Anger', 'Desire', 'Fear', 'Grief', 'Apathy', 'Guilt', 'Shame',
+  'Mostly low and drained',
+  'Often anxious or restless',
+  'Generally neutral',
+  'Mostly positive and hopeful',
+  'Energised and joyful',
 ];
 
 export const COMMITMENT_LEVEL_OPTIONS = ['100% all in', 'Nervous but ready', 'Fully present', 'Open minded'];

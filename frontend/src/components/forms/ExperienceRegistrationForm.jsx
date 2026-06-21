@@ -17,9 +17,13 @@ import { FormField } from '../ui/FormField.jsx';
 import { Button } from '../ui/Button.jsx';
 import { Spinner } from '../ui/Spinner.jsx';
 
+const OPTIONAL_BLANK_TO_NULL = ['state', 'age', 'occupation', 'dietaryNote', 'couponCode', 'partner2Name', 'batchId'];
+
 const clientRegistrationSchema = z.preprocess((d) => {
   if (typeof d !== 'object' || !d) return d;
-  return Object.fromEntries(Object.entries(d).filter(([k]) => !k.startsWith('_')));
+  const cleaned = Object.fromEntries(Object.entries(d).filter(([k]) => !k.startsWith('_')));
+  for (const k of OPTIONAL_BLANK_TO_NULL) if (cleaned[k] === '') cleaned[k] = null;
+  return cleaned;
 }, registrationCreateSchema);
 
 const PROGRAM = 'FUTURE_READINESS'; // labelled "The Badlaav Experience"
@@ -113,6 +117,10 @@ export function ExperienceRegistrationForm() {
           <FormField name="email" label="Email" type="email" required />
           <FormField name="phone" label="WhatsApp number" type="tel" required />
           <FormField name="city" label="City / town" required />
+          <div className="grid sm:grid-cols-2 gap-3">
+            <FormField name="state" label="State (optional)" />
+            <FormField name="age" label="Age (optional)" type="number" />
+          </div>
           <FormField name="occupation" label="Profession (optional)" />
 
           <div>
@@ -146,6 +154,12 @@ export function ExperienceRegistrationForm() {
               <span className="font-display text-2xl font-semibold text-ink">₹{price.toLocaleString('en-IN')}</span>
             </div>
           )}
+
+          <div>
+            <label className="block font-sans text-sm text-charcoal mb-1">Coupon code (optional)</label>
+            <input {...register('couponCode')} placeholder="Enter a code if you have one"
+              className="w-full rounded-lg border border-charcoal/20 bg-pearl px-3 py-2.5 font-sans text-sm uppercase placeholder:normal-case" />
+          </div>
 
           <label className="flex items-start gap-3 cursor-pointer">
             <input type="checkbox" {...register('consent')} className="mt-1 accent-ochre w-4 h-4" />
