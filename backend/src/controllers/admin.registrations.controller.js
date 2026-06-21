@@ -23,6 +23,7 @@ import { sendEmail }   from '../services/email.service.js';
 import { writeAudit, AUDIT_ACTIONS } from '../services/audit.service.js';
 import { buildRegistrationsCsv, buildReconciliationCsv, streamCsv } from '../services/csvExport.service.js';
 import { signedInvoiceUrl } from '../services/cloudinary.service.js';
+import { canSeeFinancials } from '../middleware/auth.js';
 
 // ── Registration select (shared by list + detail) ─────────────────────────────
 const REGISTRATION_SELECT = {
@@ -32,6 +33,8 @@ const REGISTRATION_SELECT = {
   plan:             true,
   regType:          true,
   partner2Name:     true,
+  candidateId:      true,
+  paymentMethod:    true,
   amount:           true,
   discountAmount:   true,
   finalAmount:      true,
@@ -42,10 +45,22 @@ const REGISTRATION_SELECT = {
   invoiceUrl:       true,
   invoiceNumber:    true,
   status:           true,
+  waitlistInvitedAt: true,
   completedAt:      true,
-  user: { select: { id: true, name: true, email: true, phone: true, coursesCompleted: true } },
-  batch: { select: { id: true, name: true, startDate: true } },
+  age:              true,
+  occupation:       true,
+  dietaryNote:      true,
+  questionnaire:    true,
+  user: { select: { id: true, name: true, email: true, phone: true, city: true, state: true, coursesCompleted: true } },
+  batch: { select: { id: true, name: true, startDate: true, venue: true } },
 };
+
+// Hide money from Contributor/Viewer (RBAC matrix).
+function gateFinancials(reg, user) {
+  if (!reg || canSeeFinancials(user)) return reg;
+  const { amount, discountAmount, finalAmount, couponCode, ...rest } = reg;
+  return rest;
+}
 
 // ── listRegistrations ─────────────────────────────────────────────────────────
 
@@ -76,7 +91,7 @@ export async function listRegistrations(req, res, next) {
       ? rows[rows.length - 1].id
       : null;
 
-    return res.json({ rows, nextCursor });
+    return res.json({ rows: rows.map((r) => gateFinancials(r, req.user)), nextCursor });
   } catch (err) {
     next(err);
   }
@@ -110,7 +125,7 @@ export async function getRegistration(req, res, next) {
       take:    5,
     });
 
-    return res.json({ registration: reg, invoiceSignedUrl, auditRows });
+    return res.json({ registration: gateFinancials(reg, req.user), invoiceSignedUrl, auditRows });
   } catch (err) {
     next(err);
   }

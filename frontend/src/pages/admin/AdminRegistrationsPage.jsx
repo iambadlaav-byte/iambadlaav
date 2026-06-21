@@ -28,8 +28,19 @@ import {
 } from '../../api/admin.js';
 import { cn } from '../../lib/cn.js';
 
-const PROGRAMS = ['ALL', 'BADLAAV', 'MISSION_UDAAN', 'FUTURE_READINESS', 'ANTRANG'];
+const PROGRAMS = ['ALL', 'BADLAAV', 'FUTURE_READINESS', 'MISSION_UDAAN', 'ANTRANG'];
+const PROGRAM_LABELS = {
+  BADLAAV:          'The Retreat',
+  FUTURE_READINESS: 'The Badlaav Experience',
+  MISSION_UDAAN:    'Future programme 1',
+  ANTRANG:          'Future programme 2',
+};
 const PAYMENTS = ['ALL', 'PAID', 'PENDING', 'FAILED', 'REFUNDED'];
+
+// camelCase / snake → "Sentence case" for questionnaire keys.
+const humanize = (s) =>
+  String(s).replace(/([A-Z])/g, ' $1').replace(/[_-]+/g, ' ').replace(/^./, (c) => c.toUpperCase()).trim();
+const fmtVal = (v) => (v === true ? 'Yes' : v === false ? 'No' : v == null || v === '' ? '—' : String(v));
 
 const fmtDate = (iso) =>
   new Date(iso).toLocaleString('en-IN', {
@@ -138,16 +149,21 @@ export default function AdminRegistrationsPage() {
       header: 'Batch',
       render: (r) => (
         <div className="flex flex-col">
-          <span className="text-charcoal">{r.batch?.name || r.program}</span>
+          <span className="text-charcoal">{r.batch?.name || PROGRAM_LABELS[r.program] || r.program}</span>
           <span className="text-xs text-muted font-mono">{r.plan}</span>
         </div>
       ),
     },
     {
+      key: 'candidateId',
+      header: 'Candidate ID',
+      render: (r) => <span className="font-mono text-xs">{r.candidateId || '—'}</span>,
+    },
+    {
       key: 'amount',
       header: 'Amount',
       align: 'right',
-      render: (r) => <span className="font-mono text-xs">{fmtINR(r.finalAmount)}</span>,
+      render: (r) => <span className="font-mono text-xs">{r.finalAmount != null ? fmtINR(r.finalAmount) : '—'}</span>,
     },
     {
       key: 'paymentStatus',
@@ -223,7 +239,7 @@ export default function AdminRegistrationsPage() {
 
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <SearchInput onSearch={setSearch} placeholder="Search name / email / phone" className="w-64" />
-        <FilterChips label="Program" value={program} onChange={setProgram} options={PROGRAMS} />
+        <FilterChips label="Program" value={program} onChange={setProgram} options={PROGRAMS} labels={PROGRAM_LABELS} />
         <FilterChips label="Payment" value={payment} onChange={setPayment} options={PAYMENTS} />
       </div>
 
@@ -265,29 +281,48 @@ export default function AdminRegistrationsPage() {
 
 function RegistrationDetail({ data }) {
   const r = data.registration;
+  const showMoney = r.finalAmount != null; // backend strips money for Contributor/Viewer
   return (
     <div className="flex flex-col gap-5 text-sm">
       <Section title="Participant">
         <KV k="Name" v={r.user?.name} />
         <KV k="Email" v={r.user?.email} />
         <KV k="Phone" v={r.user?.phone} />
+        <KV k="City" v={r.user?.city || '—'} />
+        <KV k="State" v={r.user?.state || '—'} />
         <KV k="Courses completed" v={r.user?.coursesCompleted} />
       </Section>
 
       <Section title="Booking">
-        <KV k="Program" v={r.program} />
+        <KV k="Candidate ID" v={r.candidateId || '—'} />
+        <KV k="Program" v={PROGRAM_LABELS[r.program] || r.program} />
         <KV k="Plan" v={r.plan} />
         <KV k="Type" v={r.regType} />
         <KV k="Partner name" v={r.partner2Name || '—'} />
         <KV k="Batch" v={r.batch?.name || '—'} />
+        <KV k="Venue" v={r.batch?.venue || '—'} />
+        <KV k="Status" v={<StatusBadge status={r.status} />} />
         <KV k="Created" v={new Date(r.createdAt).toLocaleString('en-IN')} />
       </Section>
 
+      <Section title="Details">
+        <KV k="Age" v={r.age ?? '—'} />
+        <KV k="Occupation" v={r.occupation || '—'} />
+        <KV k="Dietary / health note" v={r.dietaryNote || '—'} />
+      </Section>
+
       <Section title="Payment">
-        <KV k="Amount" v={`₹${Number(r.amount).toLocaleString('en-IN')}`} />
-        <KV k="Discount" v={`₹${Number(r.discountAmount ?? 0).toLocaleString('en-IN')}`} />
-        <KV k="Final" v={`₹${Number(r.finalAmount).toLocaleString('en-IN')}`} />
-        <KV k="Coupon" v={r.couponCode || '—'} />
+        {showMoney ? (
+          <>
+            <KV k="Amount" v={`₹${Number(r.amount).toLocaleString('en-IN')}`} />
+            <KV k="Discount" v={`₹${Number(r.discountAmount ?? 0).toLocaleString('en-IN')}`} />
+            <KV k="Final" v={`₹${Number(r.finalAmount).toLocaleString('en-IN')}`} />
+            <KV k="Coupon" v={r.couponCode || '—'} />
+          </>
+        ) : (
+          <KV k="Amounts" v={<span className="italic text-muted">Hidden for your role</span>} />
+        )}
+        <KV k="Method" v={r.paymentMethod || 'RAZORPAY'} />
         <KV k="Status" v={<StatusBadge status={r.paymentStatus} />} />
         <KV k="Order ID" v={<span className="font-mono text-xs">{r.razorpayOrderId || '—'}</span>} />
         <KV k="Payment ID" v={<span className="font-mono text-xs">{r.razorpayPaymentId || '—'}</span>} />
@@ -303,6 +338,20 @@ function RegistrationDetail({ data }) {
           />
         )}
       </Section>
+
+      {/* Questionnaire — every answer the participant filled at registration. */}
+      {r.questionnaire && typeof r.questionnaire === 'object' &&
+        Object.entries(r.questionnaire).map(([group, vals]) =>
+          vals && typeof vals === 'object' ? (
+            <Section key={group} title={`Questionnaire · ${humanize(group)}`}>
+              {Object.entries(vals).map(([k, v]) => <KV key={k} k={humanize(k)} v={fmtVal(v)} />)}
+            </Section>
+          ) : (
+            <Section key={group} title="Questionnaire">
+              <KV k={humanize(group)} v={fmtVal(vals)} />
+            </Section>
+          ),
+        )}
 
       <Section title="Recent activity">
         {data.auditRows && data.auditRows.length > 0 ? (
@@ -342,7 +391,7 @@ function KV({ k, v }) {
   );
 }
 
-function FilterChips({ label, value, onChange, options }) {
+function FilterChips({ label, value, onChange, options, labels }) {
   return (
     <div className="flex items-center gap-1.5">
       <span className="font-mono text-[10px] uppercase tracking-widest text-muted mr-1">{label}</span>
@@ -358,7 +407,7 @@ function FilterChips({ label, value, onChange, options }) {
               : 'bg-cream text-muted border-muted/30 hover:border-charcoal/40 hover:text-charcoal'
           )}
         >
-          {opt}
+          {opt === 'ALL' ? 'All' : labels?.[opt] ?? opt}
         </button>
       ))}
     </div>
