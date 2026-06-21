@@ -25,7 +25,7 @@ import { prisma } from '../lib/prisma.js';
 import { logger } from '../lib/logger.js';
 import * as razorpayService from '../services/razorpay.service.js';
 const { verifyWebhookSignature, verifyClientCallback: rzpVerifyCallback } = razorpayService;
-import { generateInvoicePdf } from '../services/invoice.service.js';
+import { generateInvoicePdf, generateRegistrationPass } from '../services/invoice.service.js';
 import { applyCouponInTx, CouponInvalidError, CouponConflictError } from '../services/coupon.service.js';
 import { nextInvoiceNumber } from '../utils/invoiceNumber.js';
 import { sendEmail } from '../services/email.service.js';
@@ -278,7 +278,30 @@ async function onPaymentCaptured(payload) {
       }).catch((err) => logger.warn({ err }, 'email.auto_account_welcome.failed'));
     }
 
-    // Registration confirmation email with invoice attachment
+    // Registration pass (arrival document) — best-effort; a failure here must not
+    // block the confirmation email, so the invoice still goes out on its own.
+    let passBuffer = null;
+    try {
+      passBuffer = await generateRegistrationPass({
+        registration,
+        user:  registration.user,
+        batch: registration.batch,
+        candidateId,
+      });
+    } catch (passErr) {
+      logger.warn({ err: passErr, registrationId: registration.id }, 'registration_pass.generate.failed');
+    }
+
+    // Registration confirmation email with the pass + invoice attached
+    const attachments = [];
+    if (passBuffer) {
+      const passName = candidateId ? `Badlaav-Pass-${candidateId}` : 'Badlaav-Registration-Pass';
+      attachments.push({ filename: `${passName}.pdf`, content: passBuffer });
+    }
+    if (pdfBuffer) {
+      attachments.push({ filename: `${invoiceNumber.replace(/\//g, '-')}.pdf`, content: pdfBuffer });
+    }
+
     await sendEmail({
       to:       registration.user.email,
       template: 'registration-confirmation',
@@ -286,11 +309,10 @@ async function onPaymentCaptured(payload) {
         name:             registration.user.name,
         programDisplayName: programDisplay(registration.program),
         batchName:        registration.batch?.name ?? '',
+        candidateId,
         invoiceNumber,
       },
-      attachments: pdfBuffer
-        ? [{ filename: `${invoiceNumber.replace(/\//g, '-')}.pdf`, content: pdfBuffer }]
-        : [],
+      attachments,
     }).catch((err) => logger.warn({ err }, 'email.registration_confirmation.failed'));
 
     // Admin notification

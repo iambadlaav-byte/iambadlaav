@@ -19,12 +19,26 @@
  *   Audit-logged via RECONCILIATION_EXPORTED.
  */
 import { prisma }      from '../lib/prisma.js';
+import { logger }      from '../lib/logger.js';
 import { sendEmail }   from '../services/email.service.js';
 import { writeAudit, AUDIT_ACTIONS } from '../services/audit.service.js';
 import { buildRegistrationsCsv, buildReconciliationCsv, streamCsv } from '../services/csvExport.service.js';
 import { signedInvoiceUrl } from '../services/cloudinary.service.js';
+import { generateInvoicePdf, generateRegistrationPass } from '../services/invoice.service.js';
 import { canSeeFinancials } from '../middleware/auth.js';
 import { nextInvoiceNumber } from '../utils/invoiceNumber.js';
+
+// Program enum → display label. Enum values are repurposed (see schema notes):
+// BADLAAV = The Retreat, FUTURE_READINESS = The Badlaav Experience.
+function programDisplay(program) {
+  const map = {
+    BADLAAV:          'The Retreat',
+    FUTURE_READINESS: 'The Badlaav Experience',
+    MISSION_UDAAN:    'Future Programme',
+    ANTRANG:          'Future Programme',
+  };
+  return map[program] ?? program;
+}
 
 // ── Registration select (shared by list + detail) ─────────────────────────────
 const REGISTRATION_SELECT = {
@@ -298,30 +312,48 @@ export async function resendConfirmationEmail(req, res, next) {
   try {
     const reg = await prisma.registration.findUnique({
       where:   { id: req.params.id },
-      include: { user: true },
+      include: { user: true, batch: true },
     });
 
     if (!reg) return res.status(404).json({ error: 'NOT_FOUND' });
 
-    // Re-sign the invoice URL for the email
-    let invoiceSignedUrl = '';
-    if (reg.invoiceUrl) {
+    // Regenerate the pass + invoice so the resend carries the same attachments as
+    // the original confirmation. Each is best-effort: a failure just drops that file.
+    const attachments = [];
+    try {
+      const passBuffer = await generateRegistrationPass({
+        registration: reg, user: reg.user, batch: reg.batch, candidateId: reg.candidateId,
+      });
+      const passName = reg.candidateId ? `Badlaav-Pass-${reg.candidateId}` : 'Badlaav-Registration-Pass';
+      attachments.push({ filename: `${passName}.pdf`, content: passBuffer });
+    } catch (passErr) {
+      logger.warn({ err: passErr, registrationId: reg.id }, 'resend.pass.failed');
+    }
+    if (reg.invoiceNumber) {
       try {
-        const match = reg.invoiceUrl.match(/\/upload\/(?:v\d+\/)?(.+)$/);
-        if (match) invoiceSignedUrl = signedInvoiceUrl(match[1].replace(/\.[^.]+$/, ''));
-      } catch { /* non-critical */ }
+        const { pdfBuffer } = await generateInvoicePdf({
+          registration: reg, user: reg.user, batch: reg.batch,
+          invoiceNumber: reg.invoiceNumber,
+          paymentDetails: { paymentId: reg.razorpayPaymentId ?? 'MANUAL', capturedAt: reg.createdAt },
+        });
+        if (pdfBuffer) attachments.push({ filename: `${reg.invoiceNumber.replace(/\//g, '-')}.pdf`, content: pdfBuffer });
+      } catch (invErr) {
+        logger.warn({ err: invErr, registrationId: reg.id }, 'resend.invoice.failed');
+      }
     }
 
     await sendEmail({
       to:       reg.user.email,
-      subject:  `Your registration confirmation — ${reg.program.replace('_', ' ')}`,
+      subject:  `Your Badlaav registration — ${programDisplay(reg.program)}`,
       template: 'registration-confirmation',
       data: {
-        name:           reg.user.name,
-        program:        reg.program,
-        invoiceNumber:  reg.invoiceNumber ?? '',
-        invoiceUrl:     invoiceSignedUrl,
+        name:               reg.user.name,
+        programDisplayName: programDisplay(reg.program),
+        batchName:          reg.batch?.name ?? '',
+        candidateId:        reg.candidateId,
+        invoiceNumber:      reg.invoiceNumber ?? '',
       },
+      attachments,
     });
 
     await writeAudit({
@@ -398,9 +430,11 @@ export async function markPaidManually(req, res, next) {
     if (!reg) return res.status(404).json({ error: 'NOT_FOUND' });
     if (reg.paymentStatus === 'PAID') return res.status(409).json({ error: 'Already paid.' });
 
-    let invoiceNumber;
+    // Hoisted out of the tx so the post-commit PDF/email step can use them.
+    let invoiceNumber = reg.invoiceNumber ?? null;
+    let candidateId   = reg.candidateId ?? null;
+
     const updated = await prisma.$transaction(async (tx) => {
-      let candidateId = reg.candidateId ?? null;
       if (reg.batchId) {
         const b = await tx.batch.update({ where: { id: reg.batchId }, data: { seatsBooked: { increment: 1 } } });
         if (!candidateId) {
@@ -408,7 +442,7 @@ export async function markPaidManually(req, res, next) {
           candidateId = `${prefix}-${reg.batchId.slice(-4)}-${String(b.seatsBooked).padStart(3, '0')}`;
         }
       }
-      invoiceNumber = reg.invoiceNumber ?? (await nextInvoiceNumber(tx));
+      if (!invoiceNumber) invoiceNumber = await nextInvoiceNumber(tx);
       const row = await tx.registration.update({
         where: { id },
         data:  { paymentStatus: 'PAID', status: 'ACTIVE', paymentMethod: 'MANUAL', candidateId, invoiceNumber },
@@ -421,13 +455,51 @@ export async function markPaidManually(req, res, next) {
       return row;
     });
 
-    // Best-effort confirmation email.
-    sendEmail({
-      to: reg.user.email,
-      subject: 'Your Badlaav registration is confirmed',
-      template: 'registration-confirmation',
-      data: { name: reg.user.name, program: reg.program, batchName: reg.batch?.name ?? '', invoiceNumber },
-    }).catch(() => { /* logged by service */ });
+    // PDFs + confirmation email — best-effort, outside the tx (slow I/O). A failure
+    // here must not undo the payment: the row is already PAID and admin can resend.
+    try {
+      const regForPdf = { ...reg, candidateId, invoiceNumber };
+      const { invoiceUrl, pdfBuffer } = await generateInvoicePdf({
+        registration:   regForPdf,
+        user:           reg.user,
+        batch:          reg.batch,
+        invoiceNumber,
+        paymentDetails: { paymentId: 'MANUAL', capturedAt: new Date() },
+      });
+      if (invoiceUrl) {
+        await prisma.registration.update({ where: { id }, data: { invoiceUrl } });
+      }
+
+      let passBuffer = null;
+      try {
+        passBuffer = await generateRegistrationPass({ registration: regForPdf, user: reg.user, batch: reg.batch, candidateId });
+      } catch (passErr) {
+        logger.warn({ err: passErr, registrationId: id }, 'registration_pass.generate.failed');
+      }
+
+      const attachments = [];
+      if (passBuffer) {
+        const passName = candidateId ? `Badlaav-Pass-${candidateId}` : 'Badlaav-Registration-Pass';
+        attachments.push({ filename: `${passName}.pdf`, content: passBuffer });
+      }
+      if (pdfBuffer) attachments.push({ filename: `${invoiceNumber.replace(/\//g, '-')}.pdf`, content: pdfBuffer });
+
+      await sendEmail({
+        to:       reg.user.email,
+        subject:  'Your Badlaav registration is confirmed',
+        template: 'registration-confirmation',
+        data: {
+          name:               reg.user.name,
+          programDisplayName: programDisplay(reg.program),
+          batchName:          reg.batch?.name ?? '',
+          candidateId,
+          invoiceNumber,
+        },
+        attachments,
+      });
+    } catch (mailErr) {
+      logger.warn({ err: mailErr, registrationId: id }, 'manual_paid.notify.failed');
+    }
 
     return res.json({ registration: gateFinancials(updated, req.user) });
   } catch (err) {
