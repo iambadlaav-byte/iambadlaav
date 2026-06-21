@@ -1,5 +1,5 @@
 # ============================================================
-# DNYANPITH BACKEND — .env.example
+# BADLAAV BACKEND — .env.example
 # Copy to backend/.env and fill in real values.
 # NEVER commit backend/.env
 # ============================================================
@@ -50,12 +50,30 @@ SENTRY_DSN_BACKEND="https://XXXXXXXX@oXXXXXX.ingest.sentry.io/XXXXXXX"
 NODE_ENV="development"
 PORT="4000"
 APP_VERSION="dev"
+# Public site URL — used in emails / notifications
+APP_URL="https://www.iambadlaav.com"
+# Where admin notifications are sent
+ADMIN_EMAIL="iambadlaav@gmail.com"
 
 # Comma-separated allowed CORS origins (no spaces between items)
-ALLOWED_ORIGINS="http://localhost:5173,https://dnyanpith.org,https://www.dnyanpith.org"
+ALLOWED_ORIGINS="http://localhost:5173,https://iambadlaav.com,https://www.iambadlaav.com"
 
 # Pino log level: trace | debug | info | warn | error | fatal
 LOG_LEVEL="info"
+
+# --- NOTIFICATIONS (MSG91 — SMS + WhatsApp) ---
+# Feature-flagged: both stay OFF (no-op) until set to "true" AND keys are provided.
+# WhatsApp additionally needs MSG91-approved message templates.
+FEATURE_SMS="false"
+FEATURE_WHATSAPP="false"
+MSG91_AUTH_KEY=""
+MSG91_SENDER_ID=""
+MSG91_SMS_FLOW_ID=""
+MSG91_WA_INTEGRATED_NUMBER=""
+MSG91_WA_CONFIRM_TEMPLATE=""
+
+# --- ANALYTICS ---
+# Frontend only — set in frontend/.env: VITE_GA_MEASUREMENT_ID="G-XXXXXXXXXX"
 
 # --- SEED (prisma db seed only) ---
 SEED_ADMIN_PASSWORD="changeme-on-first-deploy"
