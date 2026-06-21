@@ -24,6 +24,7 @@ import PricingPage from './pages/public/PricingPage.jsx';
 import AboutPage from './pages/public/AboutPage.jsx';
 import GalleryPage from './pages/public/GalleryPage.jsx';
 import StoriesPage from './pages/public/StoriesPage.jsx';
+import StoryDetailPage from './pages/public/StoryDetailPage.jsx';
 import ContactPage from './pages/public/ContactPage.jsx';
 import RegisterPage from './pages/public/RegisterPage.jsx';
 import PaymentSuccessPage from './pages/public/PaymentSuccessPage.jsx';
@@ -83,6 +84,7 @@ export default function AppRoutes() {
         <Route path="/about" element={<AboutPage />} />
         <Route path="/gallery" element={<GalleryPage />} />
         <Route path="/stories" element={<StoriesPage />} />
+        <Route path="/stories/:id" element={<StoryDetailPage />} />
         <Route path="/contact" element={<ContactPage />} />
 
         {/* Registration + payment */}

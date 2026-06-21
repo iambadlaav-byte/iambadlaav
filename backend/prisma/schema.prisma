@@ -396,7 +396,9 @@ model GalleryItem {
   id        String    @id @default(cuid())
   url       String    // Cloudinary URL
   caption   String?
-  category  String    // 'badlaav' | 'abhyasika' | 'community' | 'gallery'
+  // Programme vertical this photo belongs to — drives the public gallery filter.
+  // 'BADLAAV' (The Retreat) | 'FUTURE_READINESS' (The Badlaav Experience) | 'GENERAL'
+  category  String    @default("GENERAL")
   type      MediaType @default(PHOTO)
   altText   String    @default("") // mandatory per CONSTRAINT-MEDIA-001
   sortOrder Int       @default(0)
@@ -532,6 +534,9 @@ model Story {
   date      DateTime?
   passage   String     @db.Text
   photos    String[]   // Cloudinary URLs
+  // Programme vertical this story belongs to — drives the public stories filter.
+  // 'BADLAAV' (The Retreat) | 'FUTURE_READINESS' (The Badlaav Experience) | 'GENERAL'
+  category  String     @default("GENERAL")
   status    PostStatus @default(DRAFT)
   authorId  String?
   createdAt DateTime   @default(now())

@@ -34,6 +34,7 @@ export async function listPublishedStories(req, res, next) {
         date:      true,
         passage:   true,
         photos:    true,
+        category:  true,
         createdAt: true,
       },
     });
@@ -67,6 +68,7 @@ export async function getPublishedStory(req, res, next) {
         date:      true,
         passage:   true,
         photos:    true,
+        category:  true,
         status:    true,
         createdAt: true,
       },
