@@ -68,6 +68,16 @@ export async function inviteFromWaitlist(id) {
   return data;
 }
 
+export async function markPaidManually(id) {
+  const { data } = await apiClient.post(`/admin/registrations/${id}/mark-paid`);
+  return data;
+}
+
+export async function markRefundedManually(id, reason) {
+  const { data } = await apiClient.post(`/admin/registrations/${id}/mark-refunded`, { reason });
+  return data;
+}
+
 export function registrationsCsvUrl(params = {}) {
   const qs = new URLSearchParams(params).toString();
   return `/api/v1/admin/registrations/export.csv${qs ? `?${qs}` : ''}`;

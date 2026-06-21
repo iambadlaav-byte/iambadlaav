@@ -24,6 +24,7 @@ import { writeAudit, AUDIT_ACTIONS } from '../services/audit.service.js';
 import { buildRegistrationsCsv, buildReconciliationCsv, streamCsv } from '../services/csvExport.service.js';
 import { signedInvoiceUrl } from '../services/cloudinary.service.js';
 import { canSeeFinancials } from '../middleware/auth.js';
+import { nextInvoiceNumber } from '../utils/invoiceNumber.js';
 
 // ── Registration select (shared by list + detail) ─────────────────────────────
 const REGISTRATION_SELECT = {
@@ -382,6 +383,84 @@ export async function inviteFromWaitlist(req, res, next) {
     });
 
     return res.json({ ok: true, waitlistInvitedAt: updated.waitlistInvitedAt });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ── markPaidManually ────────────────────────────────────────────────────────
+// Admin records an off-Razorpay payment (cash/bank/UPI). Mirrors the webhook:
+// marks PAID, increments the seat, assigns a candidate ID + invoice number.
+export async function markPaidManually(req, res, next) {
+  try {
+    const { id } = req.params;
+    const reg = await prisma.registration.findUnique({ where: { id }, include: { user: true, batch: true } });
+    if (!reg) return res.status(404).json({ error: 'NOT_FOUND' });
+    if (reg.paymentStatus === 'PAID') return res.status(409).json({ error: 'Already paid.' });
+
+    let invoiceNumber;
+    const updated = await prisma.$transaction(async (tx) => {
+      let candidateId = reg.candidateId ?? null;
+      if (reg.batchId) {
+        const b = await tx.batch.update({ where: { id: reg.batchId }, data: { seatsBooked: { increment: 1 } } });
+        if (!candidateId) {
+          const prefix = reg.program === 'FUTURE_READINESS' ? 'EXP' : reg.program === 'BADLAAV' ? 'RET' : 'BAD';
+          candidateId = `${prefix}-${reg.batchId.slice(-4)}-${String(b.seatsBooked).padStart(3, '0')}`;
+        }
+      }
+      invoiceNumber = reg.invoiceNumber ?? (await nextInvoiceNumber(tx));
+      const row = await tx.registration.update({
+        where: { id },
+        data:  { paymentStatus: 'PAID', status: 'ACTIVE', paymentMethod: 'MANUAL', candidateId, invoiceNumber },
+        select: REGISTRATION_SELECT,
+      });
+      await writeAudit({
+        tx, actorId: req.user.id, action: 'registration.manual_paid',
+        subjectType: 'Registration', subjectId: id, meta: { invoiceNumber, candidateId }, req,
+      });
+      return row;
+    });
+
+    // Best-effort confirmation email.
+    sendEmail({
+      to: reg.user.email,
+      subject: 'Your Badlaav registration is confirmed',
+      template: 'registration-confirmation',
+      data: { name: reg.user.name, program: reg.program, batchName: reg.batch?.name ?? '', invoiceNumber },
+    }).catch(() => { /* logged by service */ });
+
+    return res.json({ registration: gateFinancials(updated, req.user) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ── markRefundedManually ────────────────────────────────────────────────────
+// Admin records an off-Razorpay refund. Marks REFUNDED + releases the seat.
+export async function markRefundedManually(req, res, next) {
+  try {
+    const { id } = req.params;
+    const reg = await prisma.registration.findUnique({ where: { id }, include: { user: true } });
+    if (!reg) return res.status(404).json({ error: 'NOT_FOUND' });
+    if (reg.paymentStatus !== 'PAID') return res.status(400).json({ error: 'Only PAID registrations can be refunded.' });
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const row = await tx.registration.update({
+        where: { id },
+        data:  { paymentStatus: 'REFUNDED', status: 'CANCELLED' },
+        select: REGISTRATION_SELECT,
+      });
+      if (reg.batchId) {
+        await tx.batch.update({ where: { id: reg.batchId }, data: { seatsBooked: { decrement: 1 } } });
+      }
+      await writeAudit({
+        tx, actorId: req.user.id, action: 'registration.manual_refunded',
+        subjectType: 'Registration', subjectId: id, meta: { reason: req.body?.reason ?? null }, req,
+      });
+      return row;
+    });
+
+    return res.json({ registration: gateFinancials(updated, req.user) });
   } catch (err) {
     next(err);
   }

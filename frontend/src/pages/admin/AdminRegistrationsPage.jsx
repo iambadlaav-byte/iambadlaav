@@ -25,8 +25,11 @@ import {
   getRegistration,
   resendConfirmationEmail,
   inviteFromWaitlist,
+  markPaidManually,
+  markRefundedManually,
   registrationsCsvUrl,
 } from '../../api/admin.js';
+import { useAuth } from '../../context/AuthContext.jsx';
 import { cn } from '../../lib/cn.js';
 
 const PROGRAMS = ['ALL', 'BADLAAV', 'FUTURE_READINESS', 'MISSION_UDAAN', 'ANTRANG'];
@@ -51,6 +54,8 @@ const fmtINR = (n) => `₹${Number(n ?? 0).toLocaleString('en-IN')}`;
 
 export default function AdminRegistrationsPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [acting, setActing] = useState(false);
 
   const [program, setProgram] = useState('ALL');
   const [payment, setPayment] = useState('ALL');
@@ -136,6 +141,21 @@ export default function AdminRegistrationsPage() {
       load();
     } catch (err) {
       toast(err.response?.data?.error || 'Invite failed.', 'danger');
+    }
+  }
+
+  async function handleManualAction(fn, okMsg) {
+    if (!detail) return;
+    setActing(true);
+    try {
+      await fn(detail.registration.id);
+      toast(okMsg, 'success');
+      setDetailOpen(false);
+      load();
+    } catch (err) {
+      toast(err.response?.data?.error || 'Action failed.', 'danger');
+    } finally {
+      setActing(false);
     }
   }
 
@@ -293,7 +313,22 @@ export default function AdminRegistrationsPage() {
             <Spinner size={20} />
           </div>
         ) : (
-          <RegistrationDetail data={detail} />
+          <>
+            <RegistrationDetail data={detail} />
+            {user?.role === 'ADMIN' && (
+              <div className="flex gap-2 justify-end mt-5 pt-4 border-t border-muted/15">
+                {detail.registration.paymentStatus !== 'PAID' ? (
+                  <Button size="sm" onClick={() => handleManualAction(markPaidManually, 'Marked paid.')} loading={acting}>
+                    Mark paid (manual)
+                  </Button>
+                ) : (
+                  <Button size="sm" variant="danger" onClick={() => handleManualAction(markRefundedManually, 'Marked refunded.')} loading={acting}>
+                    Mark refunded
+                  </Button>
+                )}
+              </div>
+            )}
+          </>
         )}
       </Modal>
     </>

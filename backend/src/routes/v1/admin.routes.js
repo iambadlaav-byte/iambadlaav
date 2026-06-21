@@ -37,6 +37,8 @@ import {
   getReconciliation,
   resendConfirmationEmail,
   inviteFromWaitlist,
+  markPaidManually,
+  markRefundedManually,
 } from '../../controllers/admin.registrations.controller.js';
 import { anonymizeUser } from '../../controllers/admin.users.controller.js';
 
@@ -114,6 +116,8 @@ router.get('/registrations/:id',            getRegistration);
 router.patch('/registrations/:id',          requireEditor, validate(registrationStatusSchema), updateRegistrationStatus);
 router.post('/registrations/:id/resend-email',   requireEditor, resendConfirmationEmail);
 router.post('/registrations/:id/waitlist-invite', requireEditor, inviteFromWaitlist);
+router.post('/registrations/:id/mark-paid',       requireAdmin, markPaidManually);
+router.post('/registrations/:id/mark-refunded',   requireAdmin, markRefundedManually);
 
 // ── Batches ───────────────────────────────────────────────────────────────────
 router.get('/batches',        listBatches);
