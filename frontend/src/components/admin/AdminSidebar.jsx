@@ -14,26 +14,36 @@ import {
   CalendarClock,
   TicketPercent,
   Users,
+  BarChart3,
   Inbox,
+  HeartHandshake,
   FileText,
+  BookOpen,
+  Image,
   Settings,
   LogOut,
 } from 'lucide-react';
 import { cn } from '../../lib/cn.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 
+// adminOnly items (financials, user management) are hidden from Contributor/Viewer.
 export const ADMIN_NAV_ITEMS = [
   { to: '/admin/dashboard',     label: 'Dashboard',     icon: LayoutDashboard },
   { to: '/admin/batches',       label: 'Batches',       icon: CalendarClock },
-  { to: '/admin/coupons',       label: 'Coupons',       icon: TicketPercent },
+  { to: '/admin/coupons',       label: 'Coupons',       icon: TicketPercent, adminOnly: true },
   { to: '/admin/registrations', label: 'Registrations', icon: Users },
+  { to: '/admin/reports',       label: 'Reports',       icon: BarChart3 },
   { to: '/admin/enquiries',     label: 'Enquiries',     icon: Inbox },
-  { to: '/admin/invoices',      label: 'Invoices',      icon: FileText },
-  { to: '/admin/settings',      label: 'Settings',      icon: Settings },
+  { to: '/admin/volunteers',    label: 'Volunteers',    icon: HeartHandshake },
+  { to: '/admin/invoices',      label: 'Invoices',      icon: FileText, adminOnly: true },
+  { to: '/admin/stories',       label: 'Stories',       icon: BookOpen },
+  { to: '/admin/gallery',       label: 'Gallery',       icon: Image },
+  { to: '/admin/settings',      label: 'Settings',      icon: Settings, adminOnly: true },
 ];
 
 export function AdminSidebar({ onNavigate }) {
   const { user, logout } = useAuth();
+  const navItems = ADMIN_NAV_ITEMS.filter((item) => !item.adminOnly || user?.role === 'ADMIN');
 
   return (
     <aside className="h-full flex flex-col bg-ink text-pearl">
@@ -48,7 +58,7 @@ export function AdminSidebar({ onNavigate }) {
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 overflow-y-auto" aria-label="Admin navigation">
         <ul className="flex flex-col gap-0.5">
-          {ADMIN_NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+          {navItems.map(({ to, label, icon: Icon }) => (
             <li key={to}>
               <NavLink
                 to={to}

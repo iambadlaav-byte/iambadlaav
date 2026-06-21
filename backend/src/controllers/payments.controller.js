@@ -25,10 +25,11 @@ import { prisma } from '../lib/prisma.js';
 import { logger } from '../lib/logger.js';
 import * as razorpayService from '../services/razorpay.service.js';
 const { verifyWebhookSignature, verifyClientCallback: rzpVerifyCallback } = razorpayService;
-import { generateInvoicePdf } from '../services/invoice.service.js';
+import { generateInvoicePdf, generateRegistrationPass } from '../services/invoice.service.js';
 import { applyCouponInTx, CouponInvalidError, CouponConflictError } from '../services/coupon.service.js';
 import { nextInvoiceNumber } from '../utils/invoiceNumber.js';
 import { sendEmail } from '../services/email.service.js';
+import { sendSms, sendWhatsApp } from '../services/notification.service.js';
 
 // ============================================================
 // Webhook handler — the authoritative payment confirmation channel
@@ -152,6 +153,7 @@ async function onPaymentCaptured(payload) {
 
   // ── Serializable transaction: registration + seat + coupon + invoice number ─
   let invoiceNumber;
+  let candidateId = null;
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -165,12 +167,17 @@ async function onPaymentCaptured(payload) {
         },
       });
 
-      // Seat increment (anti-pattern: never outside the transaction — RESEARCH §Anti-Patterns)
+      // Seat increment (anti-pattern: never outside the transaction — RESEARCH §Anti-Patterns).
+      // The returned seatsBooked is the participant's number within the batch; Serializable
+      // isolation makes this collision-free, so we derive the candidate ID from it.
       if (registration.batchId) {
-        await tx.batch.update({
+        const updatedBatch = await tx.batch.update({
           where: { id: registration.batchId },
           data: { seatsBooked: { increment: 1 } },
         });
+        const prefix = registration.program === 'FUTURE_READINESS' ? 'EXP'
+          : registration.program === 'BADLAAV' ? 'RET' : 'BAD';
+        candidateId = `${prefix}-${registration.batchId.slice(-4)}-${String(updatedBatch.seatsBooked).padStart(3, '0')}`;
       }
 
       // Prisma-native coupon atomic increment (FIX B — T-05-05)
@@ -208,10 +215,10 @@ async function onPaymentCaptured(payload) {
       // Row-locked invoice number (Pattern 7 — SELECT FOR UPDATE documented exception)
       invoiceNumber = await nextInvoiceNumber(tx);
 
-      // Write invoice number to registration (invoiceUrl updated after tx)
+      // Write invoice number + candidate ID + payment method (invoiceUrl updated after tx)
       await tx.registration.update({
         where: { id: registration.id },
-        data: { invoiceNumber },
+        data: { invoiceNumber, candidateId, paymentMethod: 'RAZORPAY' },
       });
 
       // Auto-account: flip emailVerified for shell users (Pitfall 5 — no temp password; OTP-only)
@@ -266,12 +273,35 @@ async function onPaymentCaptured(payload) {
           name:     registration.user.name,
           loginUrl: process.env.APP_URL
             ? `${process.env.APP_URL}/login`
-            : 'https://dnyanpith.org/login',
+            : 'https://www.iambadlaav.com/login',
         },
       }).catch((err) => logger.warn({ err }, 'email.auto_account_welcome.failed'));
     }
 
-    // Registration confirmation email with invoice attachment
+    // Registration pass (arrival document) — best-effort; a failure here must not
+    // block the confirmation email, so the invoice still goes out on its own.
+    let passBuffer = null;
+    try {
+      passBuffer = await generateRegistrationPass({
+        registration,
+        user:  registration.user,
+        batch: registration.batch,
+        candidateId,
+      });
+    } catch (passErr) {
+      logger.warn({ err: passErr, registrationId: registration.id }, 'registration_pass.generate.failed');
+    }
+
+    // Registration confirmation email with the pass + invoice attached
+    const attachments = [];
+    if (passBuffer) {
+      const passName = candidateId ? `Badlaav-Pass-${candidateId}` : 'Badlaav-Registration-Pass';
+      attachments.push({ filename: `${passName}.pdf`, content: passBuffer });
+    }
+    if (pdfBuffer) {
+      attachments.push({ filename: `${invoiceNumber.replace(/\//g, '-')}.pdf`, content: pdfBuffer });
+    }
+
     await sendEmail({
       to:       registration.user.email,
       template: 'registration-confirmation',
@@ -279,16 +309,15 @@ async function onPaymentCaptured(payload) {
         name:             registration.user.name,
         programDisplayName: programDisplay(registration.program),
         batchName:        registration.batch?.name ?? '',
+        candidateId,
         invoiceNumber,
       },
-      attachments: pdfBuffer
-        ? [{ filename: `${invoiceNumber.replace(/\//g, '-')}.pdf`, content: pdfBuffer }]
-        : [],
+      attachments,
     }).catch((err) => logger.warn({ err }, 'email.registration_confirmation.failed'));
 
     // Admin notification
     await sendEmail({
-      to:       process.env.ADMIN_EMAIL ?? 'hello@dnyanpith.org',
+      to:       process.env.ADMIN_EMAIL ?? 'iambadlaav@gmail.com',
       template: 'admin-new-registration',
       data: {
         program:     registration.program,
@@ -305,6 +334,16 @@ async function onPaymentCaptured(payload) {
           : `/admin/registrations/${registration.id}`,
       },
     }).catch((err) => logger.warn({ err }, 'email.admin_new_registration.failed'));
+
+    // SMS + WhatsApp — feature-flagged, best-effort (no-op without MSG91 keys).
+    sendSms({
+      to:   registration.user.phone,
+      vars: { name: registration.user.name, candidate: candidateId ?? '', batch: registration.batch?.name ?? '' },
+    }).catch(() => { /* logged by service */ });
+    sendWhatsApp({
+      to:           registration.user.phone,
+      templateName: process.env.MSG91_WA_CONFIRM_TEMPLATE,
+    }).catch(() => { /* logged by service */ });
   } catch (postTxErr) {
     logger.error({ err: postTxErr, registrationId: registration.id }, 'webhook.post_tx.failed');
   }
@@ -470,10 +509,10 @@ export async function verifyPayment(req, res, next) {
 
 function programDisplay(program) {
   const map = {
-    BADLAAV:          'Badlaav Corporate Retreat',
-    MISSION_UDAAN:    'Mission Udaan',
-    FUTURE_READINESS: 'Future Readiness',
-    ANTRANG:          'Antrang',
+    BADLAAV:          'The Retreat',
+    FUTURE_READINESS: 'The Badlaav Experience',
+    MISSION_UDAAN:    'Future programme 1',
+    ANTRANG:          'Future programme 2',
   };
   return map[program] ?? program;
 }

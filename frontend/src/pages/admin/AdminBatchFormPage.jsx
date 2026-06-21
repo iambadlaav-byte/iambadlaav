@@ -22,12 +22,14 @@ import { ErrorBanner } from '../../components/ui/ErrorBanner.jsx';
 import { Spinner } from '../../components/ui/Spinner.jsx';
 import { useToast } from '../../components/ui/Toast.jsx';
 import { listBatches, createBatch, updateBatch } from '../../api/admin.js';
+import { MAP_LINK, CONTACT_ADDRESS } from '../../lib/constants.js';
 
+// Repurposed enum values → live programme labels (see Phase F notes).
 const PROGRAM_OPTIONS = [
-  { value: 'BADLAAV',          label: 'Badlaav Retreat' },
-  { value: 'MISSION_UDAAN',    label: 'Mission Udaan' },
-  { value: 'FUTURE_READINESS', label: 'Future Readiness' },
-  { value: 'ANTRANG',          label: 'Antrang' },
+  { value: 'BADLAAV',          label: 'The Retreat' },
+  { value: 'FUTURE_READINESS', label: 'The Badlaav Experience' },
+  { value: 'MISSION_UDAAN',    label: 'Future programme 1' },
+  { value: 'ANTRANG',          label: 'Future programme 2' },
 ];
 const STATUS_OPTIONS = ['OPEN', 'FULL', 'CLOSED', 'PAST'];
 
@@ -63,16 +65,20 @@ export default function AdminBatchFormPage() {
   } = useForm({
     resolver: zodResolver(batchCreateSchema),
     defaultValues: {
-      program:         'BADLAAV',
-      name:            '',
-      startDate:       '',
-      endDate:         '',
-      venue:           'Dnyanpith Abhyasika, Ambajogai, Maharashtra',
-      totalSeats:      20,
-      priceIndividual: 15000,
-      priceCouple:     27000,
-      priceCorporate:  12000,
-      status:          'OPEN',
+      program:              'BADLAAV',
+      name:                 '',
+      startDate:            '',
+      endDate:              '',
+      venue:                'Ambajogai, Maharashtra',
+      address:              CONTACT_ADDRESS,
+      mapLink:              MAP_LINK,
+      totalSeats:           20,
+      waitlistCapacity:     0,
+      priceIndividual:      15000,
+      priceCouple:          27000,
+      priceCorporate:       12000,
+      priceCorporateAnnual: undefined,
+      status:               'OPEN',
     },
   });
 
@@ -91,16 +97,20 @@ export default function AdminBatchFormPage() {
           setServerError('Batch not found.');
         } else {
           reset({
-            program:         batch.program,
-            name:            batch.name,
-            startDate:       toDateInputValue(batch.startDate),
-            endDate:         toDateInputValue(batch.endDate),
-            venue:           batch.venue,
-            totalSeats:      batch.totalSeats,
-            priceIndividual: Number(batch.priceIndividual),
-            priceCouple:     batch.priceCouple ? Number(batch.priceCouple) : undefined,
-            priceCorporate:  batch.priceCorporate ? Number(batch.priceCorporate) : undefined,
-            status:          batch.status,
+            program:              batch.program,
+            name:                 batch.name,
+            startDate:            toDateInputValue(batch.startDate),
+            endDate:              toDateInputValue(batch.endDate),
+            venue:                batch.venue,
+            address:              batch.address ?? '',
+            mapLink:              batch.mapLink ?? '',
+            totalSeats:           batch.totalSeats,
+            waitlistCapacity:     batch.waitlistCapacity ?? 0,
+            priceIndividual:      Number(batch.priceIndividual),
+            priceCouple:          batch.priceCouple ? Number(batch.priceCouple) : undefined,
+            priceCorporate:       batch.priceCorporate ? Number(batch.priceCorporate) : undefined,
+            priceCorporateAnnual: batch.priceCorporateAnnual ? Number(batch.priceCorporateAnnual) : undefined,
+            status:               batch.status,
           });
         }
       } catch (err) {
@@ -257,6 +267,23 @@ export default function AdminBatchFormPage() {
             />
           </div>
 
+          <div className="sm:col-span-2">
+            <Input
+              label="Full address"
+              error={errors.address?.message}
+              placeholder="Street, area, city, PIN"
+              {...register('address')}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <Input
+              label="Google Maps link"
+              error={errors.mapLink?.message}
+              placeholder="https://maps.google.com/..."
+              {...register('mapLink')}
+            />
+          </div>
+
           <Input
             type="number"
             label="Total seats"
@@ -265,6 +292,13 @@ export default function AdminBatchFormPage() {
             max={500}
             error={errors.totalSeats?.message}
             {...register('totalSeats', { setValueAs: emptyToUndefinedNumber })}
+          />
+          <Input
+            type="number"
+            label="Waiting-list capacity (0 = unlimited)"
+            min={0}
+            error={errors.waitlistCapacity?.message}
+            {...register('waitlistCapacity', { setValueAs: emptyToUndefinedNumber })}
           />
           <Input
             type="number"
@@ -287,6 +321,13 @@ export default function AdminBatchFormPage() {
             min={0}
             error={errors.priceCorporate?.message}
             {...register('priceCorporate', { setValueAs: emptyToUndefinedNumber })}
+          />
+          <Input
+            type="number"
+            label="Corporate annual price (₹)"
+            min={0}
+            error={errors.priceCorporateAnnual?.message}
+            {...register('priceCorporateAnnual', { setValueAs: emptyToUndefinedNumber })}
           />
         </div>
 

@@ -15,7 +15,7 @@ export function ValueProp() {
           <FadeIn>
             <p className="font-mono text-xs uppercase tracking-widest text-teal mb-4">What is Badlaav</p>
             <h2
-              className="font-display font-light text-ink mb-6"
+              className="font-display font-semibold text-ink mb-6"
               style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)' }}
             >
               {SITE.coreIdea}

@@ -21,7 +21,13 @@ import { useToast } from '../../components/ui/Toast.jsx';
 import { listBatches, updateBatch } from '../../api/admin.js';
 import { cn } from '../../lib/cn.js';
 
-const PROGRAMS = ['ALL', 'BADLAAV', 'MISSION_UDAAN', 'FUTURE_READINESS', 'ANTRANG'];
+const PROGRAMS = ['ALL', 'BADLAAV', 'FUTURE_READINESS', 'MISSION_UDAAN', 'ANTRANG'];
+const PROGRAM_LABELS = {
+  BADLAAV:          'The Retreat',
+  FUTURE_READINESS: 'The Badlaav Experience',
+  MISSION_UDAAN:    'Future programme 1',
+  ANTRANG:          'Future programme 2',
+};
 const STATUSES = ['ALL', 'OPEN', 'FULL', 'CLOSED', 'PAST'];
 
 const fmtDate = (iso) =>
@@ -90,7 +96,7 @@ export default function AdminBatchesPage() {
       render: (b) => (
         <div className="flex flex-col">
           <span className="font-medium text-charcoal">{b.name}</span>
-          <span className="text-xs text-muted font-mono">{b.program}</span>
+          <span className="text-xs text-muted font-mono">{PROGRAM_LABELS[b.program] ?? b.program}</span>
         </div>
       ),
     },
@@ -112,6 +118,14 @@ export default function AdminBatchesPage() {
         <span className="font-mono text-xs">
           {b.seatsBooked}/{b.totalSeats}
         </span>
+      ),
+    },
+    {
+      key: 'waitlist',
+      header: 'Waitlist',
+      align: 'right',
+      render: (b) => (
+        <span className="font-mono text-xs text-ochre">{b.waitlistCount ?? 0}</span>
       ),
     },
     {
@@ -190,7 +204,7 @@ export default function AdminBatchesPage() {
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <SearchInput onSearch={setSearch} placeholder="Search by name" className="w-64" />
-        <FilterChips label="Program" value={program} onChange={setProgram} options={PROGRAMS} />
+        <FilterChips label="Program" value={program} onChange={setProgram} options={PROGRAMS} labels={PROGRAM_LABELS} />
         <FilterChips label="Status"  value={status}  onChange={setStatus}  options={STATUSES}  />
       </div>
 
@@ -245,7 +259,7 @@ export default function AdminBatchesPage() {
   );
 }
 
-function FilterChips({ label, value, onChange, options }) {
+function FilterChips({ label, value, onChange, options, labels }) {
   return (
     <div className="flex items-center gap-1.5">
       <span className="font-mono text-[10px] uppercase tracking-widest text-muted mr-1">
@@ -263,7 +277,7 @@ function FilterChips({ label, value, onChange, options }) {
               : 'bg-cream text-muted border-muted/30 hover:border-charcoal/40 hover:text-charcoal'
           )}
         >
-          {opt}
+          {opt === 'ALL' ? 'All' : labels?.[opt] ?? opt}
         </button>
       ))}
     </div>

@@ -7,10 +7,12 @@ import { Outlet } from 'react-router-dom';
 import Header from './Header.jsx';
 import Footer from './Footer.jsx';
 import WhatsAppFloatingButton from './WhatsAppFloatingButton.jsx';
+import { Analytics } from '../Analytics.jsx';
 
 export default function Layout() {
   return (
     <div className="min-h-screen flex flex-col bg-cream">
+      <Analytics />
       <Header />
       <main className="flex-1">
         <Outlet />

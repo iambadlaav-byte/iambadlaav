@@ -39,9 +39,9 @@ function LeafSvg({ color, size }) {
 const LEAF_COLORS = [
   'rgb(var(--color-gold))',
   'rgb(var(--color-ochre))',
-  '#c8a45a',
-  '#b89a4a',
+  'rgb(var(--color-teal-light))',
   'rgb(var(--color-gold))',
+  'rgb(var(--color-ochre))',
 ];
 
 export function FallingLeaves({ count = 14, disabled = false }) {

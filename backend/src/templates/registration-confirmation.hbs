@@ -5,25 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>You're registered for {{programDisplayName}}</title>
   <style>
-    body { font-family: 'DM Sans', Helvetica, Arial, sans-serif; background: #F8F4EF; color: #2D2D2D; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', Helvetica, Arial, sans-serif; background: #FFF0EA; color: #373735; margin: 0; padding: 0; }
     .wrapper { max-width: 560px; margin: 0 auto; padding: 40px 24px; }
-    .header { border-bottom: 2px solid #D4A017; padding-bottom: 16px; margin-bottom: 32px; }
-    .brand { font-size: 22px; font-weight: 700; color: #1A3C5E; letter-spacing: -0.01em; }
-    .tagline { font-size: 11px; color: #5a6e7a; letter-spacing: 0.12em; text-transform: uppercase; margin-top: 4px; }
-    h1 { font-size: 28px; font-weight: 300; color: #1A3C5E; margin: 0 0 16px; line-height: 1.2; }
-    p { font-size: 15px; line-height: 1.7; color: #2D2D2D; margin: 0 0 16px; }
-    .detail-row { background: #f0ebe3; border-radius: 4px; padding: 16px 20px; margin: 24px 0; }
-    .detail-label { font-size: 10px; font-weight: 500; color: #5a6e7a; text-transform: uppercase; letter-spacing: 0.15em; }
-    .detail-value { font-size: 14px; color: #0d1b2a; margin-top: 2px; }
-    .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #e0d8cc; font-size: 11px; color: #5a6e7a; }
-    a { color: #3d7a8a; }
+    .header { border-bottom: 2px solid #FAD062; padding-bottom: 16px; margin-bottom: 32px; }
+    .brand { font-size: 22px; font-weight: 700; color: #015243; letter-spacing: -0.01em; }
+    .tagline { font-size: 11px; color: #7a756f; letter-spacing: 0.12em; text-transform: uppercase; margin-top: 4px; }
+    h1 { font-size: 28px; font-weight: 700; color: #015243; margin: 0 0 16px; line-height: 1.2; }
+    p { font-size: 15px; line-height: 1.7; color: #373735; margin: 0 0 16px; }
+    .id-card { background: #A03E1B; border-radius: 10px; padding: 20px 24px; margin: 28px 0; }
+    .id-label { font-size: 10px; font-weight: 700; color: #F6D9CC; text-transform: uppercase; letter-spacing: 0.18em; }
+    .id-value { font-size: 26px; font-weight: 700; color: #FFFFFF; margin-top: 4px; letter-spacing: 0.02em; }
+    .detail-row { background: #f7e6dd; border-radius: 8px; padding: 16px 20px; margin: 20px 0; }
+    .detail-label { font-size: 10px; font-weight: 700; color: #7a756f; text-transform: uppercase; letter-spacing: 0.15em; }
+    .detail-value { font-size: 14px; color: #373735; margin-top: 2px; }
+    .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #e6d4c8; font-size: 11px; color: #7a756f; }
+    a { color: #015243; }
   </style>
 </head>
 <body>
   <div class="wrapper">
     <div class="header">
-      <div class="brand">Dnyanpith</div>
-      <div class="tagline">Environment changes outcomes.</div>
+      <div class="brand">Badlaav</div>
+      <div class="tagline">A turning point, not a trip.</div>
     </div>
 
     <h1>You're in.</h1>
@@ -31,20 +34,27 @@
     <p>Hi {{name}},</p>
     <p>Your registration for <strong>{{programDisplayName}}</strong>{{#if batchName}} — {{batchName}}{{/if}} is confirmed. Payment received.</p>
 
+    {{#if candidateId}}
+    <div class="id-card">
+      <div class="id-label">Your Candidate ID</div>
+      <div class="id-value">{{candidateId}}</div>
+    </div>
+    {{/if}}
+
     <div class="detail-row">
       <div class="detail-label">Invoice</div>
       <div class="detail-value">{{invoiceNumber}}</div>
     </div>
 
-    <p>The invoice is attached to this email. Keep it for your records.</p>
+    <p>Two documents are attached to this email — your <strong>registration pass</strong> (carry it on arrival) and your <strong>invoice</strong>. Keep both for your records.</p>
 
-    <p>We'll be in touch with batch details closer to the date. If you have any questions before then, reply to this email or reach out on WhatsApp.</p>
+    <p>We'll be in touch with the finer batch details closer to the date. If anything comes up before then, just reply to this email or message us on WhatsApp at 7409339740.</p>
 
-    <p>Looking forward to seeing you.<br />— Arjun, Dnyanpith</p>
+    <p>Looking forward to seeing you.<br />— Arjun, Badlaav</p>
 
     <div class="footer">
-      Dnyanpith Abhyasika Pvt. Ltd. · Ambajogai, Maharashtra<br />
-      <a href="mailto:hello@dnyanpith.org">hello@dnyanpith.org</a>
+      Badlaav · Ambajogai, Maharashtra<br />
+      <a href="mailto:iambadlaav@gmail.com">iambadlaav@gmail.com</a> · 7409339740
     </div>
   </div>
 </body>

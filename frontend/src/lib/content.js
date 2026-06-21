@@ -6,8 +6,8 @@
 
 export const SITE = {
   name: 'Badlaav',
-  parent: 'A Dnyanpith initiative',
-  legalEntity: 'Dnyanpith Abhyasika Pvt. Ltd.',
+  parent: 'Ambajogai · Maharashtra',
+  legalEntity: 'Badlaav',
   founder: 'Arjun Thoratt',
   tagline: 'Trip नाही — Turning Point.',
   oneLiner:
@@ -147,6 +147,86 @@ export const PLANS = [
   },
 ];
 
+// ── The Badlaav Experience (the lighter, second programme) ──
+// Client-supplied copy, lightly formatted. Program facts (dates, fee, seats,
+// venue, facilitator, deadline) render dynamically from the selected batch.
+export const EXPERIENCE = {
+  hero: {
+    program: 'The Badlaav Experience',
+    headline: 'Transform your mindset. Transform your results.',
+    sub: 'Every meaningful transformation begins with awareness. A guided experience to break through limiting patterns, gain clarity, and move forward with confidence and purpose.',
+  },
+  intro: [
+    'This programme is designed to help participants break through limiting patterns, gain clarity, develop stronger emotional resilience, and create meaningful progress in their personal and professional lives.',
+    'Whether you are an entrepreneur, professional, student, leader, or someone seeking positive change, this experience offers practical tools, guided learning, and grounded insight that help you move forward with greater confidence and purpose.',
+  ],
+  learn: [
+    { title: 'Self-awareness & personal growth', body: 'A deeper understanding of your thoughts, emotions, habits, and behavioural patterns.' },
+    { title: 'Clarity & direction', body: 'Clarity on your goals, priorities, and the actions needed to move toward the future you want to create.' },
+    { title: 'Mindset', body: 'How beliefs, emotions, and daily thinking patterns shape your results — and how to change them.' },
+    { title: 'Emotional intelligence', body: 'Stronger emotional resilience, self-confidence, and the ability to respond well to life’s challenges.' },
+    { title: 'Performance & productivity', body: 'Better focus, decision-making, consistency, and personal effectiveness.' },
+    { title: 'Meaningful action', body: 'Turning insight into practical action that creates real, lasting results.' },
+  ],
+  audience: [
+    'Entrepreneurs & business owners',
+    'Corporate professionals',
+    'Freelancers & consultants',
+    'Students & young professionals',
+    'Leaders & team members',
+    'Anyone seeking clarity, confidence, and purpose',
+  ],
+  highlights: [
+    'Interactive learning sessions',
+    'Guided reflection activities',
+    'Practical frameworks and tools',
+    'Personal growth exercises',
+    'Group discussions and networking',
+    'Action planning and goal setting',
+    'Real-world application strategies',
+  ],
+  outcomes: [
+    'Greater self-awareness',
+    'Improved clarity and focus',
+    'Increased confidence',
+    'Better emotional balance',
+    'Stronger decision-making',
+    'A renewed sense of direction and purpose',
+  ],
+  process: [
+    'Complete the registration form.',
+    'Submit the required information.',
+    'Complete payment (if applicable).',
+    'Receive confirmation by email, SMS, and WhatsApp.',
+    'Receive your registration receipt and joining details.',
+  ],
+};
+
+// ── Volunteer with Badlaav ──
+export const VOLUNTEER = {
+  hero: {
+    program: 'Volunteer',
+    headline: 'Help hold the space.',
+    sub: 'Badlaav runs on a small team of people who care. If a batch changed something for you, this is how you give it back.',
+  },
+  intro: [
+    'Volunteers are the quiet backbone of every batch. You help participants arrive, settle, and focus — and you become part of the team that makes three days feel safe enough for real work.',
+    'It is unpaid and it is meaningful. Most of our volunteers have been through a Badlaav batch themselves.',
+  ],
+  roles: [
+    { title: 'Arrival & logistics', body: 'Welcome participants, manage check-in, keep the day running on time.' },
+    { title: 'Holding the room', body: 'A calm, reliable presence during sessions — so the facilitator can focus on the work.' },
+    { title: 'Meals & care', body: 'Look after the small comforts that let people put their phones down and stay present.' },
+    { title: 'Follow-through', body: 'Help with the 30-day check-ins that keep the change alive after people leave.' },
+  ],
+  lookingFor: [
+    'You have attended a Badlaav batch (preferred, not required)',
+    'A calm, dependable presence',
+    'Available for the full three days',
+    'Comfortable putting others first',
+  ],
+};
+
 export const FAQS = [
   {
     q: 'Is this a Vipassana retreat?',
@@ -182,7 +262,14 @@ export const GALLERY = [
 
 export const HERO_IMAGE = '/images/program_badlaav.jpg';
 
+// Big-number brand stats (numerals are intentional — the "numbers" voice
+// exception covers brand stats). Mirrors the calm, factual claims of the retreat.
+export const STATS = [
+  { value: '03', kicker: 'Residential', label: 'Three days away from the noise.' },
+  { value: '20', kicker: 'Small batch', label: 'No more than twenty people.' },
+  { value: '30', kicker: 'Follow-through', label: 'A check-in call thirty days later.' },
+];
+
 export const SOCIAL = {
-  instagram: 'https://instagram.com/dnyanpith',
-  youtube: 'https://youtube.com/@dnyanpith',
+  instagram: 'https://www.instagram.com/iambadlaav/',
 };

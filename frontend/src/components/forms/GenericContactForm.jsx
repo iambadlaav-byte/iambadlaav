@@ -17,13 +17,11 @@ import { SuccessCard } from '../ui/SuccessCard.jsx';
 import { WHATSAPP_NUMBER } from '../../lib/constants.js';
 
 const ENQUIRY_TYPE_OPTIONS = [
-  { value: 'GENERAL',          label: 'General' },
-  { value: 'BADLAAV',          label: 'Badlaav' },
-  { value: 'MISSION_UDAAN',    label: 'Mission Udaan' },
-  { value: 'FUTURE_READINESS', label: 'Future Readiness' },
-  { value: 'COMMUNITY',        label: 'Community' },
-  { value: 'PRESS',            label: 'Press' },
-  { value: 'PARTNERSHIP',      label: 'Partnership' },
+  { value: 'GENERAL',     label: 'General' },
+  { value: 'BADLAAV',     label: 'Programmes' },
+  { value: 'COMMUNITY',   label: 'Volunteering' },
+  { value: 'PRESS',       label: 'Press' },
+  { value: 'PARTNERSHIP', label: 'Partnership' },
 ];
 
 export function GenericContactForm() {
@@ -40,7 +38,7 @@ export function GenericContactForm() {
   const { control, formState: { errors } } = methods;
 
   if (successData) {
-    const whatsappLink = `https://wa.me/${WHATSAPP_NUMBER.replace(/\D/g, '')}?text=${encodeURIComponent("Hi, I just sent a message on dnyanpith.org.")}`;
+    const whatsappLink = `https://wa.me/${WHATSAPP_NUMBER.replace(/\D/g, '')}?text=${encodeURIComponent('Hi, I just sent a message on the Badlaav website.')}`;
     return (
       <SuccessCard
         accent="gold"

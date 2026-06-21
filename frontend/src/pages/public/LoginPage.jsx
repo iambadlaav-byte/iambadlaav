@@ -3,7 +3,7 @@
  * Two-tab login: Email + OTP (default), Email + Password (fallback).
  *
  * Per UI-SPEC §Components Page Inventory /login.
- * SEO: title "Sign in — Dnyanpith".
+ * SEO: title "Sign in — Badlaav".
  * AmbientMotionBoundary already disables ambient motion on /login (CONSTRAINT-CODE-004).
  * NO animations on this page.
  *
@@ -31,14 +31,14 @@ export default function LoginPage() {
   // Already authenticated — redirect to next or the role-appropriate dashboard.
   if (user) {
     const next = searchParams.get('next');
-    const fallback = user.role === 'ADMIN' ? '/admin/dashboard' : '/account/dashboard';
+    const fallback = user.role === 'ADMIN' ? '/admin/dashboard' : '/';
     return <Navigate to={next && next.startsWith('/') ? next : fallback} replace />;
   }
 
   return (
     <>
       <Helmet>
-        <title>Sign in — Dnyanpith</title>
+        <title>Sign in — Badlaav</title>
         <meta name="robots" content="noindex" />
       </Helmet>
 
@@ -50,7 +50,7 @@ export default function LoginPage() {
               Welcome back.
             </h1>
             <p className="font-sans text-sm text-muted">
-              Sign in to your Dnyanpith account.
+              Sign in to your Badlaav account.
             </p>
           </div>
 

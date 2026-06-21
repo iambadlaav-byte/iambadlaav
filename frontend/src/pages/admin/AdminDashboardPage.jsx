@@ -19,7 +19,7 @@ import {
   Tooltip,
   CartesianGrid,
 } from 'recharts';
-import { Users, Inbox, CalendarClock, Wallet, AlertCircle } from 'lucide-react';
+import { Users, Inbox, CalendarClock, Wallet, AlertCircle, CheckCircle2, Clock, HeartHandshake, Hourglass } from 'lucide-react';
 import { AdminPageHeader } from '../../components/admin/AdminPageHeader.jsx';
 import { StatCard } from '../../components/admin/StatCard.jsx';
 import { EmptyState } from '../../components/admin/EmptyState.jsx';
@@ -97,23 +97,65 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* Stat tiles */}
+      {/* Stat tiles — the 7 headline metrics (+ enquiries). Revenue is Admin-only. */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
         <StatCard
-          label="Registrations · 30d"
-          value={loading ? '—' : stats?.registrationsLast30 ?? 0}
-          hint="Paid registrations in the last 30 days."
+          label="Total registrations"
+          value={loading ? '—' : stats?.totalRegistrations ?? 0}
+          hint="Active + completed registrations."
           icon={Users}
+          loading={loading}
+          accent="navy"
+        />
+        <StatCard
+          label="Paid registrations"
+          value={loading ? '—' : stats?.paidRegistrations ?? 0}
+          hint="Registrations with payment captured."
+          icon={CheckCircle2}
+          loading={loading}
+          accent="sage"
+        />
+        <StatCard
+          label="Pending payments"
+          value={loading ? '—' : stats?.pendingPayments ?? 0}
+          hint="Started checkout but not yet paid."
+          icon={Clock}
+          loading={loading}
+          accent="gold"
+        />
+        {stats?.revenueTotal !== undefined && (
+          <StatCard
+            label="Revenue"
+            value={loading ? '—' : INR(stats?.revenueTotal)}
+            hint="All paid registrations."
+            icon={Wallet}
+            loading={loading}
+            accent="sage"
+          />
+        )}
+        <StatCard
+          label="Upcoming batches"
+          value={loading ? '—' : stats?.upcomingBatches ?? 0}
+          hint="Open batches starting in the future."
+          icon={CalendarClock}
+          loading={loading}
+          accent="teal"
+        />
+        <StatCard
+          label="Volunteers"
+          value={loading ? '—' : stats?.volunteers ?? 0}
+          hint="Volunteer applications."
+          icon={HeartHandshake}
           loading={loading}
           accent="gold"
         />
         <StatCard
-          label="Revenue · 30d"
-          value={loading ? '—' : INR(stats?.revenueLast30)}
-          hint="Sum of finalAmount for paid registrations."
-          icon={Wallet}
+          label="Waiting list"
+          value={loading ? '—' : stats?.waitlist ?? 0}
+          hint="Registrations waiting for a seat."
+          icon={Hourglass}
           loading={loading}
-          accent="sage"
+          accent="navy"
         />
         <StatCard
           label="New enquiries"
@@ -122,14 +164,6 @@ export default function AdminDashboardPage() {
           icon={Inbox}
           loading={loading}
           accent="teal"
-        />
-        <StatCard
-          label="Upcoming events"
-          value={loading ? '—' : stats?.upcomingEvents ?? 0}
-          hint="Future-dated events in UPCOMING status."
-          icon={CalendarClock}
-          loading={loading}
-          accent="navy"
         />
       </div>
 

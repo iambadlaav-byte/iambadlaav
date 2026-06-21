@@ -109,7 +109,7 @@ export default function AdminCommunityPage() {
   return (
     <>
       <Helmet>
-        <title>Community — Dnyanpith Admin</title>
+        <title>Community — Badlaav Admin</title>
       </Helmet>
 
       <div className="p-6 max-w-5xl">

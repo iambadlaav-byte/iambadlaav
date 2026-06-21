@@ -35,7 +35,7 @@ export function ProgramSpotlight() {
                 Featured — Corporate Retreat
               </p>
               <h2
-                className="font-display font-light text-ink mb-4 leading-[1.2]"
+                className="font-display font-semibold text-ink mb-4 leading-[1.2]"
                 style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)' }}
               >
                 <span className="font-deva">Trip नाही — Turning Point.</span>

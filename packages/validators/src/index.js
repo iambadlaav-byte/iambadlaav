@@ -9,6 +9,7 @@ export * from './community.js';
 export * from './students.js';
 export * from './messages.js';
 export * from './registrations.js';
+export * from './volunteers.js';
 export * from './coupons.js';
 export * from './profile.js';
 export * from './admin.js';

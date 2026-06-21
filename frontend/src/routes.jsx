@@ -18,16 +18,22 @@ import { Spinner } from './components/ui/Spinner.jsx';
 
 import HomePage from './pages/public/HomePage.jsx';
 import RetreatPage from './pages/public/RetreatPage.jsx';
+import BadlaavExperiencePage from './pages/public/BadlaavExperiencePage.jsx';
+import VolunteerPage from './pages/public/VolunteerPage.jsx';
 import PricingPage from './pages/public/PricingPage.jsx';
 import AboutPage from './pages/public/AboutPage.jsx';
 import GalleryPage from './pages/public/GalleryPage.jsx';
+import StoriesPage from './pages/public/StoriesPage.jsx';
 import ContactPage from './pages/public/ContactPage.jsx';
 import RegisterPage from './pages/public/RegisterPage.jsx';
 import PaymentSuccessPage from './pages/public/PaymentSuccessPage.jsx';
+import ResumePaymentPage from './pages/public/ResumePaymentPage.jsx';
 import LoginPage from './pages/public/LoginPage.jsx';
 import PrivacyPage from './pages/public/PrivacyPage.jsx';
 import TermsPage from './pages/public/TermsPage.jsx';
 import RefundPage from './pages/public/RefundPage.jsx';
+import CookiePolicyPage from './pages/public/CookiePolicyPage.jsx';
+import CodeOfConductPage from './pages/public/CodeOfConductPage.jsx';
 import NotFoundPage from './pages/public/NotFoundPage.jsx';
 
 // Admin pages — lazy-loaded so they never enter the public bundle.
@@ -36,8 +42,12 @@ const AdminBatchesPage       = lazy(() => import('./pages/admin/AdminBatchesPage
 const AdminBatchFormPage     = lazy(() => import('./pages/admin/AdminBatchFormPage.jsx'));
 const AdminCouponsPage       = lazy(() => import('./pages/admin/AdminCouponsPage.jsx'));
 const AdminRegistrationsPage = lazy(() => import('./pages/admin/AdminRegistrationsPage.jsx'));
+const AdminReportsPage       = lazy(() => import('./pages/admin/AdminReportsPage.jsx'));
 const AdminEnquiriesPage     = lazy(() => import('./pages/admin/AdminEnquiriesPage.jsx'));
+const AdminVolunteersPage    = lazy(() => import('./pages/admin/AdminVolunteersPage.jsx'));
 const AdminInvoicesPage      = lazy(() => import('./pages/admin/AdminInvoicesPage.jsx'));
+const AdminStoriesPage       = lazy(() => import('./pages/admin/AdminStoriesPage.jsx'));
+const AdminGalleryPage       = lazy(() => import('./pages/admin/AdminGalleryPage.jsx'));
 const AdminSettingsPage      = lazy(() => import('./pages/admin/AdminSettingsPage.jsx'));
 
 function AdminSuspense({ children }) {
@@ -67,15 +77,19 @@ export default function AppRoutes() {
         {/* Marketing */}
         <Route path="/" element={<HomePage />} />
         <Route path="/retreat" element={<RetreatPage />} />
+        <Route path="/badlaav-experience" element={<BadlaavExperiencePage />} />
+        <Route path="/volunteer" element={<VolunteerPage />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/gallery" element={<GalleryPage />} />
+        <Route path="/stories" element={<StoriesPage />} />
         <Route path="/contact" element={<ContactPage />} />
 
         {/* Registration + payment */}
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/register/*" element={<RegisterPage />} />
         <Route path="/payment-success" element={<PaymentSuccessPage />} />
+        <Route path="/pay/:registrationId" element={<ResumePaymentPage />} />
 
         {/* Auth (shared — admins land at /admin/dashboard, members at /account/dashboard) */}
         <Route path="/login" element={<LoginPage />} />
@@ -84,6 +98,8 @@ export default function AppRoutes() {
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/refund" element={<RefundPage />} />
+        <Route path="/cookies" element={<CookiePolicyPage />} />
+        <Route path="/code-of-conduct" element={<CodeOfConductPage />} />
 
         {/* 404 */}
         <Route path="*" element={<NotFoundPage />} />
@@ -101,8 +117,12 @@ export default function AppRoutes() {
           <Route path="coupons"            element={<AdminSuspense><AdminCouponsPage /></AdminSuspense>} />
           <Route path="coupons/new"        element={<AdminSuspense><AdminCouponsPage /></AdminSuspense>} />
           <Route path="registrations"      element={<AdminSuspense><AdminRegistrationsPage /></AdminSuspense>} />
+          <Route path="reports"            element={<AdminSuspense><AdminReportsPage /></AdminSuspense>} />
           <Route path="enquiries"          element={<AdminSuspense><AdminEnquiriesPage /></AdminSuspense>} />
+          <Route path="volunteers"         element={<AdminSuspense><AdminVolunteersPage /></AdminSuspense>} />
           <Route path="invoices"           element={<AdminSuspense><AdminInvoicesPage /></AdminSuspense>} />
+          <Route path="stories"            element={<AdminSuspense><AdminStoriesPage /></AdminSuspense>} />
+          <Route path="gallery"            element={<AdminSuspense><AdminGalleryPage /></AdminSuspense>} />
           <Route path="settings"           element={<AdminSuspense><AdminSettingsPage /></AdminSuspense>} />
           <Route path="*"                  element={<Navigate to="dashboard" replace />} />
         </Route>

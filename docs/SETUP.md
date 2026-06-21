@@ -156,7 +156,7 @@ npm run prisma:seed         # add initial data: admin user + a batch + WELCOME50
 > and write the SQL into a new `prisma/migrations/<timestamp>_<name>/migration.sql`.
 
 **What the seed creates:**
-- An **admin user** with email `arjun@dnyanpith.org` and the password you set as `SEED_ADMIN_PASSWORD`
+- An **admin user** with email `iambadlaav@gmail.com` and the password you set as `SEED_ADMIN_PASSWORD`
 - One **Badlaav batch** with pricing
 - A `WELCOME500` **coupon code**
 - The invoice numbering sequence

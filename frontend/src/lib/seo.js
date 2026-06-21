@@ -4,7 +4,8 @@
  * Titles ≤ 60 chars. Descriptions 150–160 chars.
  */
 
-const DEFAULT_OG_IMAGE = 'https://badlaav.dnyanpith.org/og-default.jpg';
+export const SITE_URL = 'https://www.iambadlaav.com';
+const DEFAULT_OG_IMAGE = `${SITE_URL}/images/program_badlaav.jpg`;
 const SITE_NAME = 'Badlaav';
 
 const SEO_MAP = {
@@ -75,7 +76,7 @@ const SEO_MAP = {
   '/privacy': {
     title: 'Privacy Policy — Badlaav',
     description:
-      'How Dnyanpith Abhyasika Pvt. Ltd. collects, uses, and protects your personal data for the Badlaav programme.',
+      'How Badlaav collects, uses, and protects your personal data for the Badlaav programme.',
     ogImage: DEFAULT_OG_IMAGE,
     ogType: 'website',
     twitterCard: 'summary',
@@ -83,7 +84,7 @@ const SEO_MAP = {
   '/terms': {
     title: 'Terms of Service — Badlaav',
     description:
-      'Terms governing registration, payments, and participation in Badlaav retreats, operated by Dnyanpith Abhyasika Pvt. Ltd.',
+      'Terms governing registration, payments, and participation in Badlaav retreats, operated by Badlaav.',
     ogImage: DEFAULT_OG_IMAGE,
     ogType: 'website',
     twitterCard: 'summary',
@@ -108,7 +109,7 @@ const SEO_MAP = {
 const FALLBACK_SEO = {
   title: 'Badlaav — Trip नाही, Turning Point.',
   description:
-    'A 3-day residential retreat in Ambajogai for professionals and teams who need a real reset. A Dnyanpith initiative.',
+    'A 3-day residential retreat in Ambajogai for professionals and teams who need a real reset, not another workshop.',
   ogImage: DEFAULT_OG_IMAGE,
   ogType: 'website',
   twitterCard: 'summary',
@@ -140,9 +141,9 @@ export function getSeoForRoute(pathname) {
 export const OrganizationLD = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
-  name: 'Badlaav — Dnyanpith Abhyasika Pvt. Ltd.',
-  url: 'https://badlaav.dnyanpith.org',
-  logo: 'https://badlaav.dnyanpith.org/logo.png',
+  name: 'Badlaav',
+  url: SITE_URL,
+  logo: `${SITE_URL}/images/badlaav-logo.png`,
   contactPoint: {
     '@type': 'ContactPoint',
     contactType: 'customer support',
@@ -156,7 +157,7 @@ export const OrganizationLD = {
     postalCode: '431517',
     addressCountry: 'IN',
   },
-  sameAs: ['https://www.instagram.com/dnyanpith', 'https://www.youtube.com/@dnyanpith'],
+  sameAs: ['https://www.instagram.com/iambadlaav/'],
   founder: { '@type': 'Person', name: 'Arjun Thoratt' },
   foundingLocation: { '@type': 'Place', name: 'Ambajogai, Marathwada, Maharashtra' },
 };

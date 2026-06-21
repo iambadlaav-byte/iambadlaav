@@ -60,9 +60,9 @@ export function openCheckout({
     amount,
     currency,
     order_id: orderId,
-    name: 'Dnyanpith',
-    description: 'Program Registration',
-    theme: { color: '#1A3C5E' }, // navy — brand token
+    name: 'Badlaav',
+    description: 'Badlaav Registration',
+    theme: { color: '#015243' }, // deep green — LBD brand token
     prefill: {
       name:    userName,
       email:   userEmail,

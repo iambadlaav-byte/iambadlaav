@@ -48,7 +48,7 @@ export default function RetreatPage() {
         <div className="max-w-narrow mx-auto">
           <FadeIn>
             <p className="font-mono text-xs uppercase tracking-widest text-muted mb-3">The place</p>
-            <h2 className="font-display font-light text-ink mb-6" style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)' }}>
+            <h2 className="font-display font-semibold text-ink mb-6" style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)' }}>
               Why Ambajogai
             </h2>
             <div className="space-y-4 font-sans text-charcoal leading-body">

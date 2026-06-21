@@ -6,9 +6,13 @@
  * All schemas use z.strictObject to reject unknown fields.
  */
 import { z } from 'zod';
+import { email } from './shared.js';
 
 // ── Program enum (mirrors Prisma) ──────────────────────────────────────────────
 const programEnum = z.enum(['BADLAAV', 'MISSION_UDAAN', 'FUTURE_READINESS', 'ANTRANG']);
+
+// ── Staff roles (mirrors Prisma UserRole staff tiers) ──────────────────────────
+const staffRoleEnum = z.enum(['ADMIN', 'CONTRIBUTOR', 'VIEWER']);
 
 // ── Enquiry ───────────────────────────────────────────────────────────────────
 
@@ -23,19 +27,29 @@ export const registrationStatusSchema = z.strictObject({
   status: z.enum(['ACTIVE', 'COMPLETED', 'CANCELLED']),
 });
 
+// ── Volunteer ─────────────────────────────────────────────────────────────────
+
+export const volunteerStatusSchema = z.strictObject({
+  status: z.enum(['PENDING', 'APPROVED', 'REJECTED']),
+});
+
 // ── Batch ─────────────────────────────────────────────────────────────────────
 
 export const batchCreateSchema = z.strictObject({
-  program:          programEnum,
-  name:             z.string().trim().min(2).max(200),
-  startDate:        z.coerce.date(),
-  endDate:          z.coerce.date(),
-  venue:            z.string().trim().min(2).max(200),
-  totalSeats:       z.coerce.number().int().min(1).max(500),
-  priceIndividual:  z.coerce.number().int().min(0),
-  priceCouple:      z.coerce.number().int().min(0).optional(),
-  priceCorporate:   z.coerce.number().int().min(0).optional(),
-  status:           z.enum(['OPEN', 'FULL', 'CLOSED', 'PAST']).optional().default('OPEN'),
+  program:              programEnum,
+  name:                 z.string().trim().min(2).max(200),
+  startDate:            z.coerce.date(),
+  endDate:              z.coerce.date(),
+  venue:                z.string().trim().min(2).max(200),
+  address:              z.string().trim().max(300).optional(),
+  mapLink:              z.string().trim().max(1000).optional(),
+  totalSeats:           z.coerce.number().int().min(1).max(500),
+  waitlistCapacity:     z.coerce.number().int().min(0).max(1000).optional().default(0),
+  priceIndividual:      z.coerce.number().int().min(0),
+  priceCouple:          z.coerce.number().int().min(0).optional(),
+  priceCorporate:       z.coerce.number().int().min(0).optional(),
+  priceCorporateAnnual: z.coerce.number().int().min(0).optional(),
+  status:               z.enum(['OPEN', 'FULL', 'CLOSED', 'PAST']).optional().default('OPEN'),
 });
 
 export const batchUpdateSchema = batchCreateSchema.partial();
@@ -55,6 +69,35 @@ export const blogCreateSchema = z.strictObject({
 });
 
 export const blogUpdateSchema = blogCreateSchema.partial();
+
+// ── Story (retreat stories CMS) ────────────────────────────────────────────────
+// photos are Cloudinary secure URLs produced by the /admin/stories/upload endpoint.
+
+export const storyCreateSchema = z.strictObject({
+  title:     z.string().trim().min(2).max(300),
+  subtitle:  z.string().trim().max(300).optional(),
+  batchName: z.string().trim().max(200).optional(),
+  date:      z.coerce.date().optional(),
+  passage:   z.string().trim().min(20).max(20000),
+  photos:    z.array(z.string().url()).max(20).optional().default([]),
+  status:    z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).optional().default('DRAFT'),
+});
+
+export const storyUpdateSchema = storyCreateSchema.partial();
+
+// ── Gallery ───────────────────────────────────────────────────────────────────
+// altText is MANDATORY on create (accessibility, CONSTRAINT-MEDIA-001).
+
+export const galleryCreateSchema = z.strictObject({
+  url:       z.string().url(),
+  caption:   z.string().trim().max(300).optional(),
+  category:  z.enum(['badlaav', 'abhyasika', 'community', 'gallery']),
+  altText:   z.string().trim().min(1, 'Alt text is required.').max(300),
+  type:      z.enum(['PHOTO', 'VIDEO']).optional().default('PHOTO'),
+  sortOrder: z.coerce.number().int().min(0).optional().default(0),
+});
+
+export const galleryUpdateSchema = galleryCreateSchema.partial();
 
 // ── Event ─────────────────────────────────────────────────────────────────────
 
@@ -143,4 +186,38 @@ export const reconciliationQuerySchema = z.strictObject({
     .string()
     .regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'month must be in YYYY-MM format')
     .optional(),
+});
+
+// ── Aggregated registration reports ──────────────────────────────────────────
+// ?groupBy=program|batch|location|date|status & optional from/to (ISO) & program.
+// from/to are passed to `new Date()` in the controller — a loose ISO-ish check
+// is enough here (matches the lightweight reconciliation date handling).
+
+const reportDate = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}(T.*)?$/, 'date must be ISO (YYYY-MM-DD or full ISO)')
+  .optional();
+
+export const reportsQuerySchema = z.strictObject({
+  groupBy: z.enum(['program', 'batch', 'location', 'date', 'status']).optional().default('program'),
+  from:    reportDate,
+  to:      reportDate,
+  program: z.string().trim().optional(),
+});
+
+// ── Staff user management (Settings) ───────────────────────────────────────────
+
+export const staffUserCreateSchema = z.strictObject({
+  name:     z.string().trim().min(2, 'Name is too short.').max(120),
+  email,
+  role:     staffRoleEnum,
+  password: z.string().min(8, 'Password must be at least 8 characters.').max(128),
+});
+
+export const staffRoleUpdateSchema = z.strictObject({
+  role: staffRoleEnum,
+});
+
+export const adminPasswordResetSchema = z.strictObject({
+  password: z.string().min(8, 'Password must be at least 8 characters.').max(128),
 });

@@ -44,10 +44,12 @@ export async function createRegistration(req, res, next) {
     const {
       regType, fullName, partner2Name, email, phone, city, state,
       program, batchId, plan, age, occupation, dietaryNote, couponCode, consent,
+      questionnaire,
     } = req.body;
 
     // ── 1. Batch validation (if batchId provided) ─────────────────────────────
     let batch = null;
+    let isWaitlist = false;
     if (batchId) {
       batch = await prisma.batch.findUnique({ where: { id: batchId } });
       if (!batch) {
@@ -59,9 +61,9 @@ export async function createRegistration(req, res, next) {
       if (batch.program !== program) {
         return res.status(400).json({ error: 'Batch program does not match registration program.' });
       }
-      // Pre-check seat availability (authoritative check is in webhook tx)
+      // Full batch → route to the waiting list instead of payment (handled below).
       if (batch.seatsBooked >= batch.totalSeats) {
-        return res.status(400).json({ error: 'Seats filled. Drop your email — we\'ll reach out the moment seats reopen.' });
+        isWaitlist = true;
       }
     }
 
@@ -174,6 +176,40 @@ export async function createRegistration(req, res, next) {
       });
     }
 
+    // ── 5b. Waiting list: batch full → create a WAITLISTED row, no payment. ────
+    if (isWaitlist) {
+      const existingWait = await prisma.registration.findFirst({
+        where: { userId: user.id, program, batchId: batchId ?? null, status: 'WAITLISTED' },
+        select: { id: true },
+      });
+      const waitReg = existingWait ?? await prisma.registration.create({
+        data: {
+          userId:        user.id,
+          program,
+          batchId:       batchId ?? null,
+          regType,
+          partner2Name:  partner2Name ?? null,
+          plan,
+          amount:        baselineAmount,
+          couponCode:    couponCode ?? null,
+          discountAmount,
+          finalAmount,
+          age:           age ?? null,
+          occupation:    occupation ?? null,
+          dietaryNote:   dietaryNote ?? null,
+          questionnaire: questionnaire ?? null,
+          paymentStatus: 'PENDING',
+          status:        'WAITLISTED',
+        },
+      });
+      logger.info({ userId: user.id, registrationId: waitReg.id, batchId }, 'registration.waitlisted');
+      return res.status(201).json({
+        waitlisted:     true,
+        registrationId: waitReg.id,
+        message:        "This batch is full — you're on the waiting list. We'll email you the moment a seat opens.",
+      });
+    }
+
     // ── 6. Create registration row with PENDING status ────────────────────────
     const registration = await prisma.registration.create({
       data: {
@@ -190,6 +226,7 @@ export async function createRegistration(req, res, next) {
         age:           age ?? null,
         occupation:    occupation ?? null,
         dietaryNote:   dietaryNote ?? null,
+        questionnaire: questionnaire ?? null,
         paymentStatus: 'PENDING',
       },
     });

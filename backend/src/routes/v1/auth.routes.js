@@ -17,11 +17,13 @@ import {
   loginLimit,
 } from '../../middleware/rateLimit.js';
 import { validate } from '../../middleware/validate.js';
-import { otpRequestSchema, otpVerifySchema, loginPasswordSchema } from '../../validators/index.js';
+import { authenticate, requireAuth } from '../../middleware/auth.js';
+import { otpRequestSchema, otpVerifySchema, loginPasswordSchema, changePasswordSchema } from '../../validators/index.js';
 import {
   requestOtp,
   verifyOtpHandler,
   loginPassword,
+  changePassword,
   refresh,
   logout,
 } from '../../controllers/auth.controller.js';
@@ -52,6 +54,15 @@ router.post(
   loginLimit,
   validate(loginPasswordSchema),
   loginPassword
+);
+
+// POST /api/v1/auth/password/change — authenticated; change own password
+router.post(
+  '/auth/password/change',
+  authenticate,
+  requireAuth,
+  validate(changePasswordSchema),
+  changePassword
 );
 
 // POST /api/v1/auth/refresh — no rate-limit

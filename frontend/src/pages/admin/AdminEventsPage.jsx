@@ -131,7 +131,7 @@ export default function AdminEventsPage() {
   return (
     <>
       <Helmet>
-        <title>Events — Dnyanpith Admin</title>
+        <title>Events — Badlaav Admin</title>
       </Helmet>
 
       <div className="p-6 max-w-5xl">

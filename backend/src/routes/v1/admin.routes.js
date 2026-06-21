@@ -9,22 +9,31 @@
  */
 import { Router } from 'express';
 import rateLimit  from 'express-rate-limit';
-import { authenticate, requireAuth, requireAdmin } from '../../middleware/auth.js';
+import { authenticate, requireAuth, requireStaff, requireEditor, requireAdmin } from '../../middleware/auth.js';
 import { validate } from '../../middleware/validate.js';
 import {
   enquiryStatusSchema,
   registrationStatusSchema,
+  volunteerStatusSchema,
   batchCreateSchema,
   batchUpdateSchema,
   blogCreateSchema,
   blogUpdateSchema,
+  storyCreateSchema,
+  storyUpdateSchema,
+  galleryCreateSchema,
+  galleryUpdateSchema,
   eventCreateSchema,
   eventUpdateSchema,
   refundSchema,
   anonymizeSchema,
   reconciliationQuerySchema,
+  reportsQuerySchema,
   couponCreateSchema,
   couponUpdateSchema,
+  staffUserCreateSchema,
+  staffRoleUpdateSchema,
+  adminPasswordResetSchema,
 } from '@dnyanpith/validators';
 
 // Controllers — Task 1a (core)
@@ -36,8 +45,22 @@ import {
   exportRegistrationsCsv,
   getReconciliation,
   resendConfirmationEmail,
+  inviteFromWaitlist,
+  markPaidManually,
+  markRefundedManually,
+  deleteRegistration,
 } from '../../controllers/admin.registrations.controller.js';
-import { anonymizeUser } from '../../controllers/admin.users.controller.js';
+import {
+  anonymizeUser,
+  listStaffUsers,
+  createStaffUser,
+  updateStaffUserRole,
+  resetUserPassword,
+} from '../../controllers/admin.users.controller.js';
+import {
+  getReports,
+  exportReportsCsv,
+} from '../../controllers/admin.reports.controller.js';
 
 // Controllers — Task 1b (content + ops)
 import {
@@ -45,6 +68,11 @@ import {
   getEnquiry,
   updateEnquiryStatus,
 } from '../../controllers/admin.enquiries.controller.js';
+import {
+  listVolunteers,
+  getVolunteer,
+  updateVolunteerStatus,
+} from '../../controllers/admin.volunteers.controller.js';
 import {
   listBatches,
   createBatch,
@@ -72,17 +100,34 @@ import {
   archiveBlog,
 } from '../../controllers/admin.blog.controller.js';
 import {
+  listStories,
+  createStory,
+  updateStory,
+  archiveStory,
+  uploadStoryPhoto,
+} from '../../controllers/admin.stories.controller.js';
+import {
+  listGalleryItems,
+  createGalleryItem,
+  updateGalleryItem,
+  deleteGalleryItem,
+  uploadGalleryImage,
+} from '../../controllers/admin.gallery.controller.js';
+import {
   listEvents,
   createEvent,
   updateEvent,
   cancelEvent,
 } from '../../controllers/admin.events.controller.js';
 import { listAudit } from '../../controllers/admin.audit.controller.js';
+import { mediaImageUpload, verifyMagicBytes } from '../../middleware/upload.js';
 
 const router = Router();
 
-// ── Apply the full RBAC chain to every admin route ────────────────────────────
-router.use(authenticate, requireAuth, requireAdmin);
+// ── RBAC chain ────────────────────────────────────────────────────────────────
+// Base: any staff tier may READ. Write routes add requireEditor (Admin/Contributor)
+// or requireAdmin (financials, batches, coupons, refunds, users) per the matrix.
+router.use(authenticate, requireAuth, requireStaff);
 
 // ── Rate limiter for the refund endpoint ──────────────────────────────────────
 // 10 refund requests per hour per IP — slows abuse without blocking legitimate use (T-07-09)
@@ -100,7 +145,13 @@ router.get('/dashboard', dashboardStats);
 // ── Enquiries ─────────────────────────────────────────────────────────────────
 router.get('/enquiries',       listEnquiries);
 router.get('/enquiries/:id',   getEnquiry);
-router.patch('/enquiries/:id', validate(enquiryStatusSchema), updateEnquiryStatus);
+router.patch('/enquiries/:id', requireEditor, validate(enquiryStatusSchema), updateEnquiryStatus);
+
+// ── Volunteers ────────────────────────────────────────────────────────────────
+// Static '/volunteers' GET must come BEFORE '/volunteers/:id'.
+router.get('/volunteers',      listVolunteers);
+router.get('/volunteers/:id',  getVolunteer);
+router.patch('/volunteers/:id', requireEditor, validate(volunteerStatusSchema), updateVolunteerStatus);
 
 // ── Registrations ─────────────────────────────────────────────────────────────
 // NOTE: static sub-paths (export.csv, reconciliation) must come BEFORE /:id
@@ -108,20 +159,24 @@ router.get('/registrations/export.csv',     exportRegistrationsCsv);
 router.get('/registrations/reconciliation', validate(reconciliationQuerySchema, 'query'), getReconciliation);
 router.get('/registrations',                listRegistrations);
 router.get('/registrations/:id',            getRegistration);
-router.patch('/registrations/:id',          validate(registrationStatusSchema), updateRegistrationStatus);
-router.post('/registrations/:id/resend-email', resendConfirmationEmail);
+router.patch('/registrations/:id',          requireEditor, validate(registrationStatusSchema), updateRegistrationStatus);
+router.post('/registrations/:id/resend-email',   requireEditor, resendConfirmationEmail);
+router.post('/registrations/:id/waitlist-invite', requireEditor, inviteFromWaitlist);
+router.post('/registrations/:id/mark-paid',       requireAdmin, markPaidManually);
+router.post('/registrations/:id/mark-refunded',   requireAdmin, markRefundedManually);
+router.delete('/registrations/:id',               requireAdmin, deleteRegistration);
 
 // ── Batches ───────────────────────────────────────────────────────────────────
 router.get('/batches',        listBatches);
-router.post('/batches',       validate(batchCreateSchema), createBatch);
-router.patch('/batches/:id',  validate(batchUpdateSchema), updateBatch);
+router.post('/batches',       requireAdmin, validate(batchCreateSchema), createBatch);
+router.patch('/batches/:id',  requireAdmin, validate(batchUpdateSchema), updateBatch);
 
 // ── Coupons ───────────────────────────────────────────────────────────────────
 // PATCH supports both updating fields and deactivating (active: false) — no
 // hard-delete route to preserve audit history. Soft-delete is a one-field PATCH.
 router.get('/coupons',        listCoupons);
-router.post('/coupons',       validate(couponCreateSchema), createCoupon);
-router.patch('/coupons/:id',  validate(couponUpdateSchema), updateCoupon);
+router.post('/coupons',       requireAdmin, validate(couponCreateSchema), createCoupon);
+router.patch('/coupons/:id',  requireAdmin, validate(couponUpdateSchema), updateCoupon);
 
 // ── Community ─────────────────────────────────────────────────────────────────
 router.get('/community',            listCommunity);
@@ -130,25 +185,52 @@ router.get('/community/export.csv', exportCommunityCsv);
 // ── Invoices ──────────────────────────────────────────────────────────────────
 router.get('/invoices',              listInvoices);
 router.get('/invoices/:id',          viewInvoice);
-router.post('/invoices/:id/resend',  resendInvoice);
-router.post('/invoices/:id/refund',  refundLimiter, validate(refundSchema), refundPayment);
+router.post('/invoices/:id/resend',  requireEditor, resendInvoice);
+router.post('/invoices/:id/refund',  requireAdmin, refundLimiter, validate(refundSchema), refundPayment);
 
 // ── Blog ──────────────────────────────────────────────────────────────────────
 router.get('/blog',             listBlog);
-router.post('/blog',            validate(blogCreateSchema), createBlog);
-router.patch('/blog/:id',       validate(blogUpdateSchema), updateBlog);
-router.post('/blog/:id/archive', archiveBlog);
+router.post('/blog',            requireEditor, validate(blogCreateSchema), createBlog);
+router.patch('/blog/:id',       requireEditor, validate(blogUpdateSchema), updateBlog);
+router.post('/blog/:id/archive', requireEditor, archiveBlog);
+
+// ── Stories ─────────────────────────────────────────────────────────────────────
+// Static '/stories/upload' must come BEFORE '/stories/:id'-style routes so the
+// literal 'upload' segment is never captured as an :id param.
+router.post('/stories/upload',    requireEditor, mediaImageUpload, verifyMagicBytes, uploadStoryPhoto);
+router.get('/stories',            listStories);
+router.post('/stories',           requireEditor, validate(storyCreateSchema), createStory);
+router.patch('/stories/:id',      requireEditor, validate(storyUpdateSchema), updateStory);
+router.post('/stories/:id/archive', requireEditor, archiveStory);
+
+// ── Gallery ─────────────────────────────────────────────────────────────────────
+// Static '/gallery/upload' before '/gallery/:id' so 'upload' is never an :id.
+router.post('/gallery/upload', requireEditor, mediaImageUpload, verifyMagicBytes, uploadGalleryImage);
+router.get('/gallery',         listGalleryItems);
+router.post('/gallery',        requireEditor, validate(galleryCreateSchema), createGalleryItem);
+router.patch('/gallery/:id',   requireEditor, validate(galleryUpdateSchema), updateGalleryItem);
+router.delete('/gallery/:id',  requireEditor, deleteGalleryItem);
 
 // ── Events ────────────────────────────────────────────────────────────────────
 router.get('/events',             listEvents);
-router.post('/events',            validate(eventCreateSchema), createEvent);
-router.patch('/events/:id',       validate(eventUpdateSchema), updateEvent);
-router.post('/events/:id/cancel', cancelEvent);
+router.post('/events',            requireEditor, validate(eventCreateSchema), createEvent);
+router.patch('/events/:id',       requireEditor, validate(eventUpdateSchema), updateEvent);
+router.post('/events/:id/cancel', requireEditor, cancelEvent);
+
+// ── Reports ───────────────────────────────────────────────────────────────────
+// Reads only → base requireStaff chain is enough. Revenue is gated inside the
+// controller via canSeeFinancials. export.csv listed before /reports for clarity.
+router.get('/reports/export.csv', validate(reportsQuerySchema, 'query'), exportReportsCsv);
+router.get('/reports',            validate(reportsQuerySchema, 'query'), getReports);
 
 // ── Audit log ─────────────────────────────────────────────────────────────────
 router.get('/audit', listAudit);
 
-// ── Users ─────────────────────────────────────────────────────────────────────
-router.post('/users/:id/anonymize', validate(anonymizeSchema), anonymizeUser);
+// ── Users (staff management — Admin only) ──────────────────────────────────────
+router.get('/users',                    requireAdmin, listStaffUsers);
+router.post('/users',                   requireAdmin, validate(staffUserCreateSchema), createStaffUser);
+router.patch('/users/:id/role',         requireAdmin, validate(staffRoleUpdateSchema), updateStaffUserRole);
+router.post('/users/:id/reset-password', requireAdmin, validate(adminPasswordResetSchema), resetUserPassword);
+router.post('/users/:id/anonymize',     requireAdmin, validate(anonymizeSchema), anonymizeUser);
 
 export default router;

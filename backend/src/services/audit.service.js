@@ -30,6 +30,9 @@ export const AUDIT_ACTIONS = Object.freeze({
   REGISTRATION_REFUNDED:    'registration.refunded',
   RECONCILIATION_EXPORTED:  'registration.reconciliation_exported',
 
+  // Volunteers
+  VOLUNTEER_STATUS_CHANGED: 'volunteer.status_changed',
+
   // Batches
   BATCH_CREATED:            'batch.created',
   BATCH_UPDATED:            'batch.updated',
@@ -38,6 +41,17 @@ export const AUDIT_ACTIONS = Object.freeze({
   BLOG_PUBLISHED:           'blog.published',
   BLOG_UNPUBLISHED:         'blog.unpublished',
   BLOG_ARCHIVED:            'blog.archived',
+
+  // Stories
+  STORY_CREATED:            'story.created',
+  STORY_UPDATED:            'story.updated',
+  STORY_PUBLISHED:          'story.published',
+  STORY_ARCHIVED:           'story.archived',
+
+  // Gallery
+  GALLERY_CREATED:          'gallery.created',
+  GALLERY_UPDATED:          'gallery.updated',
+  GALLERY_DELETED:          'gallery.deleted',
 
   // Events
   EVENT_CREATED:            'event.created',
@@ -49,6 +63,10 @@ export const AUDIT_ACTIONS = Object.freeze({
 
   // Users
   USER_ANONYMIZED:          'user.anonymized',
+  USER_CREATED:             'user.created',
+  USER_ROLE_CHANGED:        'user.role_changed',
+  USER_PASSWORD_RESET:      'user.password_reset',
+  USER_PASSWORD_CHANGED:    'user.password_changed',
 
   // Auth
   ADMIN_LOGIN_SUCCESS:      'admin.login.success',

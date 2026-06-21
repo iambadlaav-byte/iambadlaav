@@ -18,14 +18,14 @@ import { Button } from './Button.jsx';
 export function SuccessCard({ title, body, accent = 'gold', primaryAction, secondaryAction }) {
   const accentBorder = accent === 'ochre' ? 'border-ochre' : 'border-gold';
   const accentText   = accent === 'ochre' ? 'text-ochre'   : 'text-gold';
-  const btnVariant   = accent === 'ochre' ? 'community'    : 'primary';
+  const btnVariant   = 'primary';
 
   return (
-    <div className={cn('bg-cream rounded-lg p-8 border-t-4', accentBorder)}>
+    <div className={cn('bg-pearl rounded-2xl p-8 border-t-4 shadow-sm', accentBorder)}>
       <p className={cn('font-mono text-xs uppercase tracking-widest mb-3', accentText)}>
         Done
       </p>
-      <h3 className="font-display font-light text-ink mb-3 text-[length:var(--text-subheading)]">
+      <h3 className="font-display font-semibold text-ink mb-3 text-[length:var(--text-subheading)]">
         {title}
       </h3>
       <p className="font-sans text-sm text-charcoal leading-body mb-6">
@@ -39,12 +39,10 @@ export function SuccessCard({ title, body, accent = 'gold', primaryAction, secon
               target={primaryAction.href.startsWith('http') ? '_blank' : undefined}
               rel={primaryAction.href.startsWith('http') ? 'noopener noreferrer' : undefined}
               className={cn(
-                'inline-flex items-center justify-center gap-2 rounded font-sans font-medium',
-                'px-5 py-3 text-base min-h-[44px] transition-colors duration-150',
+                'inline-flex items-center justify-center gap-2 rounded-full font-sans font-semibold',
+                'px-6 py-3 text-base min-h-[44px] shadow-sm hover:shadow-md transition-all duration-150',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2',
-                accent === 'ochre'
-                  ? 'bg-ochre text-on-ochre hover:bg-ochre/90 focus-visible:outline-ochre'
-                  : 'bg-gold text-on-gold hover:bg-gold/90 focus-visible:outline-gold'
+                'bg-ochre text-on-ochre hover:bg-ochre/90 focus-visible:outline-ochre'
               )}
             >
               {primaryAction.label}

@@ -1,31 +1,35 @@
 /**
- * invoice.service.js — pdfkit-based PDF invoice generation + Cloudinary upload.
+ * invoice.service.js — pdfkit-based PDF generation + Cloudinary upload.
  *
- * Invoice layout (A4 portrait, 50pt margins):
- *   - Header: "Dnyanpith" (Cormorant Garamond equivalent via pdfkit Helvetica)
- *   - INVOICE + number + date
- *   - Bill-to block
- *   - Service row (program — plan)
- *   - Amount table: Base ₹X — Discount -₹Y — Total ₹Z
- *   - NO GST line items in Phase 1 (REQUIREMENTS.md PAY-01 revised + DECISION-009;
- *     GST deferred to Phase 2 pending CA advice — founder-approved)
- *   - Footer: Dnyanpith Abhyasika Pvt. Ltd. Ambajogai, Maharashtra
+ * Two documents, both branded "Badlaav" (warm green / terracotta palette):
+ *   1. generateInvoicePdf()      — the tax-style invoice (uploaded to Cloudinary,
+ *                                  signed URL returned for dashboard re-download).
+ *   2. generateRegistrationPass() — the participant's arrival pass: big candidate ID,
+ *                                  programme, batch dates, venue + map, help contact.
+ *                                  Returned as a raw buffer for email attachment only
+ *                                  (no upload — it is regenerable and carries no money).
  *
- * After PDF generation, uploads to Cloudinary dnyanpith/invoices/ (private)
- * with type:'authenticated' and 7-day signed URL for user re-download.
+ * Colours are hard-coded here because pdfkit can't read CSS variables; they mirror the
+ * frontend Badlaav tokens (deep green, terracotta, warm cream).
  *
- * ARCHITECTURE.md §23.9 + RESEARCH "Don't Hand-Roll" PDF gen row.
+ * NO GST line items in Phase 1 (deferred pending CA advice — founder-approved).
  */
 import PDFDocument from 'pdfkit';
 import { v2 as cloudinary } from 'cloudinary';
 import { logger } from '../lib/logger.js';
 
-// Colours matched to brand tokens (CSS vars can't be used in pdfkit)
-const NAVY   = '#1A3C5E';
-const GOLD   = '#D4A017';
-const CREAM  = '#F8F4EF';
-const INK    = '#0d1b2a';
-const MUTED  = '#5a6e7a';
+// ── Badlaav brand palette (mirrors frontend tokens; pdfkit needs literal hex) ──
+const GREEN = '#015243'; // deep forest green — primary surfaces
+const TERRA = '#A03E1B'; // terracotta — accent / candidate-ID panel
+const GOLD  = '#FAD062'; // warm gold — labels on dark
+const CREAM = '#FFF0EA'; // warm blush — soft panels
+const INK   = '#373735'; // charcoal — body text
+const MUTED = '#7a756f'; // muted brown-grey — secondary text
+const PEARL = '#FFFFFF';
+
+const CONTACT_EMAIL = 'iambadlaav@gmail.com';
+const CONTACT_PHONE = '7409339740';
+const FOOTER_LINE   = `Badlaav  ·  Ambajogai, Maharashtra  ·  ${CONTACT_EMAIL}  ·  ${CONTACT_PHONE}`;
 
 /**
  * Generate an invoice PDF and upload to Cloudinary.
@@ -37,13 +41,13 @@ const MUTED  = '#5a6e7a';
  *   invoiceNumber: string,
  *   paymentDetails: { paymentId: string, capturedAt: Date }
  * }} opts
- * @returns {Promise<{ invoiceNumber: string, invoiceUrl: string, pdfBuffer: Buffer }>}
+ * @returns {Promise<{ invoiceNumber: string, invoiceUrl: string|null, pdfBuffer: Buffer }>}
  */
 export async function generateInvoicePdf({ registration, user, batch, invoiceNumber, paymentDetails }) {
-  const pdfBuffer = await buildPdf({ registration, user, batch, invoiceNumber, paymentDetails });
+  const pdfBuffer = await buildInvoicePdf({ registration, user, batch, invoiceNumber, paymentDetails });
 
   // Upload to Cloudinary private folder with authenticated type
-  const publicId = invoiceNumber.replace(/\//g, '-'); // DNY-2026-27-00001
+  const publicId = invoiceNumber.replace(/\//g, '-'); // BAD-2026-27-00001
 
   // Configure Cloudinary lazily — keys may not be set during local preview
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
@@ -64,7 +68,7 @@ export async function generateInvoicePdf({ registration, user, batch, invoiceNum
         resource_type: 'raw',
         format: 'pdf',
         public_id: publicId,
-        folder: 'dnyanpith/invoices',
+        folder: 'badlaav/invoices',
         type: 'authenticated',
         // 7-day signed URL — long enough for user re-download from dashboard
         invalidate: true,
@@ -89,12 +93,10 @@ export async function generateInvoicePdf({ registration, user, batch, invoiceNum
 }
 
 /**
- * Build the PDF buffer using pdfkit.
- * No Cloudinary calls — pure computation.
- *
+ * Build the invoice PDF buffer using pdfkit. No Cloudinary calls — pure computation.
  * @returns {Promise<Buffer>}
  */
-function buildPdf({ registration, user, batch, invoiceNumber, paymentDetails }) {
+function buildInvoicePdf({ registration, user, batch, invoiceNumber, paymentDetails }) {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
     const chunks = [];
@@ -106,9 +108,7 @@ function buildPdf({ registration, user, batch, invoiceNumber, paymentDetails }) 
     const date = paymentDetails?.capturedAt
       ? new Date(paymentDetails.capturedAt)
       : new Date();
-    const dateStr = date.toLocaleDateString('en-IN', {
-      day: '2-digit', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata',
-    });
+    const dateStr = formatDate(date);
 
     const baseAmount   = Number(registration.amount ?? 0);
     const discountAmt  = Number(registration.discountAmount ?? 0);
@@ -118,28 +118,25 @@ function buildPdf({ registration, user, batch, invoiceNumber, paymentDetails }) 
     const batchName    = batch?.name ?? '';
 
     // ── Header ────────────────────────────────────────────────
-    // Brand name
     doc
-      .fillColor(NAVY)
+      .fillColor(GREEN)
       .fontSize(28)
       .font('Helvetica-Bold')
-      .text('Dnyanpith', 50, 50);
+      .text('Badlaav', 50, 50);
 
-    // Tagline
     doc
       .fillColor(MUTED)
       .fontSize(9)
       .font('Helvetica')
-      .text('Environment changes outcomes.', 50, 82);
+      .text('A turning point, not a trip.', 50, 82);
 
     // INVOICE label (right-aligned)
     doc
-      .fillColor(GOLD)
+      .fillColor(TERRA)
       .fontSize(22)
       .font('Helvetica-Bold')
       .text('INVOICE', 50, 50, { align: 'right', width: W });
 
-    // Invoice number + date (right-aligned)
     doc
       .fillColor(INK)
       .fontSize(10)
@@ -149,7 +146,6 @@ function buildPdf({ registration, user, batch, invoiceNumber, paymentDetails }) 
 
     // Divider
     doc
-      .moveDown(0.5)
       .moveTo(50, 115)
       .lineTo(50 + W, 115)
       .strokeColor(GOLD)
@@ -158,7 +154,6 @@ function buildPdf({ registration, user, batch, invoiceNumber, paymentDetails }) 
 
     // ── Bill To ───────────────────────────────────────────────
     doc
-      .moveDown(1)
       .fillColor(MUTED)
       .fontSize(8)
       .font('Helvetica-Bold')
@@ -181,7 +176,7 @@ function buildPdf({ registration, user, batch, invoiceNumber, paymentDetails }) 
     // ── Service Row ───────────────────────────────────────────
     const serviceY = 225;
     doc
-      .fillColor(NAVY)
+      .fillColor(GREEN)
       .fontSize(8)
       .font('Helvetica-Bold')
       .text('DESCRIPTION', 50, serviceY, { characterSpacing: 1.5 })
@@ -190,7 +185,7 @@ function buildPdf({ registration, user, batch, invoiceNumber, paymentDetails }) 
     doc
       .moveTo(50, serviceY + 14)
       .lineTo(50 + W, serviceY + 14)
-      .strokeColor(NAVY)
+      .strokeColor(GREEN)
       .lineWidth(0.5)
       .stroke();
 
@@ -199,7 +194,7 @@ function buildPdf({ registration, user, batch, invoiceNumber, paymentDetails }) 
       .fillColor(INK)
       .fontSize(10)
       .font('Helvetica')
-      .text(descLine, 50, serviceY + 20)
+      .text(descLine, 50, serviceY + 20, { width: W - 100 })
       .text(`₹${baseAmount.toLocaleString('en-IN')}`, 50 + W - 80, serviceY + 20);
 
     // ── Amount Table ──────────────────────────────────────────
@@ -233,32 +228,34 @@ function buildPdf({ registration, user, batch, invoiceNumber, paymentDetails }) 
       finalLineY = tableY + 48;
     }
 
-    // NOTE: No GST line items in Phase 1 — deferred to Phase 2 per REQUIREMENTS.md PAY-01
-    // (founder-approved; pending CA advice on GST registration)
+    // NOTE: No GST line items in Phase 1 — deferred pending CA advice (founder-approved)
 
     // Divider before total
     doc
       .moveTo(50 + W - 210, finalLineY + 4)
       .lineTo(50 + W, finalLineY + 4)
-      .strokeColor(NAVY)
+      .strokeColor(GREEN)
       .lineWidth(0.5)
       .stroke();
 
     // Total
     doc
-      .fillColor(NAVY)
+      .fillColor(GREEN)
       .fontSize(12)
       .font('Helvetica-Bold')
       .text('Total', 50 + W - 200, finalLineY + 10)
       .text(`₹${finalAmount.toLocaleString('en-IN')}`, 50 + W - 80, finalLineY + 10);
 
-    // Payment ID reference (small muted)
-    if (paymentDetails?.paymentId) {
+    // Payment reference (small muted)
+    const refParts = [];
+    if (registration.candidateId)   refParts.push(`Candidate ID: ${registration.candidateId}`);
+    if (paymentDetails?.paymentId)  refParts.push(`Payment ref: ${paymentDetails.paymentId}`);
+    if (refParts.length) {
       doc
         .fillColor(MUTED)
         .fontSize(8)
         .font('Helvetica')
-        .text(`Payment ref: ${paymentDetails.paymentId}`, 50, finalLineY + 30);
+        .text(refParts.join('     '), 50, finalLineY + 32);
     }
 
     // ── Footer ────────────────────────────────────────────────
@@ -274,28 +271,226 @@ function buildPdf({ registration, user, batch, invoiceNumber, paymentDetails }) 
       .fillColor(MUTED)
       .fontSize(8)
       .font('Helvetica')
-      .text(
-        'Dnyanpith Abhyasika Pvt. Ltd.  ·  Ambajogai, Maharashtra  ·  hello@dnyanpith.org',
-        50,
-        footerY + 8,
-        { align: 'center', width: W }
-      );
+      .text(FOOTER_LINE, 50, footerY + 8, { align: 'center', width: W });
 
     doc.end();
   });
 }
 
 /**
- * Map Program enum to display name.
+ * Generate the participant's Registration Pass PDF (arrival document).
+ *
+ * Pure computation — returns a raw buffer for email attachment. Not uploaded:
+ * it carries no financial data and can be regenerated from the registration row.
+ *
+ * @param {{ registration: object, user: object, batch: object|null, candidateId: string }} opts
+ * @returns {Promise<Buffer>}
+ */
+export function generateRegistrationPass({ registration, user, batch, candidateId }) {
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({ size: 'A4', margin: 50 });
+    const chunks = [];
+    doc.on('data', (c) => chunks.push(c));
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
+
+    const pageW = doc.page.width;
+    const W = pageW - 100; // usable width
+    const L = 50;          // left margin
+
+    const programLabel = programDisplay(registration.program);
+    const planLabel    = planDisplay(registration.plan);
+    const batchName    = batch?.name ?? '';
+    const dateRange    = batch?.startDate ? formatDateRange(batch.startDate, batch.endDate) : '';
+    const venue        = batch?.venue || '';
+    const address      = batch?.address || '';
+    const mapLink      = batch?.mapLink || '';
+
+    // ── Header band (full-bleed green) ────────────────────────
+    doc.rect(0, 0, pageW, 132).fill(GREEN);
+
+    doc
+      .fillColor(PEARL)
+      .fontSize(30)
+      .font('Helvetica-Bold')
+      .text('Badlaav', L, 42);
+
+    doc
+      .fillColor(GOLD)
+      .fontSize(11)
+      .font('Helvetica-Bold')
+      .text('REGISTRATION PASS', L, 82, { characterSpacing: 3 });
+
+    // Programme (right-aligned, on the band)
+    doc
+      .fillColor(PEARL)
+      .fontSize(13)
+      .font('Helvetica-Bold')
+      .text(programLabel, L, 58, { align: 'right', width: W });
+
+    // ── Candidate ID panel (terracotta) ──────────────────────
+    const panelY = 168;
+    const panelH = 82;
+    doc.roundedRect(L, panelY, W, panelH, 10).fill(TERRA);
+
+    doc
+      .fillColor('#F6D9CC')
+      .fontSize(9)
+      .font('Helvetica-Bold')
+      .text('CANDIDATE ID', L + 24, panelY + 18, { characterSpacing: 2 });
+
+    doc
+      .fillColor(PEARL)
+      .fontSize(30)
+      .font('Helvetica-Bold')
+      .text(candidateId || '—', L + 24, panelY + 36);
+
+    // Participant name on the right of the panel
+    doc
+      .fillColor('#F6D9CC')
+      .fontSize(9)
+      .font('Helvetica-Bold')
+      .text('PARTICIPANT', L + 24, panelY + 18, { width: W - 48, align: 'right', characterSpacing: 2 });
+    doc
+      .fillColor(PEARL)
+      .fontSize(15)
+      .font('Helvetica-Bold')
+      .text(user.name || '', L + 24, panelY + 38, { width: W - 48, align: 'right' });
+
+    // ── Details grid ──────────────────────────────────────────
+    let y = panelY + panelH + 30;
+    y = detailRow(doc, L, y, W, 'Programme', programLabel);
+    if (planLabel)  y = detailRow(doc, L, y, W, 'Plan', planLabel);
+    if (batchName)  y = detailRow(doc, L, y, W, 'Batch', batchName);
+    if (dateRange)  y = detailRow(doc, L, y, W, 'Dates', dateRange);
+    y = detailRow(doc, L, y, W, 'Email', user.email || '');
+    y = detailRow(doc, L, y, W, 'Phone', user.phone || '');
+
+    // ── Venue panel (cream) ───────────────────────────────────
+    if (venue || address || mapLink) {
+      y += 12;
+      const vLines = [venue, address].filter(Boolean);
+      const vH = 56 + vLines.length * 14 + (mapLink ? 18 : 0);
+      doc.roundedRect(L, y, W, vH, 10).fill(CREAM);
+
+      doc
+        .fillColor(TERRA)
+        .fontSize(9)
+        .font('Helvetica-Bold')
+        .text('WHERE TO REACH', L + 20, y + 16, { characterSpacing: 2 });
+
+      let vy = y + 34;
+      if (venue) {
+        doc.fillColor(INK).fontSize(12).font('Helvetica-Bold').text(venue, L + 20, vy, { width: W - 40 });
+        vy += 16;
+      }
+      if (address) {
+        doc.fillColor(INK).fontSize(10).font('Helvetica').text(address, L + 20, vy, { width: W - 40 });
+        vy += 14;
+      }
+      if (mapLink) {
+        doc
+          .fillColor(GREEN)
+          .fontSize(10)
+          .font('Helvetica-Bold')
+          .text('Open in Google Maps →', L + 20, vy + 2, { link: mapLink, underline: true });
+      }
+      y += vH;
+    }
+
+    // ── Note ──────────────────────────────────────────────────
+    y += 22;
+    doc
+      .fillColor(MUTED)
+      .fontSize(10)
+      .font('Helvetica')
+      .text(
+        'Please carry this pass — printed or on your phone — on the day you arrive. ' +
+        `Any questions before then, write to ${CONTACT_EMAIL} or call ${CONTACT_PHONE}. ` +
+        'We are glad you said yes.',
+        L, y, { width: W, lineGap: 3 }
+      );
+
+    // ── Footer ────────────────────────────────────────────────
+    const footerY = doc.page.height - 64;
+    doc
+      .moveTo(L, footerY)
+      .lineTo(L + W, footerY)
+      .strokeColor(GOLD)
+      .lineWidth(0.5)
+      .stroke();
+    doc
+      .fillColor(MUTED)
+      .fontSize(8)
+      .font('Helvetica')
+      .text(FOOTER_LINE, L, footerY + 8, { align: 'center', width: W });
+
+    doc.end();
+  });
+}
+
+/** One label/value row in the pass details grid. Returns the next y. */
+function detailRow(doc, x, y, w, label, value) {
+  doc
+    .fillColor(MUTED)
+    .fontSize(8)
+    .font('Helvetica-Bold')
+    .text(label.toUpperCase(), x, y, { width: 120, characterSpacing: 1.5 });
+  const h = doc
+    .fillColor(INK)
+    .fontSize(11)
+    .font('Helvetica')
+    .text(value || '—', x + 130, y - 1, { width: w - 130 })
+    .heightOfString(value || '—', { width: w - 130 });
+  return y + Math.max(20, h + 8);
+}
+
+/** "12–14 August 2026" (collapses the month/year when the range shares them). */
+function formatDateRange(start, end) {
+  const s = new Date(start);
+  const e = end ? new Date(end) : s;
+  const optsFull = { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' };
+  if (!end || s.getTime() === e.getTime()) return s.toLocaleDateString('en-IN', optsFull);
+
+  const sameMonth = s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear();
+  if (sameMonth) {
+    const month = e.toLocaleDateString('en-IN', { month: 'long', timeZone: 'Asia/Kolkata' });
+    const year  = e.toLocaleDateString('en-IN', { year: 'numeric', timeZone: 'Asia/Kolkata' });
+    return `${s.getDate()}–${e.getDate()} ${month} ${year}`;
+  }
+  return `${s.toLocaleDateString('en-IN', optsFull)} – ${e.toLocaleDateString('en-IN', optsFull)}`;
+}
+
+/** "12 August 2026" in IST. */
+function formatDate(date) {
+  return new Date(date).toLocaleDateString('en-IN', {
+    day: '2-digit', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata',
+  });
+}
+
+/**
+ * Map Program enum to display name. The enum values are repurposed (see schema notes):
+ * BADLAAV = The Retreat, FUTURE_READINESS = The Badlaav Experience.
  * @param {string} program
- * @returns {string}
  */
 function programDisplay(program) {
   const map = {
-    BADLAAV:          'Badlaav Corporate Retreat',
-    MISSION_UDAAN:    'Mission Udaan',
-    FUTURE_READINESS: 'Future Readiness',
-    ANTRANG:          'Antrang',
+    BADLAAV:          'The Retreat',
+    FUTURE_READINESS: 'The Badlaav Experience',
+    MISSION_UDAAN:    'Future Programme',
+    ANTRANG:          'Future Programme',
   };
   return map[program] ?? program;
+}
+
+/** Humanise the stored plan slug for display. */
+function planDisplay(plan) {
+  if (!plan) return '';
+  const map = {
+    individual:       'Individual',
+    couple:           'Couple',
+    corporate_batch:  'Corporate Batch',
+    corporate_annual: 'Corporate Annual',
+  };
+  return map[plan] ?? plan.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }

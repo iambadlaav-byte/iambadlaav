@@ -4,7 +4,7 @@
  * Profile photo pipeline:
  *   buffer → upload_stream → transformation (400×400 fill face + f_auto/q_auto)
  *   f_auto re-encodes the image which strips EXIF metadata (T-06-09 / RESEARCH Pitfall 12).
- *   Resource stored at dnyanpith/profile-photos/<userId> (overwrite: true).
+ *   Resource stored at badlaav/profile-photos/<userId> (overwrite: true).
  *
  * EXIF stripping: Cloudinary's fetch_format:'auto' transformation forces a re-encode
  * into the optimal delivery format, which strips all original EXIF data including GPS.
@@ -38,7 +38,7 @@ export function uploadProfilePhoto(buffer, userId) {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       {
-        folder:          'dnyanpith/profile-photos',
+        folder:          'badlaav/profile-photos',
         public_id:       userId,
         overwrite:       true,
         resource_type:   'image',
@@ -53,6 +53,46 @@ export function uploadProfilePhoto(buffer, userId) {
           return reject(error);
         }
         logger.info({ publicId: result.public_id, userId }, 'cloudinary.profile_photo.uploaded');
+        resolve(result.secure_url);
+      }
+    );
+    stream.end(buffer);
+  });
+}
+
+/**
+ * Upload a generic media image buffer to Cloudinary (stories, gallery, etc.).
+ * Re-usable beyond stories — keep it generic so a Gallery feature can call it too.
+ *
+ * Transformation: max width 1600 (downscale only, never upscale) + f_auto/q_auto.
+ * f_auto re-encodes into the optimal delivery format which strips all original
+ * EXIF metadata including GPS (T-06-09 / CONSTRAINT-MEDIA-001).
+ *
+ * @param {Buffer} buffer            - image buffer from multer memoryStorage
+ * @param {object} opts
+ * @param {string} opts.folder       - Cloudinary folder (e.g. 'badlaav/stories')
+ * @param {string} [opts.publicId]   - optional public_id; Cloudinary auto-generates if absent
+ * @returns {Promise<string>} secure_url of the uploaded image
+ */
+export function uploadMediaImage(buffer, { folder, publicId } = {}) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder,
+        ...(publicId ? { public_id: publicId } : {}),
+        resource_type: 'image',
+        transformation: [
+          // crop:'limit' downscales oversized images but never upscales smaller ones
+          { width: 1600, crop: 'limit' },
+          { fetch_format: 'auto', quality: 'auto' }, // re-encode strips EXIF
+        ],
+      },
+      (error, result) => {
+        if (error) {
+          logger.error({ err: error, folder }, 'cloudinary.media_image.upload_failed');
+          return reject(error);
+        }
+        logger.info({ publicId: result.public_id, folder }, 'cloudinary.media_image.uploaded');
         resolve(result.secure_url);
       }
     );

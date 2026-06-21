@@ -30,19 +30,24 @@ export const API_BASE = import.meta.env.VITE_API_URL
   : '/api/v1';
 
 // ============================================================
-// CONTACT / SOCIAL (placeholder until Arjun confirms — Week 9)
+// CONTACT / SOCIAL
 // ============================================================
-export const WHATSAPP_NUMBER = '+91XXXXXXXXXX';
-export const CONTACT_EMAIL = 'hello@dnyanpith.org';
+export const WHATSAPP_NUMBER = '+917409339740';
+export const CONTACT_PHONE = '7409339740';
+export const CONTACT_EMAIL = 'iambadlaav@gmail.com';
 export const CONTACT_ADDRESS = 'Ambajogai, Dist. Beed, Maharashtra 431517';
+
+// Venue location on Google Maps (physical retreat centre near Ambajogai).
+export const MAP_LINK =
+  'https://www.google.com/maps/place/Dnyanpitt+Abhyasika/@18.7177129,76.3777553,21z/data=!4m6!3m5!1s0x3bc55e6e57308101:0x3b8347cf8562ad45!8m2!3d18.7176969!4d76.3778593!16s%2Fg%2F11c1p9s0nh';
 
 // ============================================================
 // CORS (for dev-only reference — enforced server-side)
 // ============================================================
 export const ALLOWED_ORIGINS = [
   'http://localhost:5173',
-  'https://dnyanpith.org',
-  'https://www.dnyanpith.org',
+  'https://iambadlaav.com',
+  'https://www.iambadlaav.com',
 ];
 
 // ============================================================

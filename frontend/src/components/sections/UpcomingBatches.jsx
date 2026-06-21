@@ -51,7 +51,7 @@ export function UpcomingBatches() {
         <FadeIn>
           <p className="font-mono text-xs uppercase tracking-widest text-gold mb-3">Upcoming batches</p>
           <h2
-            className="font-display font-light text-pearl mb-10"
+            className="font-display font-semibold text-pearl mb-10"
             style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)' }}
           >
             Find your dates
@@ -89,7 +89,7 @@ export function UpcomingBatches() {
                       {!full && (
                         <Link
                           to={`/register?program=badlaav&batch=${b.id}`}
-                          className="inline-flex items-center justify-center rounded font-sans font-medium text-sm bg-gold text-on-gold hover:bg-gold/90 px-5 py-2.5 min-h-[44px] transition-colors"
+                          className="inline-flex items-center justify-center rounded-full font-sans font-semibold text-sm bg-ochre text-on-ochre hover:bg-ochre/90 px-5 py-2.5 min-h-[44px] shadow-sm hover:shadow-md transition-all"
                         >
                           Register
                         </Link>
@@ -109,7 +109,7 @@ export function UpcomingBatches() {
               </p>
               <Link
                 to="/contact"
-                className="inline-flex items-center justify-center mt-6 rounded font-sans font-medium text-sm bg-gold text-on-gold hover:bg-gold/90 px-6 py-3 min-h-[44px] transition-colors"
+                className="inline-flex items-center justify-center mt-6 rounded-full font-sans font-semibold text-sm bg-ochre text-on-ochre hover:bg-ochre/90 px-6 py-3 min-h-[44px] shadow-sm hover:shadow-md transition-all"
               >
                 Talk to Arjun Dada
               </Link>

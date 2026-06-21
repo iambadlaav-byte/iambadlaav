@@ -37,7 +37,7 @@ export default function AboutPage() {
         <div className="max-w-narrow mx-auto">
           <FadeIn>
             <p className="font-mono text-xs uppercase tracking-widest text-teal mb-3">The idea</p>
-            <h2 className="font-display font-light text-ink mb-6" style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)' }}>
+            <h2 className="font-display font-semibold text-ink mb-6" style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)' }}>
               {SITE.coreIdea}
             </h2>
             <div className="space-y-4 font-sans text-charcoal leading-body">
@@ -64,7 +64,7 @@ export default function AboutPage() {
           </FadeIn>
           <FadeIn>
             <p className="font-mono text-xs uppercase tracking-widest text-teal mb-3">Who leads it</p>
-            <h2 className="font-display font-light text-ink mb-6" style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)' }}>
+            <h2 className="font-display font-semibold text-ink mb-6" style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)' }}>
               Arjun Dada
             </h2>
             <div className="space-y-4 font-sans text-charcoal leading-body">

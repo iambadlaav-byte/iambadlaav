@@ -11,7 +11,7 @@ export function WhoItsFor() {
         <FadeIn>
           <p className="font-mono text-xs uppercase tracking-widest text-muted text-center mb-3">Is this for you?</p>
           <h2
-            className="font-display font-light text-ink text-center mb-8"
+            className="font-display font-semibold text-ink text-center mb-8"
             style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)' }}
           >
             Who comes to Badlaav
@@ -20,7 +20,7 @@ export function WhoItsFor() {
             {WHO_CHIPS.map((chip) => (
               <span
                 key={chip}
-                className="font-mono text-xs uppercase tracking-widest bg-soft text-charcoal px-4 py-2 rounded-full border border-muted/20"
+                className="font-mono text-xs uppercase tracking-widest bg-pearl text-charcoal px-4 py-2 rounded-full border border-charcoal/10 shadow-sm"
               >
                 {chip}
               </span>

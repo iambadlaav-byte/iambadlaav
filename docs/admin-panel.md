@@ -58,9 +58,8 @@ with `next=/admin/dashboard`.
 | `/admin/invoices`              | List paid/refunded, view PDF, resend email         |
 | `/admin/settings`              | System health (auto-refresh every 30s)             |
 
-Refund, anonymize, audit log, blog, events, and community admin remain in the
-codebase (legacy from the parent Dnyanpith project) but are not linked from the
-sidebar — Badlaav doesn't ship them in phase 1.
+Some legacy admin screens (blog, events, community) remain in the codebase,
+carried over from the parent project, but are not all linked from the sidebar.
 
 ---
 

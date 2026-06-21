@@ -7,6 +7,8 @@ import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
 import { getSeoForRoute, OrganizationLD } from '../../lib/seo.js';
 import { ProgramHero } from '../../components/sections/ProgramHero.jsx';
+import { NextRetreatCard } from '../../components/sections/NextRetreatCard.jsx';
+import { StatStrip } from '../../components/sections/StatStrip.jsx';
 import { ValueProp } from '../../components/sections/ValueProp.jsx';
 import { RetreatDays } from '../../components/sections/RetreatDays.jsx';
 import { WhoItsFor } from '../../components/sections/WhoItsFor.jsx';
@@ -43,9 +45,11 @@ export default function HomePage() {
         heroImageAlt="The Badlaav retreat grounds at Ambajogai"
         primaryCta={{ label: 'Register', href: '/register?program=badlaav' }}
         secondaryCta={{ label: 'Talk to Arjun Dada', href: '/contact' }}
+        aside={<NextRetreatCard />}
         showAmbient
       />
 
+      <StatStrip />
       <ValueProp />
       <RetreatDays variant="teaser" />
       <WhoItsFor />

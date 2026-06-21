@@ -29,3 +29,13 @@ export const loginPasswordSchema = z.strictObject({
     .min(8, 'Password must be at least 8 characters.')
     .max(128, 'Password must be 128 characters or fewer.'),
 });
+
+/**
+ * POST /api/v1/auth/password/change (authenticated — change own password)
+ */
+export const changePasswordSchema = z.strictObject({
+  currentPassword: z.string().min(1, 'Enter your current password.').max(128),
+  newPassword: z.string()
+    .min(8, 'New password must be at least 8 characters.')
+    .max(128, 'Password must be 128 characters or fewer.'),
+});

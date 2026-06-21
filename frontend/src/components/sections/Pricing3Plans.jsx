@@ -11,8 +11,8 @@ function PlanCard({ name, price, features, cta, isPopular, isFree }) {
   return (
     <div
       className={cn(
-        'bg-soft rounded-lg p-6 flex flex-col border-2 transition-all duration-300 hover:scale-105 hover:shadow-2xl h-full',
-        isPopular ? 'border-gold' : 'border-transparent hover:border-gold/30',
+        'bg-pearl rounded-2xl p-7 flex flex-col border transition-all duration-300 shadow-sm hover:shadow-xl h-full',
+        isPopular ? 'border-gold' : 'border-charcoal/10 hover:border-ochre/40',
       )}
     >
       {isPopular && (
@@ -29,7 +29,7 @@ function PlanCard({ name, price, features, cta, isPopular, isFree }) {
             Free
           </span>
         ) : (
-          <p className="font-display text-3xl font-light text-ink">
+          <p className="font-display text-3xl font-semibold text-ink">
             {typeof price === 'number'
               ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(price)
               : price}
@@ -64,10 +64,10 @@ function PlanCard({ name, price, features, cta, isPopular, isFree }) {
 
       <a
         href={cta?.href || '#'}
-        className="inline-flex items-center justify-center gap-2 rounded font-sans font-medium
-                   bg-gold text-on-gold hover:bg-gold/90 px-5 py-3 min-h-[44px]
-                   transition-colors duration-150 text-center
-                   focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+        className="inline-flex items-center justify-center gap-2 rounded-full font-sans font-semibold
+                   bg-ochre text-on-ochre hover:bg-ochre/90 px-5 py-3 min-h-[44px]
+                   shadow-sm hover:shadow-md transition-all duration-150 text-center
+                   focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ochre"
       >
         {cta?.label || 'Enquire'}
       </a>
@@ -87,7 +87,7 @@ export function Pricing3Plans({ program, plans = [] }) {
             Pricing
           </p>
           <h2
-            className="font-display font-light text-ink text-center mb-12"
+            className="font-display font-semibold text-ink text-center mb-12"
             style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)' }}
           >
             {program} plans
