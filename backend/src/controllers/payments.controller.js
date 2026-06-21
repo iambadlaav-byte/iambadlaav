@@ -29,6 +29,7 @@ import { generateInvoicePdf } from '../services/invoice.service.js';
 import { applyCouponInTx, CouponInvalidError, CouponConflictError } from '../services/coupon.service.js';
 import { nextInvoiceNumber } from '../utils/invoiceNumber.js';
 import { sendEmail } from '../services/email.service.js';
+import { sendSms, sendWhatsApp } from '../services/notification.service.js';
 
 // ============================================================
 // Webhook handler — the authoritative payment confirmation channel
@@ -152,6 +153,7 @@ async function onPaymentCaptured(payload) {
 
   // ── Serializable transaction: registration + seat + coupon + invoice number ─
   let invoiceNumber;
+  let candidateId = null;
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -168,7 +170,6 @@ async function onPaymentCaptured(payload) {
       // Seat increment (anti-pattern: never outside the transaction — RESEARCH §Anti-Patterns).
       // The returned seatsBooked is the participant's number within the batch; Serializable
       // isolation makes this collision-free, so we derive the candidate ID from it.
-      let candidateId = null;
       if (registration.batchId) {
         const updatedBatch = await tx.batch.update({
           where: { id: registration.batchId },
@@ -311,6 +312,16 @@ async function onPaymentCaptured(payload) {
           : `/admin/registrations/${registration.id}`,
       },
     }).catch((err) => logger.warn({ err }, 'email.admin_new_registration.failed'));
+
+    // SMS + WhatsApp — feature-flagged, best-effort (no-op without MSG91 keys).
+    sendSms({
+      to:   registration.user.phone,
+      vars: { name: registration.user.name, candidate: candidateId ?? '', batch: registration.batch?.name ?? '' },
+    }).catch(() => { /* logged by service */ });
+    sendWhatsApp({
+      to:           registration.user.phone,
+      templateName: process.env.MSG91_WA_CONFIRM_TEMPLATE,
+    }).catch(() => { /* logged by service */ });
   } catch (postTxErr) {
     logger.error({ err: postTxErr, registrationId: registration.id }, 'webhook.post_tx.failed');
   }
