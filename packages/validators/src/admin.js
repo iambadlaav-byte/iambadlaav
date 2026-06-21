@@ -148,3 +148,20 @@ export const reconciliationQuerySchema = z.strictObject({
     .regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'month must be in YYYY-MM format')
     .optional(),
 });
+
+// ── Aggregated registration reports ──────────────────────────────────────────
+// ?groupBy=program|batch|location|date|status & optional from/to (ISO) & program.
+// from/to are passed to `new Date()` in the controller — a loose ISO-ish check
+// is enough here (matches the lightweight reconciliation date handling).
+
+const reportDate = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}(T.*)?$/, 'date must be ISO (YYYY-MM-DD or full ISO)')
+  .optional();
+
+export const reportsQuerySchema = z.strictObject({
+  groupBy: z.enum(['program', 'batch', 'location', 'date', 'status']).optional().default('program'),
+  from:    reportDate,
+  to:      reportDate,
+  program: z.string().trim().optional(),
+});

@@ -23,6 +23,7 @@ import {
   refundSchema,
   anonymizeSchema,
   reconciliationQuerySchema,
+  reportsQuerySchema,
   couponCreateSchema,
   couponUpdateSchema,
 } from '@dnyanpith/validators';
@@ -41,6 +42,10 @@ import {
   markRefundedManually,
 } from '../../controllers/admin.registrations.controller.js';
 import { anonymizeUser } from '../../controllers/admin.users.controller.js';
+import {
+  getReports,
+  exportReportsCsv,
+} from '../../controllers/admin.reports.controller.js';
 
 // Controllers — Task 1b (content + ops)
 import {
@@ -152,6 +157,12 @@ router.get('/events',             listEvents);
 router.post('/events',            requireEditor, validate(eventCreateSchema), createEvent);
 router.patch('/events/:id',       requireEditor, validate(eventUpdateSchema), updateEvent);
 router.post('/events/:id/cancel', requireEditor, cancelEvent);
+
+// ── Reports ───────────────────────────────────────────────────────────────────
+// Reads only → base requireStaff chain is enough. Revenue is gated inside the
+// controller via canSeeFinancials. export.csv listed before /reports for clarity.
+router.get('/reports/export.csv', validate(reportsQuerySchema, 'query'), exportReportsCsv);
+router.get('/reports',            validate(reportsQuerySchema, 'query'), getReports);
 
 // ── Audit log ─────────────────────────────────────────────────────────────────
 router.get('/audit', listAudit);

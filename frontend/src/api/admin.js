@@ -83,6 +83,18 @@ export function registrationsCsvUrl(params = {}) {
   return `/api/v1/admin/registrations/export.csv${qs ? `?${qs}` : ''}`;
 }
 
+// ── Reports ──────────────────────────────────────────────────────────────────
+
+export async function fetchReports(params = {}) {
+  const { data } = await apiClient.get('/admin/reports', { params });
+  return data; // { groupBy, from, to, rows, totals, financialsVisible }
+}
+
+export function reportsCsvUrl(params = {}) {
+  const qs = new URLSearchParams(params).toString();
+  return `/api/v1/admin/reports/export.csv${qs ? `?${qs}` : ''}`;
+}
+
 // ── Coupons ──────────────────────────────────────────────────────────────────
 
 export async function listCoupons(params = {}) {
