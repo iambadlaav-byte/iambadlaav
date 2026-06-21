@@ -42,7 +42,7 @@ export default function AdminLoginPage() {
       const { accessToken, user } = res.data;
 
       // Validate role before granting admin access
-      if (user.role !== 'ADMIN') {
+      if (user.role !== 'ADMIN' && user.role !== 'SUPERADMIN') {
         // Sign out the non-admin session immediately
         try { await apiClient.post('/auth/logout'); } catch { /* ignore */ }
         setServerError("You're not an admin.");

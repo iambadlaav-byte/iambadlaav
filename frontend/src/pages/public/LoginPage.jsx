@@ -31,7 +31,7 @@ export default function LoginPage() {
   // Already authenticated — redirect to next or the role-appropriate dashboard.
   if (user) {
     const next = searchParams.get('next');
-    const fallback = user.role === 'ADMIN' ? '/admin/dashboard' : '/';
+    const fallback = (user.role === 'ADMIN' || user.role === 'SUPERADMIN') ? '/admin/dashboard' : '/';
     return <Navigate to={next && next.startsWith('/') ? next : fallback} replace />;
   }
 

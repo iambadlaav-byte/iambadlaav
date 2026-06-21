@@ -157,8 +157,15 @@ export async function updateStaffUserRole(req, res, next) {
     });
     if (!target || target.deletedAt) return res.status(404).json({ error: 'NOT_FOUND' });
 
-    if (target.role === 'ADMIN' && role !== 'ADMIN') {
-      const adminCount = await prisma.user.count({ where: { role: 'ADMIN', deletedAt: null } });
+    // Only a SUPERADMIN may change a SUPERADMIN's role.
+    if (target.role === 'SUPERADMIN' && req.user.role !== 'SUPERADMIN') {
+      return res.status(403).json({ error: 'ONLY_SUPERADMIN' });
+    }
+    // Never leave the system with no admin-tier account.
+    if ((target.role === 'ADMIN' || target.role === 'SUPERADMIN') && role !== 'ADMIN') {
+      const adminCount = await prisma.user.count({
+        where: { role: { in: ['ADMIN', 'SUPERADMIN'] }, deletedAt: null },
+      });
       if (adminCount <= 1) return res.status(409).json({ error: 'LAST_ADMIN' });
     }
 
@@ -210,6 +217,65 @@ export async function resetUserPassword(req, res, next) {
         action:      AUDIT_ACTIONS.USER_PASSWORD_RESET,
         subjectType: 'User',
         subjectId:   id,
+        req,
+      });
+    });
+
+    return res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * DELETE /admin/users/:id — remove a staff account.
+ *
+ * Role rules:
+ *   - You can never delete yourself.
+ *   - A SUPERADMIN can never be deleted through this endpoint.
+ *   - Deleting an ADMIN requires SUPERADMIN; a regular ADMIN may only delete
+ *     CONTRIBUTOR / VIEWER accounts.
+ * Soft-deletes (sets deletedAt), frees the unique email for reuse, and revokes
+ * all sessions. The audit row records who removed whom.
+ */
+export async function deleteStaffUser(req, res, next) {
+  try {
+    const { id } = req.params;
+    if (id === req.user.id) return res.status(409).json({ error: 'CANNOT_DELETE_SELF' });
+
+    const target = await prisma.user.findUnique({
+      where:  { id },
+      select: { id: true, role: true, email: true, deletedAt: true },
+    });
+    if (!target || target.deletedAt) return res.status(404).json({ error: 'NOT_FOUND' });
+
+    if (target.role === 'SUPERADMIN') {
+      return res.status(403).json({ error: 'CANNOT_DELETE_SUPERADMIN' });
+    }
+    if (target.role === 'ADMIN' && req.user.role !== 'SUPERADMIN') {
+      return res.status(403).json({ error: 'ONLY_SUPERADMIN_CAN_DELETE_ADMIN' });
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id },
+        data: {
+          deletedAt:    new Date(),
+          email:        `deleted-${id.slice(0, 8)}@removed.local`, // free the unique email
+          passwordHash: null,
+        },
+      });
+      await tx.refreshToken.updateMany({
+        where: { userId: id, revokedAt: null },
+        data:  { revokedAt: new Date(), revokeReason: 'user_deleted' },
+      });
+      await writeAudit({
+        tx,
+        actorId:     req.user.id,
+        action:      AUDIT_ACTIONS.USER_DELETED,
+        subjectType: 'User',
+        subjectId:   id,
+        meta:        { role: target.role, email: target.email },
         req,
       });
     });

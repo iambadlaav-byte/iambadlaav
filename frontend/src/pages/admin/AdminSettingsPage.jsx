@@ -14,7 +14,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import {
   HeartPulse, Database, CreditCard, Activity, Tag, RefreshCw,
-  UserPlus, KeyRound, Users, ShieldCheck,
+  UserPlus, KeyRound, Users, ShieldCheck, Trash2,
 } from 'lucide-react';
 import { AdminPageHeader } from '../../components/admin/AdminPageHeader.jsx';
 import { StatusBadge } from '../../components/admin/StatusBadge.jsx';
@@ -27,6 +27,7 @@ import {
   createStaffUser,
   updateStaffUserRole,
   resetUserPassword,
+  deleteStaffUser,
   fetchLoginLogs,
 } from '../../api/admin.js';
 import { useAuth } from '../../context/AuthContext.jsx';
@@ -49,7 +50,7 @@ const fmtDateTime = (iso) => (iso ? new Date(iso).toLocaleString('en-IN') : '—
 
 export default function AdminSettingsPage() {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'ADMIN';
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPERADMIN';
   const [health, setHealth] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -188,6 +189,7 @@ export default function AdminSettingsPage() {
 // ── Team (Admin only) ──────────────────────────────────────────────────────────
 
 function TeamSection() {
+  const { user: me } = useAuth();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -210,6 +212,9 @@ function TeamSection() {
   }
   function handleRoleChanged(id, role) {
     setRows((prev) => prev.map((u) => (u.id === id ? { ...u, role } : u)));
+  }
+  function handleDeleted(id) {
+    setRows((prev) => prev.filter((u) => u.id !== id));
   }
 
   return (
@@ -244,7 +249,10 @@ function TeamSection() {
                 <TeamRow
                   key={u.id}
                   staff={u}
+                  currentRole={me?.role}
+                  currentUserId={me?.id}
                   onRoleChanged={handleRoleChanged}
+                  onDeleted={handleDeleted}
                 />
               ))}
             </tbody>
@@ -257,10 +265,34 @@ function TeamSection() {
   );
 }
 
-function TeamRow({ staff, onRoleChanged }) {
+function TeamRow({ staff, currentRole, currentUserId, onRoleChanged, onDeleted }) {
   const [roleError, setRoleError] = useState('');
   const [savingRole, setSavingRole] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
+  const [confirmDel, setConfirmDel] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [delError, setDelError] = useState('');
+
+  const isSuperActor = currentRole === 'SUPERADMIN';
+  const targetIsSuper = staff.role === 'SUPERADMIN';
+  // A regular ADMIN can delete CONTRIBUTOR/VIEWER; only a SUPERADMIN can delete an
+  // ADMIN. Nobody deletes a SUPERADMIN here, and nobody deletes themselves.
+  const canDelete =
+    staff.id !== currentUserId &&
+    !targetIsSuper &&
+    (staff.role !== 'ADMIN' || isSuperActor);
+
+  async function remove() {
+    setDelError('');
+    setDeleting(true);
+    try {
+      await deleteStaffUser(staff.id);
+      onDeleted(staff.id);
+    } catch (err) {
+      setDelError(err.response?.data?.error || 'Could not delete.');
+      setDeleting(false);
+    }
+  }
 
   async function changeRole(nextRole) {
     if (nextRole === staff.role) return;
@@ -289,29 +321,53 @@ function TeamRow({ staff, onRoleChanged }) {
         <Td className="text-muted">{staff.email}</Td>
         <Td>
           <div className="flex flex-col gap-1">
-            <select
-              value={staff.role}
-              disabled={savingRole}
-              onChange={(e) => changeRole(e.target.value)}
-              className="font-mono text-[11px] uppercase tracking-widest bg-cream border border-muted/40 rounded px-2 py-1 text-charcoal focus:border-teal focus:outline focus:outline-2 focus:outline-teal focus:outline-offset-2 disabled:opacity-50"
-              aria-label={`Role for ${staff.email}`}
-            >
-              {ROLES.map((r) => (
-                <option key={r} value={r}>{r}</option>
-              ))}
-            </select>
+            {targetIsSuper ? (
+              <span className="font-mono text-[11px] uppercase tracking-widest text-ochre">SUPERADMIN</span>
+            ) : (
+              <select
+                value={staff.role}
+                disabled={savingRole}
+                onChange={(e) => changeRole(e.target.value)}
+                className="font-mono text-[11px] uppercase tracking-widest bg-cream border border-muted/40 rounded px-2 py-1 text-charcoal focus:border-teal focus:outline focus:outline-2 focus:outline-teal focus:outline-offset-2 disabled:opacity-50"
+                aria-label={`Role for ${staff.email}`}
+              >
+                {ROLES.map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+            )}
             {roleError && <span className="text-danger text-xs" role="alert">{roleError}</span>}
           </div>
         </Td>
         <Td className="text-muted text-xs whitespace-nowrap">{fmtDateTime(staff.lastLoginAt)}</Td>
         <Td className="text-right">
-          <button
-            type="button"
-            onClick={() => setResetOpen((v) => !v)}
-            className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-mono uppercase tracking-widest text-teal hover:bg-teal/10 transition-colors"
-          >
-            <KeyRound size={12} /> Reset password
-          </button>
+          <div className="inline-flex items-center gap-1 justify-end">
+            <button
+              type="button"
+              onClick={() => setResetOpen((v) => !v)}
+              className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-mono uppercase tracking-widest text-teal hover:bg-teal/10 transition-colors"
+            >
+              <KeyRound size={12} /> Reset password
+            </button>
+            {canDelete && (confirmDel ? (
+              <>
+                <button type="button" onClick={remove} disabled={deleting}
+                  className="px-2 py-1 rounded text-[11px] font-mono uppercase tracking-widest text-danger hover:bg-danger/10 transition-colors disabled:opacity-50">
+                  {deleting ? '…' : 'Confirm'}
+                </button>
+                <button type="button" onClick={() => setConfirmDel(false)} disabled={deleting}
+                  className="px-2 py-1 rounded text-[11px] font-mono uppercase tracking-widest text-muted hover:bg-muted/10 transition-colors">
+                  No
+                </button>
+              </>
+            ) : (
+              <button type="button" onClick={() => { setDelError(''); setConfirmDel(true); }}
+                className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-mono uppercase tracking-widest text-danger hover:bg-danger/10 transition-colors">
+                <Trash2 size={12} /> Delete
+              </button>
+            ))}
+          </div>
+          {delError && <span className="block text-danger text-xs mt-1" role="alert">{delError}</span>}
         </Td>
       </tr>
       {resetOpen && (

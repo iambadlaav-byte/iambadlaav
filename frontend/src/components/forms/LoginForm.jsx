@@ -140,7 +140,7 @@ function OtpTab() {
       const { data } = await apiClient.post('/auth/otp/verify', { email: submittedEmail, code });
       login(data.accessToken, data.user);
       const next = searchParams.get('next');
-      const fallback = data.user?.role === 'ADMIN' ? '/admin/dashboard' : '/account/dashboard';
+      const fallback = (data.user?.role === 'ADMIN' || data.user?.role === 'SUPERADMIN') ? '/admin/dashboard' : '/account/dashboard';
       navigate(next && next.startsWith('/') ? next : fallback, { replace: true });
     } catch (err) {
       const status = err.response?.status;
@@ -251,7 +251,7 @@ function PasswordTab() {
       const { data } = await apiClient.post('/auth/login', { email, password });
       login(data.accessToken, data.user);
       const next = searchParams.get('next');
-      const fallback = data.user?.role === 'ADMIN' ? '/admin/dashboard' : '/account/dashboard';
+      const fallback = (data.user?.role === 'ADMIN' || data.user?.role === 'SUPERADMIN') ? '/admin/dashboard' : '/account/dashboard';
       navigate(next && next.startsWith('/') ? next : fallback, { replace: true });
     } catch (err) {
       const status = err.response?.status;

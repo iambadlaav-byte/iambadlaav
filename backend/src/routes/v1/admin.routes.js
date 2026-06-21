@@ -56,6 +56,7 @@ import {
   createStaffUser,
   updateStaffUserRole,
   resetUserPassword,
+  deleteStaffUser,
 } from '../../controllers/admin.users.controller.js';
 import {
   getReports,
@@ -231,6 +232,7 @@ router.get('/users',                    requireAdmin, listStaffUsers);
 router.post('/users',                   requireAdmin, validate(staffUserCreateSchema), createStaffUser);
 router.patch('/users/:id/role',         requireAdmin, validate(staffRoleUpdateSchema), updateStaffUserRole);
 router.post('/users/:id/reset-password', requireAdmin, validate(adminPasswordResetSchema), resetUserPassword);
+router.delete('/users/:id',             requireAdmin, deleteStaffUser);
 router.post('/users/:id/anonymize',     requireAdmin, validate(anonymizeSchema), anonymizeUser);
 
 export default router;

@@ -67,6 +67,7 @@ export const AUDIT_ACTIONS = Object.freeze({
   USER_ROLE_CHANGED:        'user.role_changed',
   USER_PASSWORD_RESET:      'user.password_reset',
   USER_PASSWORD_CHANGED:    'user.password_changed',
+  USER_DELETED:             'user.deleted',
 
   // Auth
   ADMIN_LOGIN_SUCCESS:      'admin.login.success',

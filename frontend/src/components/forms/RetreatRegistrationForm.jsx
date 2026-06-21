@@ -323,7 +323,7 @@ export function RetreatRegistrationForm({ program = 'BADLAAV', programLabel = 'T
                   {localErrors.healthDetails && <p className="text-danger text-xs mt-1">{localErrors.healthDetails}</p>}
                 </div>
               )}
-              <ChoiceField question="If December 2026 was a massive success, your biggest achievement would be…"
+              <ChoiceField question={`If December ${new Date().getFullYear()} was a massive success, your biggest achievement would be…`}
                 options={SUCCESS_OPTIONS} value={answers.success} onChange={(v) => set('success', v)} required error={localErrors.success} />
               <ChoiceField question="What is your deepest hunger right now?" options={HUNGER_OPTIONS}
                 value={answers.hunger} onChange={(v) => set('hunger', v)} required columns={2} error={localErrors.hunger} />

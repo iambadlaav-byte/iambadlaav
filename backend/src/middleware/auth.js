@@ -64,7 +64,7 @@ export function requireAuth(req, res, next) {
  * Returns 403 if req.user.role !== 'ADMIN'.
  */
 export function requireAdmin(req, res, next) {
-  if (req.user?.role !== 'ADMIN') {
+  if (!isAdminTier(req.user)) {
     return res.status(403).json({ error: 'FORBIDDEN' });
   }
   next();
@@ -75,26 +75,34 @@ export function requireAdmin(req, res, next) {
 // CONTRIBUTOR = ops (registrations/enquiries/volunteers/stories/gallery) but NO
 // payment amounts/revenue, NO batch creation, NO user management;
 // VIEWER = read-only, NO financials.
-export const STAFF_ROLES = ['ADMIN', 'CONTRIBUTOR', 'VIEWER'];
+export const STAFF_ROLES = ['SUPERADMIN', 'ADMIN', 'CONTRIBUTOR', 'VIEWER'];
+
+// SUPERADMIN is a superset of ADMIN (everything ADMIN can do, plus deleting ADMINs).
+export function isAdminTier(user) {
+  return user?.role === 'ADMIN' || user?.role === 'SUPERADMIN';
+}
+export function isSuperAdmin(user) {
+  return user?.role === 'SUPERADMIN';
+}
 
 export function isStaff(user) {
   return Boolean(user) && STAFF_ROLES.includes(user.role);
 }
 export function canSeeFinancials(user) {
-  return user?.role === 'ADMIN';
+  return isAdminTier(user);
 }
-/** Contact PII (email / phone / address) — Admin + Contributor only; hidden from Viewer. */
+/** Contact PII (email / phone / address) — Admin tier + Contributor; hidden from Viewer. */
 export function canSeeContact(user) {
-  return user?.role === 'ADMIN' || user?.role === 'CONTRIBUTOR';
+  return isAdminTier(user) || user?.role === 'CONTRIBUTOR';
 }
 export function canEdit(user) {
-  return user?.role === 'ADMIN' || user?.role === 'CONTRIBUTOR';
+  return isAdminTier(user) || user?.role === 'CONTRIBUTOR';
 }
 export function canManageBatches(user) {
-  return user?.role === 'ADMIN';
+  return isAdminTier(user);
 }
 export function canManageUsers(user) {
-  return user?.role === 'ADMIN';
+  return isAdminTier(user);
 }
 
 /** requireStaff — any staff tier (read access to the admin panel). */
