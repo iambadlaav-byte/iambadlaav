@@ -14,6 +14,8 @@ import { logger } from '../lib/logger.js';
 import { sendEmail } from '../services/email.service.js';
 import { sendSms, sendWhatsApp } from '../services/notification.service.js';
 import { writeAudit, AUDIT_ACTIONS } from '../services/audit.service.js';
+import { buildVolunteersCsv, streamCsv } from '../services/csvExport.service.js';
+import { canSeeContact } from '../middleware/auth.js';
 
 const VOLUNTEER_USER_SELECT = { id: true, name: true, email: true, phone: true, city: true };
 
@@ -149,6 +151,75 @@ export async function updateVolunteerStatus(req, res, next) {
 
     return res.json({ volunteer: updated });
   } catch (err) {
+    next(err);
+  }
+}
+
+// ── exportVolunteersCsv ────────────────────────────────────────────────────────
+// Streams a CSV honouring the same status/batch filters as the list endpoint.
+// Contact columns (email / phone) drop for non-contact-eligible staff.
+
+export async function exportVolunteersCsv(req, res, next) {
+  try {
+    const { status, batch } = req.query;
+
+    const where = {};
+    if (status) where.status = status;
+    if (batch)  where.batchAttended = { contains: batch, mode: 'insensitive' };
+
+    const volunteers = await prisma.volunteer.findMany({
+      where,
+      include: { user: { select: VOLUNTEER_USER_SELECT } },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const { columns, rows } = buildVolunteersCsv(volunteers, { showContact: canSeeContact(req.user) });
+
+    await writeAudit({
+      actorId:     req.user.id,
+      action:      AUDIT_ACTIONS.VOLUNTEERS_EXPORTED,
+      subjectType: 'Export',
+      subjectId:   null,
+      meta:        { count: rows.length },
+      req,
+    });
+
+    streamCsv(res, { filename: 'volunteers.csv', columns, rows });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ── deleteVolunteer ────────────────────────────────────────────────────────────
+// Admin-tier HARD delete. Audit row keeps a loose subjectId ref.
+
+export async function deleteVolunteer(req, res, next) {
+  try {
+    const { id } = req.params;
+
+    await prisma.$transaction(async (tx) => {
+      const current = await tx.volunteer.findUnique({
+        where:  { id },
+        select: { id: true, userId: true, batchAttended: true },
+      });
+      if (!current) throw Object.assign(new Error('NOT_FOUND'), { statusCode: 404 });
+
+      await tx.volunteer.delete({ where: { id } });
+
+      await writeAudit({
+        tx,
+        actorId:     req.user.id,
+        action:      AUDIT_ACTIONS.VOLUNTEER_DELETED,
+        subjectType: 'Volunteer',
+        subjectId:   id,
+        meta:        { userId: current.userId, batchAttended: current.batchAttended },
+        req,
+      });
+    });
+
+    return res.json({ ok: true });
+  } catch (err) {
+    if (err.statusCode === 404) return res.status(404).json({ error: 'NOT_FOUND' });
     next(err);
   }
 }

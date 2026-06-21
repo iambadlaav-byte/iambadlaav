@@ -80,10 +80,10 @@ function computeDiscount(coupon, amount) {
  * Validate a coupon code against a program + baseline amount.
  * Returns same shape on valid and invalid paths (timing-oracle mitigation).
  *
- * @param {{ code: string, program: string, amount: number }} opts
+ * @param {{ code: string, program: string, amount: number, batchId?: string }} opts
  * @returns {Promise<{ valid: boolean, reason?: string, discountAmount: number, finalAmount: number }>}
  */
-export async function validateCoupon({ code, program, amount }) {
+export async function validateCoupon({ code, program, amount, batchId }) {
   try {
     const coupon = await prisma.coupon.findFirst({
       where: { code, active: true },
@@ -104,6 +104,15 @@ export async function validateCoupon({ code, program, amount }) {
     if (
       coupon.applicablePrograms.length > 0 &&
       !coupon.applicablePrograms.includes(program)
+    ) {
+      return { valid: false, reason: 'NOT_APPLICABLE', discountAmount: 0, finalAmount: amount };
+    }
+
+    // Per-batch scope: empty array = any batch. Otherwise the registration's
+    // batchId must be in the list (mirrors the applicablePrograms check above).
+    if (
+      coupon.applicableBatches.length > 0 &&
+      (!batchId || !coupon.applicableBatches.includes(batchId))
     ) {
       return { valid: false, reason: 'NOT_APPLICABLE', discountAmount: 0, finalAmount: amount };
     }
@@ -134,12 +143,12 @@ export async function validateCoupon({ code, program, amount }) {
  * This function does NOT call prisma.$transaction — the CALLER must wrap it in
  * prisma.$transaction({ isolationLevel: 'Serializable' }).
  *
- * @param {{ tx: object, code: string, program: string, amount: number }} opts
+ * @param {{ tx: object, code: string, program: string, amount: number, batchId?: string }} opts
  * @returns {Promise<{ discountAmount: number, finalAmount: number }>}
  * @throws {CouponInvalidError} if coupon not found/expired/exhausted/not applicable
  * @throws {CouponConflictError} if optimistic-concurrency guard fires (concurrent redemption)
  */
-export async function applyCouponInTx({ tx, code, program, amount }) {
+export async function applyCouponInTx({ tx, code, program, amount, batchId }) {
   const coupon = await tx.coupon.findFirst({
     where: { code, active: true },
   });
@@ -159,6 +168,14 @@ export async function applyCouponInTx({ tx, code, program, amount }) {
   if (
     coupon.applicablePrograms.length > 0 &&
     !coupon.applicablePrograms.includes(program)
+  ) {
+    throw new CouponInvalidError('NOT_APPLICABLE');
+  }
+
+  // Per-batch scope: empty array = any batch (mirrors the program check above).
+  if (
+    coupon.applicableBatches.length > 0 &&
+    (!batchId || !coupon.applicableBatches.includes(batchId))
   ) {
     throw new CouponInvalidError('NOT_APPLICABLE');
   }

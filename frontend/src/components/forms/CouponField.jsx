@@ -8,6 +8,7 @@
  * Props:
  *   program  — enum value for the coupon's applicability check ('BADLAAV', …).
  *   amount   — baseline price (₹, integer) the discount is computed against.
+ *   batchId  — selected batch (cuid) for per-batch coupon scoping; optional.
  *   applied  — current applied result ({ code, discountAmount, finalAmount }) or null.
  *   onApply  — called with { code, discountAmount, finalAmount } on a valid code.
  *   onClear  — called when an applied code is removed.
@@ -24,7 +25,7 @@ const REASON_COPY = {
   NOT_APPLICABLE: "That code isn't valid for this programme.",
 };
 
-export function CouponField({ program, amount, applied, onApply, onClear, disabled }) {
+export function CouponField({ program, amount, batchId, applied, onApply, onClear, disabled }) {
   const [code, setCode] = useState('');
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState('');
@@ -39,6 +40,8 @@ export function CouponField({ program, amount, applied, onApply, onClear, disabl
         code: trimmed,
         program,
         amount: Math.round(amount),
+        // Only send batchId when present — the validate schema treats it as optional.
+        ...(batchId ? { batchId } : {}),
       });
       if (data.valid) {
         onApply({ code: trimmed, discountAmount: data.discountAmount, finalAmount: data.finalAmount });

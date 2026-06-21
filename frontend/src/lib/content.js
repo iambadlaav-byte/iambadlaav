@@ -147,6 +147,22 @@ export const PLANS = [
   },
 ];
 
+// Pricing for The Badlaav Experience — a single, accessible entry point.
+// Same plan shape as PLANS so it renders through <Pricing3Plans />.
+export const EXPERIENCE_PLANS = [
+  {
+    name: 'The Badlaav Experience',
+    price: 999,
+    features: [
+      'Full-day guided experience',
+      'Interactive learning sessions',
+      'Practical frameworks and tools',
+      'Action planning and goal setting',
+    ],
+    cta: { label: 'Register', href: '/register?program=badlaav-experience' },
+  },
+];
+
 // ── The Badlaav Experience (the lighter, second programme) ──
 // Client-supplied copy, lightly formatted. Program facts (dates, fee, seats,
 // venue, facilitator, deadline) render dynamically from the selected batch.

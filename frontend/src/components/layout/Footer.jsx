@@ -7,19 +7,24 @@ import { Instagram, Mail, MapPin, Phone } from 'lucide-react';
 import { CONTACT_EMAIL, WHATSAPP_NUMBER, CONTACT_PHONE, MAP_LINK } from '../../lib/constants.js';
 import { SITE, SOCIAL } from '../../lib/content.js';
 
-const SITE_LINKS_LEFT = [
+// Main site navigation — kept distinct from the legal column below.
+const EXPLORE_LINKS = [
   { label: 'Home', href: '/' },
-  { label: 'The Retreat', href: '/retreat' },
-  { label: 'The Badlaav Experience', href: '/badlaav-experience' },
   { label: 'Pricing', href: '/pricing' },
   { label: 'Gallery', href: '/gallery' },
   { label: 'Stories', href: '/stories' },
+  { label: 'About', href: '/about' },
+  { label: 'Volunteer', href: '/volunteer' },
+  { label: 'Contact', href: '/contact' },
 ];
 
-const SITE_LINKS_RIGHT = [
-  { label: 'About', href: '/about' },
-  { label: 'Contact', href: '/contact' },
-  { label: 'Volunteer', href: '/volunteer' },
+const PROGRAMME_LINKS = [
+  { label: 'The Retreat', href: '/retreat' },
+  { label: 'The Badlaav Experience', href: '/badlaav-experience' },
+];
+
+// Legal links live in their own column — never crammed in with the nav.
+const LEGAL_LINKS = [
   { label: 'Privacy', href: '/privacy' },
   { label: 'Terms', href: '/terms' },
   { label: 'Refund Policy', href: '/refund' },
@@ -27,22 +32,27 @@ const SITE_LINKS_RIGHT = [
   { label: 'Code of Conduct', href: '/code-of-conduct' },
 ];
 
+const linkClass = 'font-sans text-sm text-charcoal/80 hover:text-teal transition-colors';
+
 export default function Footer() {
   return (
     <footer className="bg-cream border-t border-soft">
-      <div className="max-w-default mx-auto px-4 py-16 grid grid-cols-1 md:grid-cols-3 gap-10">
+      <div className="max-w-default mx-auto px-4 py-16 grid grid-cols-2 gap-x-8 gap-y-12 md:grid-cols-4 lg:grid-cols-12 lg:gap-x-10">
 
-        {/* Column 1 — Contact */}
-        <div>
+        {/* Brand + contact — wider lead column */}
+        <div className="col-span-2 md:col-span-4 lg:col-span-4">
           <img
             src="/images/badlaav-logo.png"
             alt="Badlaav"
-            className="h-10 w-auto"
+            className="h-14 w-auto"
           />
-          <p className="font-mono text-xs uppercase tracking-widest text-muted mt-3 mb-4">
+          <p className="font-mono text-xs uppercase tracking-widest text-muted mt-4 mb-4">
             {SITE.parent}
           </p>
-          <div className="space-y-3 text-sm text-charcoal/80 font-sans">
+          <p className="font-display text-lg text-ink mb-6">
+            {SITE.tagline}
+          </p>
+          <address className="not-italic space-y-3 text-sm text-charcoal/80 font-sans">
             <a
               href={MAP_LINK}
               target="_blank"
@@ -70,48 +80,8 @@ export default function Footer() {
                 {CONTACT_PHONE}
               </a>
             </div>
-            <div>
-              <a
-                href={`https://wa.me/${WHATSAPP_NUMBER.replace(/\D/g, '')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-teal hover:text-teal-light text-sm transition-colors"
-              >
-                WhatsApp us
-              </a>
-            </div>
-          </div>
-        </div>
-
-        {/* Column 2 — Site map */}
-        <div>
-          <h3 className="font-mono text-xs uppercase tracking-widest text-muted mb-4">Explore</h3>
-          <div className="grid grid-cols-2 gap-x-6">
-            <ul className="space-y-2">
-              {SITE_LINKS_LEFT.map((link) => (
-                <li key={link.href}>
-                  <Link to={link.href} className="font-sans text-sm text-charcoal/80 hover:text-teal transition-colors">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            <ul className="space-y-2">
-              {SITE_LINKS_RIGHT.map((link) => (
-                <li key={link.href}>
-                  <Link to={link.href} className="font-sans text-sm text-charcoal/80 hover:text-teal transition-colors">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        {/* Column 3 — Social */}
-        <div>
-          <h3 className="font-mono text-xs uppercase tracking-widest text-muted mb-4">Follow along</h3>
-          <div className="flex gap-4 mb-4">
+          </address>
+          <div className="flex items-center gap-4 mt-5">
             <a
               href={SOCIAL.instagram}
               target="_blank"
@@ -121,13 +91,58 @@ export default function Footer() {
             >
               <Instagram size={20} />
             </a>
+            <a
+              href={`https://wa.me/${WHATSAPP_NUMBER.replace(/\D/g, '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={linkClass}
+            >
+              WhatsApp us
+            </a>
           </div>
-          <p className="font-sans text-xs text-muted leading-relaxed">
-            Trip नाही — Turning Point.
-            <br />
-            Three days in Ambajogai.
-          </p>
         </div>
+
+        {/* Explore */}
+        <nav aria-label="Footer navigation" className="lg:col-span-3">
+          <h3 className="font-mono text-xs uppercase tracking-widest text-muted mb-4">Explore</h3>
+          <ul className="space-y-2.5">
+            {EXPLORE_LINKS.map((link) => (
+              <li key={link.href}>
+                <Link to={link.href} className={linkClass}>
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        {/* Programmes */}
+        <nav aria-label="Programmes" className="lg:col-span-2">
+          <h3 className="font-mono text-xs uppercase tracking-widest text-muted mb-4">Programmes</h3>
+          <ul className="space-y-2.5">
+            {PROGRAMME_LINKS.map((link) => (
+              <li key={link.href}>
+                <Link to={link.href} className={linkClass}>
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        {/* Legal — its own grouped column */}
+        <nav aria-label="Legal" className="lg:col-span-3">
+          <h3 className="font-mono text-xs uppercase tracking-widest text-muted mb-4">Legal</h3>
+          <ul className="space-y-2.5">
+            {LEGAL_LINKS.map((link) => (
+              <li key={link.href}>
+                <Link to={link.href} className={linkClass}>
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
       </div>
 
       {/* Bottom strip */}

@@ -158,6 +158,7 @@ export function ExperienceRegistrationForm() {
           <CouponField
             program={PROGRAM}
             amount={price}
+            batchId={batchId}
             applied={couponApplied}
             disabled={price == null}
             onApply={(r) => { setValue('couponCode', r.code); setCouponApplied(r); }}

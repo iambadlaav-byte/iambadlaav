@@ -9,7 +9,7 @@ import { Pricing3Plans } from '../../components/sections/Pricing3Plans.jsx';
 import { Inclusions } from '../../components/sections/Inclusions.jsx';
 import { CtaBand } from '../../components/sections/CtaBand.jsx';
 import { FadeIn } from '../../components/animations/FadeIn.jsx';
-import { PLANS } from '../../lib/content.js';
+import { PLANS, EXPERIENCE_PLANS } from '../../lib/content.js';
 
 export default function PricingPage() {
   const { pathname } = useLocation();
@@ -34,7 +34,11 @@ export default function PricingPage() {
         primaryCta={{ label: 'Register', href: '/register?program=badlaav' }}
       />
 
-      <Pricing3Plans program="Badlaav" plans={PLANS} />
+      <Pricing3Plans program="Retreat" plans={PLANS} />
+
+      {/* The Badlaav Experience — the lighter, single-price programme. */}
+      <Pricing3Plans program="The Badlaav Experience" plans={EXPERIENCE_PLANS} />
+
       <Inclusions />
 
       {/* Refund policy summary */}

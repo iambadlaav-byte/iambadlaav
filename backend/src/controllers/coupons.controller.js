@@ -16,8 +16,8 @@ import { validateCoupon } from '../services/coupon.service.js';
 
 export async function validateCouponEndpoint(req, res, next) {
   try {
-    const { code, program, amount } = req.body;
-    const result = await validateCoupon({ code, program, amount });
+    const { code, program, amount, batchId } = req.body;
+    const result = await validateCoupon({ code, program, amount, batchId });
     return res.status(200).json(result);
   } catch (err) {
     next(err);

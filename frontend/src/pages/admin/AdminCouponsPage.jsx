@@ -15,7 +15,7 @@ import { Helmet } from 'react-helmet-async';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { couponCreateSchema } from '@dnyanpith/validators';
-import { Plus, Power } from 'lucide-react';
+import { Plus, Power, Trash2 } from 'lucide-react';
 import { AdminPageHeader } from '../../components/admin/AdminPageHeader.jsx';
 import { DataTable } from '../../components/admin/DataTable.jsx';
 import { Pagination, usePaginator } from '../../components/admin/Pagination.jsx';
@@ -31,6 +31,8 @@ import {
   listCoupons,
   createCoupon,
   deactivateCoupon,
+  deleteCoupon,
+  listBatches,
 } from '../../api/admin.js';
 import { cn } from '../../lib/cn.js';
 import { programLabel } from '../../lib/constants.js';
@@ -57,7 +59,17 @@ export default function AdminCouponsPage() {
 
   // Create modal is open whenever the user clicks "New coupon" OR lands on /admin/coupons/new.
   const [createOpen, setCreateOpen] = useState(location.pathname.endsWith('/new'));
-  const [confirm, setConfirm]       = useState(null); // { id, code }
+  const [confirm, setConfirm]       = useState(null); // { id, code } — deactivate
+  const [confirmDelete, setConfirmDelete] = useState(null); // { id, code } — hard delete
+
+  // Batches drive both the create-form scoping and the table's batch labels.
+  const [batches, setBatches] = useState([]);
+  useEffect(() => {
+    listBatches({ limit: 100 })
+      .then((data) => setBatches(data.rows ?? []))
+      .catch(() => setBatches([]));
+  }, []);
+  const batchName = (id) => batches.find((b) => b.id === id)?.name ?? id;
 
   useEffect(() => { paginator.reset(); }, [filter]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -99,6 +111,17 @@ export default function AdminCouponsPage() {
     }
   }
 
+  async function handleDelete() {
+    if (!confirmDelete) return;
+    try {
+      await deleteCoupon(confirmDelete.id);
+      toast('Coupon deleted.', 'success');
+      setRows((rs) => rs.filter((r) => r.id !== confirmDelete.id));
+    } catch (err) {
+      toast(err.response?.data?.error || 'Delete failed.', 'danger');
+    }
+  }
+
   const columns = [
     {
       key: 'code',
@@ -127,6 +150,22 @@ export default function AdminCouponsPage() {
           ))}
         </div>
       ),
+    },
+    {
+      key: 'batches',
+      header: 'Batches',
+      render: (c) =>
+        c.applicableBatches?.length ? (
+          <div className="flex flex-wrap gap-1 max-w-[14rem]">
+            {c.applicableBatches.map((b) => (
+              <span key={b} className="font-mono text-[10px] text-muted bg-soft px-1.5 py-0.5 rounded truncate" title={batchName(b)}>
+                {batchName(b)}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <span className="font-mono text-[10px] uppercase tracking-widest text-muted">All batches</span>
+        ),
     },
     {
       key: 'uses',
@@ -164,18 +203,27 @@ export default function AdminCouponsPage() {
       header: '',
       align: 'right',
       render: (c) => (
-        c.active ? (
+        <div className="flex items-center justify-end gap-1">
+          {c.active && (
+            <button
+              type="button"
+              onClick={() => setConfirm({ id: c.id, code: c.code })}
+              className="px-2 py-1 rounded text-[11px] font-mono uppercase tracking-widest text-danger hover:bg-danger/10 transition-colors"
+              title="Deactivate coupon"
+            >
+              <span className="inline-flex items-center gap-1"><Power size={12} /> Deactivate</span>
+            </button>
+          )}
           <button
             type="button"
-            onClick={() => setConfirm({ id: c.id, code: c.code })}
-            className="px-2 py-1 rounded text-[11px] font-mono uppercase tracking-widest text-danger hover:bg-danger/10 transition-colors"
-            title="Deactivate coupon"
+            onClick={() => setConfirmDelete({ id: c.id, code: c.code })}
+            className="p-1.5 rounded text-danger hover:bg-danger/10 transition-colors"
+            aria-label="Delete coupon"
+            title="Delete coupon"
           >
-            <span className="inline-flex items-center gap-1"><Power size={12} /> Deactivate</span>
+            <Trash2 size={12} />
           </button>
-        ) : (
-          <span className="text-[11px] font-mono uppercase tracking-widest text-muted">—</span>
-        )
+        </div>
       ),
     },
   ];
@@ -236,6 +284,7 @@ export default function AdminCouponsPage() {
         open={createOpen}
         onOpenChange={(v) => v ? openCreate() : closeCreate()}
         onCreated={() => { closeCreate(); load(); toast('Coupon created.', 'success'); }}
+        batches={batches}
       />
 
       <ConfirmDialog
@@ -247,13 +296,23 @@ export default function AdminCouponsPage() {
         variant="danger"
         onConfirm={() => handleDeactivate(confirm)}
       />
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        onOpenChange={(v) => !v && setConfirmDelete(null)}
+        title={`Delete “${confirmDelete?.code}”?`}
+        message="This permanently removes the coupon. Unlike deactivate, the code becomes reusable for a new coupon. The deletion is recorded in the audit log."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={handleDelete}
+      />
     </>
   );
 }
 
 // ── Create modal ──────────────────────────────────────────────────────────────
 
-function CreateCouponModal({ open, onOpenChange, onCreated }) {
+function CreateCouponModal({ open, onOpenChange, onCreated, batches = [] }) {
   const [discountType, setDiscountType] = useState('pct'); // 'pct' | 'amount'
   const [serverError, setServerError] = useState('');
 
@@ -271,6 +330,7 @@ function CreateCouponModal({ open, onOpenChange, onCreated }) {
       discountPct: 10,
       discountAmount: null,
       applicablePrograms: [],
+      applicableBatches: [],
       maxUses: null,
       validUntil: null,
       active: true,
@@ -278,6 +338,7 @@ function CreateCouponModal({ open, onOpenChange, onCreated }) {
   });
 
   const selectedPrograms = watch('applicablePrograms') ?? [];
+  const selectedBatches  = watch('applicableBatches') ?? [];
 
   useEffect(() => {
     if (!open) {
@@ -299,6 +360,16 @@ function CreateCouponModal({ open, onOpenChange, onCreated }) {
       selectedPrograms.includes(p)
         ? selectedPrograms.filter((x) => x !== p)
         : [...selectedPrograms, p],
+      { shouldValidate: false }
+    );
+  }
+
+  function toggleBatch(id) {
+    setValue(
+      'applicableBatches',
+      selectedBatches.includes(id)
+        ? selectedBatches.filter((x) => x !== id)
+        : [...selectedBatches, id],
       { shouldValidate: false }
     );
   }
@@ -412,6 +483,28 @@ function CreateCouponModal({ open, onOpenChange, onCreated }) {
               />
             ))}
           </div>
+        </div>
+
+        {/* Applicable batches (optional per-batch scoping) */}
+        <div>
+          <label className="font-mono text-[10px] uppercase tracking-widest text-muted mb-2 block">
+            Applicable batches
+          </label>
+          <p className="text-xs text-muted mb-2">Leave empty to allow all batches. Selecting batches restricts the code to those batches only.</p>
+          {batches.length > 0 ? (
+            <div className="flex flex-col gap-2 max-h-44 overflow-y-auto pr-1">
+              {batches.map((b) => (
+                <Checkbox
+                  key={b.id}
+                  label={`${b.name}${b.program ? ` · ${programLabel(b.program)}` : ''}`}
+                  checked={selectedBatches.includes(b.id)}
+                  onCheckedChange={() => toggleBatch(b.id)}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted">No batches available yet.</p>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3">

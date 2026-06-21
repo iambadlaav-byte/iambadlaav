@@ -26,6 +26,15 @@ import {
 import { cn } from '../../lib/cn.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 
+// Friendly role labels + token-based pill colors. Mirrors StatusBadge styling
+// (rounded, bordered, font-mono uppercase). Display only — no permission logic.
+const ROLE_BADGE = {
+  SUPERADMIN:  { label: 'Super Admin', classes: 'bg-ochre/20 text-ochre border-ochre/40' },
+  ADMIN:       { label: 'Admin',       classes: 'bg-gold/15 text-gold border-gold/30' },
+  CONTRIBUTOR: { label: 'Contributor', classes: 'bg-teal/15 text-teal border-teal/30' },
+  VIEWER:      { label: 'Viewer',      classes: 'bg-pearl/10 text-pearl/70 border-pearl/20' },
+};
+
 // adminOnly items (financials, user management) are hidden from Contributor/Viewer.
 export const ADMIN_NAV_ITEMS = [
   { to: '/admin/dashboard',     label: 'Dashboard',     icon: LayoutDashboard },
@@ -45,6 +54,7 @@ export function AdminSidebar({ onNavigate }) {
   const { user, logout } = useAuth();
   const isAdminTier = user?.role === 'ADMIN' || user?.role === 'SUPERADMIN';
   const navItems = ADMIN_NAV_ITEMS.filter((item) => !item.adminOnly || isAdminTier);
+  const roleBadge = user?.role ? ROLE_BADGE[user.role] : null;
 
   return (
     <aside className="h-full flex flex-col bg-ink text-pearl">
@@ -87,9 +97,21 @@ export function AdminSidebar({ onNavigate }) {
         {user && (
           <div className="px-2 mb-2">
             <p className="text-sm font-sans text-pearl truncate">{user.name || user.email}</p>
-            <p className="text-[11px] font-mono uppercase tracking-widest text-pearl/50">
-              {user.role}
-            </p>
+            {roleBadge ? (
+              <span
+                className={cn(
+                  'inline-flex items-center mt-1.5 px-2 py-0.5 rounded-full border',
+                  'font-mono text-[10px] uppercase tracking-widest font-medium',
+                  roleBadge.classes,
+                )}
+              >
+                {roleBadge.label}
+              </span>
+            ) : (
+              <p className="text-[11px] font-mono uppercase tracking-widest text-pearl/50 mt-1">
+                {user.role}
+              </p>
+            )}
           </div>
         )}
         <button

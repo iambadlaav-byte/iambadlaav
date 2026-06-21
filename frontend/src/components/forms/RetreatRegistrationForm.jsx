@@ -440,6 +440,7 @@ export function RetreatRegistrationForm({ program = 'BADLAAV', programLabel = 'T
                   <CouponField
                     program={program}
                     amount={price}
+                    batchId={batchId}
                     applied={couponApplied}
                     disabled={price == null}
                     onApply={(r) => { setValue('couponCode', r.code); setCouponApplied(r); }}

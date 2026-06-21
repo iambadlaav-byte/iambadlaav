@@ -430,6 +430,9 @@ model Coupon {
   discountPct        Int?
   discountAmount     Decimal?
   applicablePrograms Program[]
+  // Optional per-batch scoping. Empty = applies to all batches (program-level only).
+  // String[] of Batch cuids — mirrors applicablePrograms but references Batch rows by id.
+  applicableBatches  String[]  @default([])
   maxUses            Int?
   currentUses        Int       @default(0)
   validUntil         DateTime?

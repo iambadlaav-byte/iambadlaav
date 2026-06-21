@@ -9,15 +9,22 @@ import { Link, NavLink } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { cn } from '../../lib/cn.js';
 import MobileNav from './MobileNav.jsx';
+import NavDropdown from './NavDropdown.jsx';
 
-const NAV_LINKS = [
+// The two programmes live under one "Programmes" dropdown to save top-bar space.
+const PROGRAMME_LINKS = [
   { label: 'The Retreat', href: '/retreat' },
   { label: 'The Badlaav Experience', href: '/badlaav-experience' },
-  { label: 'Pricing',     href: '/pricing' },
-  { label: 'About',       href: '/about' },
-  { label: 'Gallery',     href: '/gallery' },
-  { label: 'Volunteer',   href: '/volunteer' },
-  { label: 'Contact',     href: '/contact' },
+];
+
+const NAV_LINKS = [
+  { label: 'Programmes', dropdown: PROGRAMME_LINKS },
+  { label: 'Pricing',   href: '/pricing' },
+  { label: 'About',     href: '/about' },
+  { label: 'Gallery',   href: '/gallery' },
+  { label: 'Stories',   href: '/stories' },
+  { label: 'Volunteer', href: '/volunteer' },
+  { label: 'Contact',   href: '/contact' },
 ];
 
 export default function Header() {
@@ -33,28 +40,32 @@ export default function Header() {
             <img
               src="/images/badlaav-logo-white.png"
               alt="Badlaav"
-              className="h-9 w-auto"
+              className="h-12 sm:h-14 w-auto"
             />
           </Link>
 
           {/* Desktop navigation */}
           <nav className="hidden lg:flex items-center gap-6" aria-label="Main navigation">
-            {NAV_LINKS.map((link) => (
-              <NavLink
-                key={link.href}
-                to={link.href}
-                className={({ isActive }) =>
-                  cn(
-                    'font-sans text-sm transition-colors py-1 border-b-2',
-                    isActive
-                      ? 'text-gold border-gold'
-                      : 'text-pearl/80 hover:text-pearl border-transparent',
-                  )
-                }
-              >
-                {link.label}
-              </NavLink>
-            ))}
+            {NAV_LINKS.map((link) =>
+              link.dropdown ? (
+                <NavDropdown key={link.label} label={link.label} items={link.dropdown} />
+              ) : (
+                <NavLink
+                  key={link.href}
+                  to={link.href}
+                  className={({ isActive }) =>
+                    cn(
+                      'font-sans text-sm transition-colors py-1 border-b-2',
+                      isActive
+                        ? 'text-gold border-gold'
+                        : 'text-pearl/80 hover:text-pearl border-transparent',
+                    )
+                  }
+                >
+                  {link.label}
+                </NavLink>
+              ),
+            )}
           </nav>
 
           {/* CTA + hamburger */}

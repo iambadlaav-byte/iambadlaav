@@ -14,7 +14,8 @@ import { Download, RefreshCw } from 'lucide-react';
 import { AdminPageHeader } from '../../components/admin/AdminPageHeader.jsx';
 import { DataTable } from '../../components/admin/DataTable.jsx';
 import { Button } from '../../components/ui/Button.jsx';
-import { fetchReports, reportsCsvUrl } from '../../api/admin.js';
+import { useToast } from '../../components/ui/Toast.jsx';
+import { fetchReports, downloadCsv } from '../../api/admin.js';
 
 const GROUP_OPTIONS = [
   { value: 'program',  label: 'Programme' },
@@ -27,6 +28,7 @@ const GROUP_OPTIONS = [
 const fmtINR = (n) => `₹${Number(n ?? 0).toLocaleString('en-IN')}`;
 
 export default function AdminReportsPage() {
+  const { toast } = useToast();
   const [groupBy, setGroupBy] = useState('program');
   const [from, setFrom] = useState('');
   const [to, setTo]     = useState('');
@@ -36,12 +38,24 @@ export default function AdminReportsPage() {
   const [financialsVisible, setFinancialsVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(null);
+  const [exporting, setExporting] = useState(false);
 
   function buildParams() {
     const params = { groupBy };
     if (from) params.from = from;
     if (to)   params.to   = to;
     return params;
+  }
+
+  async function handleExport() {
+    setExporting(true);
+    try {
+      await downloadCsv('/admin/reports/export.csv', buildParams(), `report-${groupBy}.csv`);
+    } catch (err) {
+      toast(err.response?.data?.error || 'Export failed.', 'danger');
+    } finally {
+      setExporting(false);
+    }
   }
 
   async function load() {
@@ -83,14 +97,9 @@ export default function AdminReportsPage() {
         title="Reports"
         subtitle="Registration counts grouped by programme, batch, location, month, or status."
         actions={
-          <a
-            href={reportsCsvUrl(buildParams())}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-3 py-2 rounded text-sm font-sans bg-ink text-pearl hover:bg-ink/90 transition-colors"
-          >
+          <Button size="sm" onClick={handleExport} loading={exporting}>
             <Download size={14} /> Export CSV
-          </a>
+          </Button>
         }
       />
 

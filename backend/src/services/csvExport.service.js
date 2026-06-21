@@ -157,3 +157,116 @@ export function buildReconciliationCsv(registrations) {
 
   return { columns, rows };
 }
+
+// ── Enquiries export ──────────────────────────────────────────────────────────
+
+/**
+ * Build CSV payload for the enquiries inbox export.
+ * Contact columns (email / phone) are included only when `showContact` is true —
+ * matches the canSeeContact gating used by the JSON list endpoints.
+ *
+ * @param {Array} enquiries — Prisma Enquiry rows
+ * @param {{ showContact?: boolean }} [opts]
+ */
+export function buildEnquiriesCsv(enquiries, { showContact = true } = {}) {
+  const columns = [
+    'id',
+    'createdAt',
+    'type',
+    'name',
+    'organisation',
+    ...(showContact ? ['email', 'phone'] : []),
+    'message',
+    'status',
+    'adminNote',
+  ];
+
+  const rows = enquiries.map((e) => ({
+    id:           e.id,
+    createdAt:    e.createdAt,
+    type:         e.type,
+    name:         e.name ?? '',
+    organisation: e.organisation ?? '',
+    ...(showContact ? { email: e.email ?? '', phone: e.phone ?? '' } : {}),
+    message:      e.message ?? '',
+    status:       e.status,
+    adminNote:    e.adminNote ?? '',
+  }));
+
+  return { columns, rows };
+}
+
+// ── Volunteers export ─────────────────────────────────────────────────────────
+
+/**
+ * Build CSV payload for the volunteers export.
+ * Contact columns (email / phone) are included only when `showContact` is true.
+ *
+ * @param {Array} volunteers — Prisma Volunteer rows (with user included)
+ * @param {{ showContact?: boolean }} [opts]
+ */
+export function buildVolunteersCsv(volunteers, { showContact = true } = {}) {
+  const columns = [
+    'id',
+    'createdAt',
+    'name',
+    'city',
+    ...(showContact ? ['email', 'phone'] : []),
+    'batchAttended',
+    'skills',
+    'availability',
+    'canTravel',
+    'status',
+  ];
+
+  const rows = volunteers.map((v) => ({
+    id:            v.id,
+    createdAt:     v.createdAt,
+    name:          v.user?.name ?? '',
+    city:          v.user?.city ?? '',
+    ...(showContact ? { email: v.user?.email ?? '', phone: v.user?.phone ?? '' } : {}),
+    batchAttended: v.batchAttended ?? '',
+    skills:        (v.skills ?? []).join('; '),
+    availability:  (v.availability ?? []).join('; '),
+    canTravel:     v.canTravel ? 'Yes' : 'No',
+    status:        v.status,
+  }));
+
+  return { columns, rows };
+}
+
+// ── Invoices export ───────────────────────────────────────────────────────────
+
+/**
+ * Build CSV payload for the invoices export (paid + refunded registrations).
+ * Financial columns (amount) drop when `showFinancials` is false; contact column
+ * (email) drops when `showContact` is false — mirrors the RBAC gating elsewhere.
+ *
+ * @param {Array} registrations — Prisma Registration rows (with user included)
+ * @param {{ showFinancials?: boolean, showContact?: boolean }} [opts]
+ */
+export function buildInvoicesCsv(registrations, { showFinancials = true, showContact = true } = {}) {
+  const columns = [
+    'invoiceNumber',
+    'registrationId',
+    'createdAt',
+    'userName',
+    ...(showContact ? ['userEmail'] : []),
+    'program',
+    ...(showFinancials ? ['amount'] : []),
+    'paymentStatus',
+  ];
+
+  const rows = registrations.map((r) => ({
+    invoiceNumber:  r.invoiceNumber ?? '',
+    registrationId: r.id,
+    createdAt:      r.createdAt,
+    userName:       r.user?.name ?? '',
+    ...(showContact ? { userEmail: r.user?.email ?? '' } : {}),
+    program:        r.program,
+    ...(showFinancials ? { amount: Number(r.finalAmount) } : {}),
+    paymentStatus:  r.paymentStatus,
+  }));
+
+  return { columns, rows };
+}

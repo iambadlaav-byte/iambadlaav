@@ -130,6 +130,8 @@ export const couponCreateSchema = z.strictObject({
   discountPct:        z.coerce.number().int().min(1).max(100).optional().nullable(),
   discountAmount:     z.coerce.number().int().min(1).optional().nullable(),
   applicablePrograms: z.array(programEnum).max(4).optional().default([]),
+  // Optional per-batch scoping (Batch cuids). Empty = all batches.
+  applicableBatches:  z.array(z.string().trim().min(1).max(40)).max(50).optional().default([]),
   maxUses:            z.coerce.number().int().min(1).optional().nullable(),
   validUntil:         z.coerce.date().optional().nullable(),
   active:             z.boolean().optional().default(true),
@@ -143,6 +145,7 @@ export const couponUpdateSchema = z.strictObject({
   discountPct:        z.coerce.number().int().min(1).max(100).optional().nullable(),
   discountAmount:     z.coerce.number().int().min(1).optional().nullable(),
   applicablePrograms: z.array(programEnum).max(4).optional(),
+  applicableBatches:  z.array(z.string().trim().min(1).max(40)).max(50).optional(),
   maxUses:            z.coerce.number().int().min(1).optional().nullable(),
   validUntil:         z.coerce.date().optional().nullable(),
   active:             z.boolean().optional(),

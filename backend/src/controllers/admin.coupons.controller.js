@@ -22,6 +22,7 @@ import { writeAudit, AUDIT_ACTIONS } from '../services/audit.service.js';
 const COUPON_CREATED     = AUDIT_ACTIONS.COUPON_CREATED     ?? 'COUPON_CREATED';
 const COUPON_UPDATED     = AUDIT_ACTIONS.COUPON_UPDATED     ?? 'COUPON_UPDATED';
 const COUPON_DEACTIVATED = AUDIT_ACTIONS.COUPON_DEACTIVATED ?? 'COUPON_DEACTIVATED';
+const COUPON_DELETED     = AUDIT_ACTIONS.COUPON_DELETED     ?? 'coupon.deleted';
 
 // ── listCoupons ──────────────────────────────────────────────────────────────
 
@@ -77,6 +78,7 @@ export async function createCoupon(req, res, next) {
           discountPct:        req.body.discountPct ?? null,
           discountAmount:     req.body.discountAmount ?? null,
           applicablePrograms: req.body.applicablePrograms ?? [],
+          applicableBatches:  req.body.applicableBatches ?? [],
           maxUses:            req.body.maxUses ?? null,
           validUntil:         req.body.validUntil ?? null,
           active:             req.body.active ?? true,
@@ -147,6 +149,42 @@ export async function updateCoupon(req, res, next) {
         remainingUses:  result.maxUses != null ? Math.max(result.maxUses - result.currentUses, 0) : null,
       },
     });
+  } catch (err) {
+    if (err.statusCode === 404) return res.status(404).json({ error: 'Coupon not found.' });
+    next(err);
+  }
+}
+
+// ── deleteCoupon ─────────────────────────────────────────────────────────────
+// HARD delete (Editor tier: Admin/Contributor/Superadmin). Distinct from the
+// soft-deactivate PATCH — a deleted coupon's code can be reused for a new code.
+// Audit row keeps a loose subjectId ref so the deletion stays on the trail.
+
+export async function deleteCoupon(req, res, next) {
+  try {
+    const { id } = req.params;
+
+    await prisma.$transaction(async (tx) => {
+      const current = await tx.coupon.findUnique({
+        where:  { id },
+        select: { id: true, code: true, currentUses: true },
+      });
+      if (!current) throw Object.assign(new Error('NOT_FOUND'), { statusCode: 404 });
+
+      await tx.coupon.delete({ where: { id } });
+
+      await writeAudit({
+        tx,
+        actorId:     req.user.id,
+        action:      COUPON_DELETED,
+        subjectType: 'Coupon',
+        subjectId:   id,
+        meta:        { code: current.code, currentUses: current.currentUses },
+        req,
+      });
+    });
+
+    return res.json({ ok: true });
   } catch (err) {
     if (err.statusCode === 404) return res.status(404).json({ error: 'Coupon not found.' });
     next(err);
