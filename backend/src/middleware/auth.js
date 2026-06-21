@@ -83,6 +83,10 @@ export function isStaff(user) {
 export function canSeeFinancials(user) {
   return user?.role === 'ADMIN';
 }
+/** Contact PII (email / phone / address) — Admin + Contributor only; hidden from Viewer. */
+export function canSeeContact(user) {
+  return user?.role === 'ADMIN' || user?.role === 'CONTRIBUTOR';
+}
 export function canEdit(user) {
   return user?.role === 'ADMIN' || user?.role === 'CONTRIBUTOR';
 }

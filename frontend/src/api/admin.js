@@ -78,6 +78,11 @@ export async function markRefundedManually(id, reason) {
   return data;
 }
 
+export async function deleteRegistration(id) {
+  const { data } = await apiClient.delete(`/admin/registrations/${id}`);
+  return data;
+}
+
 export function registrationsCsvUrl(params = {}) {
   const qs = new URLSearchParams(params).toString();
   return `/api/v1/admin/registrations/export.csv${qs ? `?${qs}` : ''}`;

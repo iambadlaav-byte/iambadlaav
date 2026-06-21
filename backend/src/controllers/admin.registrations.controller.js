@@ -26,7 +26,7 @@ import { buildRegistrationsCsv, buildReconciliationCsv, streamCsv } from '../ser
 import { signedInvoiceUrl } from '../services/cloudinary.service.js';
 import { generateInvoicePdf, generateRegistrationPass } from '../services/invoice.service.js';
 import { sendSms, sendWhatsApp } from '../services/notification.service.js';
-import { canSeeFinancials } from '../middleware/auth.js';
+import { canSeeFinancials, canSeeContact } from '../middleware/auth.js';
 import { nextInvoiceNumber } from '../utils/invoiceNumber.js';
 
 // Program enum → display label. Enum values are repurposed (see schema notes):
@@ -78,6 +78,16 @@ function gateFinancials(reg, user) {
   return rest;
 }
 
+// Hide registrant contact PII (email / phone / city / state) from Viewer.
+function gateContact(reg, user) {
+  if (!reg || canSeeContact(user) || !reg.user) return reg;
+  const { email, phone, city, state, ...userRest } = reg.user;
+  return { ...reg, user: userRest };
+}
+
+// Apply both gates in one pass.
+const gateRow = (reg, user) => gateContact(gateFinancials(reg, user), user);
+
 // ── listRegistrations ─────────────────────────────────────────────────────────
 
 export async function listRegistrations(req, res, next) {
@@ -107,7 +117,7 @@ export async function listRegistrations(req, res, next) {
       ? rows[rows.length - 1].id
       : null;
 
-    return res.json({ rows: rows.map((r) => gateFinancials(r, req.user)), nextCursor });
+    return res.json({ rows: rows.map((r) => gateRow(r, req.user)), nextCursor });
   } catch (err) {
     next(err);
   }
@@ -141,7 +151,7 @@ export async function getRegistration(req, res, next) {
       take:    5,
     });
 
-    return res.json({ registration: gateFinancials(reg, req.user), invoiceSignedUrl, auditRows });
+    return res.json({ registration: gateRow(reg, req.user), invoiceSignedUrl, auditRows });
   } catch (err) {
     next(err);
   }
@@ -514,7 +524,7 @@ export async function markPaidManually(req, res, next) {
       logger.warn({ err: mailErr, registrationId: id }, 'manual_paid.notify.failed');
     }
 
-    return res.json({ registration: gateFinancials(updated, req.user) });
+    return res.json({ registration: gateRow(updated, req.user) });
   } catch (err) {
     next(err);
   }
@@ -545,7 +555,42 @@ export async function markRefundedManually(req, res, next) {
       return row;
     });
 
-    return res.json({ registration: gateFinancials(updated, req.user) });
+    return res.json({ registration: gateRow(updated, req.user) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ── deleteRegistration ───────────────────────────────────────────────────────
+// Admin-only HARD delete for duplicate / false records. Frees a seat if the row
+// had actually booked one (PAID). Audit-log rows are kept (loose subjectId ref),
+// so the deletion itself stays on the trail.
+export async function deleteRegistration(req, res, next) {
+  try {
+    const { id } = req.params;
+    const reg = await prisma.registration.findUnique({
+      where:  { id },
+      select: { id: true, batchId: true, paymentStatus: true, candidateId: true, program: true, user: { select: { email: true } } },
+    });
+    if (!reg) return res.status(404).json({ error: 'NOT_FOUND' });
+
+    await prisma.$transaction(async (tx) => {
+      // Free a seat only if this registration had actually consumed one.
+      if (reg.paymentStatus === 'PAID' && reg.batchId) {
+        const batch = await tx.batch.findUnique({ where: { id: reg.batchId }, select: { seatsBooked: true } });
+        if (batch && batch.seatsBooked > 0) {
+          await tx.batch.update({ where: { id: reg.batchId }, data: { seatsBooked: { decrement: 1 } } });
+        }
+      }
+      await tx.registration.delete({ where: { id } });
+      await writeAudit({
+        tx, actorId: req.user.id, action: 'registration.deleted',
+        subjectType: 'Registration', subjectId: id,
+        meta: { candidateId: reg.candidateId ?? null, program: reg.program, userEmail: reg.user?.email ?? null }, req,
+      });
+    });
+
+    return res.json({ ok: true });
   } catch (err) {
     next(err);
   }

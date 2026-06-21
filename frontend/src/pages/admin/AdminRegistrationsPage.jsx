@@ -27,6 +27,7 @@ import {
   inviteFromWaitlist,
   markPaidManually,
   markRefundedManually,
+  deleteRegistration,
   registrationsCsvUrl,
 } from '../../api/admin.js';
 import { useAuth } from '../../context/AuthContext.jsx';
@@ -55,6 +56,9 @@ const fmtINR = (n) => `₹${Number(n ?? 0).toLocaleString('en-IN')}`;
 export default function AdminRegistrationsPage() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
+  // Contact PII (email / phone / address) is hidden from Viewer — server strips it too.
+  const showContact = user?.role === 'ADMIN' || user?.role === 'CONTRIBUTOR';
   const [acting, setActing] = useState(false);
 
   const [program, setProgram] = useState('ALL');
@@ -68,6 +72,7 @@ export default function AdminRegistrationsPage() {
   const paginator = usePaginator();
 
   const [detailOpen, setDetailOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [detail, setDetail]         = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [resending, setResending]   = useState(null);
@@ -110,6 +115,7 @@ export default function AdminRegistrationsPage() {
   async function openDetail(id) {
     setDetailOpen(true);
     setDetail(null);
+    setConfirmDelete(false);
     setDetailLoading(true);
     try {
       const data = await getRegistration(id);
@@ -166,15 +172,15 @@ export default function AdminRegistrationsPage() {
       render: (r) => (
         <div className="flex flex-col">
           <span className="font-medium text-charcoal">{r.user?.name || '—'}</span>
-          <span className="text-xs text-muted">{r.user?.email}</span>
+          {showContact && <span className="text-xs text-muted">{r.user?.email}</span>}
         </div>
       ),
     },
-    {
+    ...(showContact ? [{
       key: 'phone',
       header: 'Phone',
       render: (r) => <span className="font-mono text-xs">{r.user?.phone || '—'}</span>,
-    },
+    }] : []),
     {
       key: 'batch',
       header: 'Batch',
@@ -314,9 +320,9 @@ export default function AdminRegistrationsPage() {
           </div>
         ) : (
           <>
-            <RegistrationDetail data={detail} />
-            {user?.role === 'ADMIN' && (
-              <div className="flex gap-2 justify-end mt-5 pt-4 border-t border-muted/15">
+            <RegistrationDetail data={detail} showContact={showContact} />
+            {isAdmin && (
+              <div className="flex flex-wrap gap-2 justify-end mt-5 pt-4 border-t border-muted/15">
                 {detail.registration.paymentStatus !== 'PAID' ? (
                   <Button size="sm" onClick={() => handleManualAction(markPaidManually, 'Marked paid.')} loading={acting}>
                     Mark paid (manual)
@@ -324,6 +330,20 @@ export default function AdminRegistrationsPage() {
                 ) : (
                   <Button size="sm" variant="danger" onClick={() => handleManualAction(markRefundedManually, 'Marked refunded.')} loading={acting}>
                     Mark refunded
+                  </Button>
+                )}
+                {confirmDelete ? (
+                  <>
+                    <Button size="sm" variant="danger"
+                      onClick={async () => { await handleManualAction(deleteRegistration, 'Registration deleted.'); setConfirmDelete(false); }}
+                      loading={acting}>
+                      Confirm delete
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(false)} disabled={acting}>Cancel</Button>
+                  </>
+                ) : (
+                  <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(true)} disabled={acting}>
+                    Delete record
                   </Button>
                 )}
               </div>
@@ -335,17 +355,23 @@ export default function AdminRegistrationsPage() {
   );
 }
 
-function RegistrationDetail({ data }) {
+function RegistrationDetail({ data, showContact = true }) {
   const r = data.registration;
   const showMoney = r.finalAmount != null; // backend strips money for Contributor/Viewer
   return (
     <div className="flex flex-col gap-5 text-sm">
       <Section title="Participant">
         <KV k="Name" v={r.user?.name} />
-        <KV k="Email" v={r.user?.email} />
-        <KV k="Phone" v={r.user?.phone} />
-        <KV k="City" v={r.user?.city || '—'} />
-        <KV k="State" v={r.user?.state || '—'} />
+        {showContact ? (
+          <>
+            <KV k="Email" v={r.user?.email} />
+            <KV k="Phone" v={r.user?.phone} />
+            <KV k="City" v={r.user?.city || '—'} />
+            <KV k="State" v={r.user?.state || '—'} />
+          </>
+        ) : (
+          <KV k="Contact" v={<span className="italic text-muted">Hidden for your role</span>} />
+        )}
         <KV k="Courses completed" v={r.user?.coursesCompleted} />
       </Section>
 

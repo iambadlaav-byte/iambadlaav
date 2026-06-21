@@ -48,6 +48,7 @@ import {
   inviteFromWaitlist,
   markPaidManually,
   markRefundedManually,
+  deleteRegistration,
 } from '../../controllers/admin.registrations.controller.js';
 import {
   anonymizeUser,
@@ -163,6 +164,7 @@ router.post('/registrations/:id/resend-email',   requireEditor, resendConfirmati
 router.post('/registrations/:id/waitlist-invite', requireEditor, inviteFromWaitlist);
 router.post('/registrations/:id/mark-paid',       requireAdmin, markPaidManually);
 router.post('/registrations/:id/mark-refunded',   requireAdmin, markRefundedManually);
+router.delete('/registrations/:id',               requireAdmin, deleteRegistration);
 
 // ── Batches ───────────────────────────────────────────────────────────────────
 router.get('/batches',        listBatches);
