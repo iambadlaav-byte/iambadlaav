@@ -7,6 +7,7 @@ import healthRoutes from './health.routes.js';
 import authRoutes from './auth.routes.js';
 import blogRoutes from './blog.routes.js';
 import eventsRoutes from './events.routes.js';
+import storiesRoutes from './stories.routes.js';
 import enquiriesRoutes from './enquiries.routes.js';
 import communityRoutes from './community.routes.js';
 import volunteersRoutes from './volunteers.routes.js';
@@ -29,6 +30,7 @@ router.use(authRoutes);
 // Public read-only content endpoints (Plan 03)
 router.use(blogRoutes);
 router.use(eventsRoutes);
+router.use(storiesRoutes);     // GET /stories, GET /stories/:id (published only)
 
 // Form submission endpoints (Plan 04)
 router.use(enquiriesRoutes);   // POST /enquiries/corporate, POST /enquiries/college

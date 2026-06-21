@@ -59,6 +59,29 @@ export const profilePhotoUpload = multer({
 }).single('photo');
 
 /**
+ * mediaImageUpload — multer single-file handler for media images (stories, gallery).
+ *
+ * Same security config as profilePhotoUpload (2MB cap, MIME allow-list, memoryStorage)
+ * but expects field name 'image'. Pair with verifyMagicBytes downstream — that
+ * middleware is generic and only inspects req.file, so it works here unchanged.
+ *
+ * Field name expected: 'image'
+ */
+export const mediaImageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 2 * 1024 * 1024, // 2MB — CONSTRAINT-SEC-006
+    files:    1,
+  },
+  fileFilter: (_req, file, cb) => {
+    if (!ALLOWED_MIMES.has(file.mimetype)) {
+      return cb(new HttpError(415, 'Only JPG, PNG, WEBP files accepted.'));
+    }
+    cb(null, true);
+  },
+}).single('image');
+
+/**
  * verifyMagicBytes — magic-byte verification middleware.
  *
  * Must run AFTER profilePhotoUpload (req.file.buffer must exist).

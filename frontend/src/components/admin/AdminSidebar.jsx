@@ -18,6 +18,7 @@ import {
   Inbox,
   HeartHandshake,
   FileText,
+  BookOpen,
   Settings,
   LogOut,
 } from 'lucide-react';
@@ -34,6 +35,7 @@ export const ADMIN_NAV_ITEMS = [
   { to: '/admin/enquiries',     label: 'Enquiries',     icon: Inbox },
   { to: '/admin/volunteers',    label: 'Volunteers',    icon: HeartHandshake },
   { to: '/admin/invoices',      label: 'Invoices',      icon: FileText, adminOnly: true },
+  { to: '/admin/stories',       label: 'Stories',       icon: BookOpen },
   { to: '/admin/settings',      label: 'Settings',      icon: Settings, adminOnly: true },
 ];
 

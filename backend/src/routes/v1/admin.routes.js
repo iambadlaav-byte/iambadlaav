@@ -19,6 +19,8 @@ import {
   batchUpdateSchema,
   blogCreateSchema,
   blogUpdateSchema,
+  storyCreateSchema,
+  storyUpdateSchema,
   eventCreateSchema,
   eventUpdateSchema,
   refundSchema,
@@ -95,12 +97,20 @@ import {
   archiveBlog,
 } from '../../controllers/admin.blog.controller.js';
 import {
+  listStories,
+  createStory,
+  updateStory,
+  archiveStory,
+  uploadStoryPhoto,
+} from '../../controllers/admin.stories.controller.js';
+import {
   listEvents,
   createEvent,
   updateEvent,
   cancelEvent,
 } from '../../controllers/admin.events.controller.js';
 import { listAudit } from '../../controllers/admin.audit.controller.js';
+import { mediaImageUpload, verifyMagicBytes } from '../../middleware/upload.js';
 
 const router = Router();
 
@@ -172,6 +182,15 @@ router.get('/blog',             listBlog);
 router.post('/blog',            requireEditor, validate(blogCreateSchema), createBlog);
 router.patch('/blog/:id',       requireEditor, validate(blogUpdateSchema), updateBlog);
 router.post('/blog/:id/archive', requireEditor, archiveBlog);
+
+// ── Stories ─────────────────────────────────────────────────────────────────────
+// Static '/stories/upload' must come BEFORE '/stories/:id'-style routes so the
+// literal 'upload' segment is never captured as an :id param.
+router.post('/stories/upload',    requireEditor, mediaImageUpload, verifyMagicBytes, uploadStoryPhoto);
+router.get('/stories',            listStories);
+router.post('/stories',           requireEditor, validate(storyCreateSchema), createStory);
+router.patch('/stories/:id',      requireEditor, validate(storyUpdateSchema), updateStory);
+router.post('/stories/:id/archive', requireEditor, archiveStory);
 
 // ── Events ────────────────────────────────────────────────────────────────────
 router.get('/events',             listEvents);

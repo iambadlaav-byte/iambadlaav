@@ -116,6 +116,41 @@ export async function deactivateCoupon(id) {
   return updateCoupon(id, { active: false });
 }
 
+// ── Stories (retreat stories CMS) ────────────────────────────────────────────
+
+export async function listStories(params = {}) {
+  const { data } = await apiClient.get('/admin/stories', { params });
+  return data; // { rows, nextCursor }
+}
+
+export async function createStory(body) {
+  const { data } = await apiClient.post('/admin/stories', body);
+  return data.story;
+}
+
+export async function updateStory(id, body) {
+  const { data } = await apiClient.patch(`/admin/stories/${id}`, body);
+  return data.story;
+}
+
+export async function archiveStory(id) {
+  const { data } = await apiClient.post(`/admin/stories/${id}/archive`);
+  return data.story;
+}
+
+/**
+ * Upload one story photo as multipart/form-data (field name 'image').
+ * Returns the Cloudinary secure_url, which the caller pushes into photos[].
+ */
+export async function uploadStoryPhoto(file) {
+  const formData = new FormData();
+  formData.append('image', file);
+  const { data } = await apiClient.post('/admin/stories/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data.url;
+}
+
 // ── Enquiries ────────────────────────────────────────────────────────────────
 
 export async function listEnquiries(params = {}) {

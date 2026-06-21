@@ -23,6 +23,7 @@ import VolunteerPage from './pages/public/VolunteerPage.jsx';
 import PricingPage from './pages/public/PricingPage.jsx';
 import AboutPage from './pages/public/AboutPage.jsx';
 import GalleryPage from './pages/public/GalleryPage.jsx';
+import StoriesPage from './pages/public/StoriesPage.jsx';
 import ContactPage from './pages/public/ContactPage.jsx';
 import RegisterPage from './pages/public/RegisterPage.jsx';
 import PaymentSuccessPage from './pages/public/PaymentSuccessPage.jsx';
@@ -44,6 +45,7 @@ const AdminReportsPage       = lazy(() => import('./pages/admin/AdminReportsPage
 const AdminEnquiriesPage     = lazy(() => import('./pages/admin/AdminEnquiriesPage.jsx'));
 const AdminVolunteersPage    = lazy(() => import('./pages/admin/AdminVolunteersPage.jsx'));
 const AdminInvoicesPage      = lazy(() => import('./pages/admin/AdminInvoicesPage.jsx'));
+const AdminStoriesPage       = lazy(() => import('./pages/admin/AdminStoriesPage.jsx'));
 const AdminSettingsPage      = lazy(() => import('./pages/admin/AdminSettingsPage.jsx'));
 
 function AdminSuspense({ children }) {
@@ -78,6 +80,7 @@ export default function AppRoutes() {
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/gallery" element={<GalleryPage />} />
+        <Route path="/stories" element={<StoriesPage />} />
         <Route path="/contact" element={<ContactPage />} />
 
         {/* Registration + payment */}
@@ -115,6 +118,7 @@ export default function AppRoutes() {
           <Route path="enquiries"          element={<AdminSuspense><AdminEnquiriesPage /></AdminSuspense>} />
           <Route path="volunteers"         element={<AdminSuspense><AdminVolunteersPage /></AdminSuspense>} />
           <Route path="invoices"           element={<AdminSuspense><AdminInvoicesPage /></AdminSuspense>} />
+          <Route path="stories"            element={<AdminSuspense><AdminStoriesPage /></AdminSuspense>} />
           <Route path="settings"           element={<AdminSuspense><AdminSettingsPage /></AdminSuspense>} />
           <Route path="*"                  element={<Navigate to="dashboard" replace />} />
         </Route>

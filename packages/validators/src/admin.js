@@ -70,6 +70,21 @@ export const blogCreateSchema = z.strictObject({
 
 export const blogUpdateSchema = blogCreateSchema.partial();
 
+// ── Story (retreat stories CMS) ────────────────────────────────────────────────
+// photos are Cloudinary secure URLs produced by the /admin/stories/upload endpoint.
+
+export const storyCreateSchema = z.strictObject({
+  title:     z.string().trim().min(2).max(300),
+  subtitle:  z.string().trim().max(300).optional(),
+  batchName: z.string().trim().max(200).optional(),
+  date:      z.coerce.date().optional(),
+  passage:   z.string().trim().min(20).max(20000),
+  photos:    z.array(z.string().url()).max(20).optional().default([]),
+  status:    z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).optional().default('DRAFT'),
+});
+
+export const storyUpdateSchema = storyCreateSchema.partial();
+
 // ── Event ─────────────────────────────────────────────────────────────────────
 
 export const eventCreateSchema = z.strictObject({

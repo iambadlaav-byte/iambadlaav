@@ -13,6 +13,7 @@ const SITE_LINKS_LEFT = [
   { label: 'The Badlaav Experience', href: '/badlaav-experience' },
   { label: 'Pricing', href: '/pricing' },
   { label: 'Gallery', href: '/gallery' },
+  { label: 'Stories', href: '/stories' },
 ];
 
 const SITE_LINKS_RIGHT = [

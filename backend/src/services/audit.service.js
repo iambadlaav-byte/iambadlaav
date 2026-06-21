@@ -42,6 +42,12 @@ export const AUDIT_ACTIONS = Object.freeze({
   BLOG_UNPUBLISHED:         'blog.unpublished',
   BLOG_ARCHIVED:            'blog.archived',
 
+  // Stories
+  STORY_CREATED:            'story.created',
+  STORY_UPDATED:            'story.updated',
+  STORY_PUBLISHED:          'story.published',
+  STORY_ARCHIVED:           'story.archived',
+
   // Events
   EVENT_CREATED:            'event.created',
   EVENT_UPDATED:            'event.updated',
