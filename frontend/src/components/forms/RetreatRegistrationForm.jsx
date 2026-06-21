@@ -179,6 +179,10 @@ export function RetreatRegistrationForm({ program = 'BADLAAV', programLabel = 'T
       const payload = { ...rest, dietaryNote: answers.healthDetails ?? null, questionnaire };
 
       const res = await apiClient.post('/registrations', payload);
+      if (res.data?.waitlisted) {
+        navigate(`/payment-success?reg=${res.data.registrationId}&waitlist=1`);
+        return;
+      }
       const { registrationId, razorpayOrderId, amount, key } = res.data;
       openCheckout({
         key, amount: Math.round(amount * 100), orderId: razorpayOrderId, registrationId,

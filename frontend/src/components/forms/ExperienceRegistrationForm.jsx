@@ -64,6 +64,10 @@ export function ExperienceRegistrationForm() {
     setRazorpayLoading(true);
     try {
       const res = await apiClient.post('/registrations', data);
+      if (res.data?.waitlisted) {
+        navigate(`/payment-success?reg=${res.data.registrationId}&waitlist=1`);
+        return;
+      }
       const { registrationId, razorpayOrderId, amount, key } = res.data;
       openCheckout({
         key, amount: Math.round(amount * 100), orderId: razorpayOrderId, registrationId,

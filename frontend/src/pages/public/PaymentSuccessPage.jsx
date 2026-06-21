@@ -30,6 +30,7 @@ export default function PaymentSuccessPage() {
   const [searchParams] = useSearchParams();
   const navigate        = useNavigate();
   const regId           = searchParams.get('reg');
+  const isWaitlist      = searchParams.get('waitlist') === '1';
 
   const [status, setStatus]             = useState('polling'); // 'polling' | 'paid' | 'timeout' | 'error'
   const [registration, setRegistration] = useState(null);
@@ -42,6 +43,9 @@ export default function PaymentSuccessPage() {
       navigate('/', { replace: true });
       return;
     }
+
+    // Waiting-list confirmations have no payment to poll for.
+    if (isWaitlist) return;
 
     let elapsed = 0;
 
@@ -79,7 +83,38 @@ export default function PaymentSuccessPage() {
       clearInterval(intervalRef.current);
       clearTimeout(timeoutRef.current);
     };
-  }, [regId, navigate]);
+  }, [regId, navigate, isWaitlist]);
+
+  if (isWaitlist) {
+    return (
+      <>
+        <Helmet>
+          <title>You're on the waiting list — Badlaav</title>
+          <meta name="robots" content="noindex" />
+        </Helmet>
+        <main className="max-w-[--container-narrow] mx-auto px-4 py-16 text-center">
+          <div className="w-14 h-14 rounded-full bg-ochre/15 flex items-center justify-center mx-auto mb-5">
+            <Check size={26} className="text-ochre" strokeWidth={2.5} />
+          </div>
+          <h1 className="font-display text-3xl sm:text-4xl font-semibold text-ink mb-3">You're on the waiting list.</h1>
+          <p className="font-sans text-charcoal leading-body max-w-[480px] mx-auto mb-8">
+            This batch is full. We've saved your details and will email and WhatsApp you the moment a seat opens — usually within a few days.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button as={Link} to="/" variant="primary">Back to home</Button>
+            <a
+              href={`https://wa.me/${WHATSAPP_NUMBER.replace(/\D/g, '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center rounded-full font-sans font-semibold border border-charcoal/20 text-charcoal hover:border-ochre hover:text-ochre px-6 py-3 transition-colors"
+            >
+              Message us on WhatsApp
+            </a>
+          </div>
+        </main>
+      </>
+    );
+  }
 
   if (status === 'polling') {
     return (
