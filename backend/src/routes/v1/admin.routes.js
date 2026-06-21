@@ -36,6 +36,7 @@ import {
   exportRegistrationsCsv,
   getReconciliation,
   resendConfirmationEmail,
+  inviteFromWaitlist,
 } from '../../controllers/admin.registrations.controller.js';
 import { anonymizeUser } from '../../controllers/admin.users.controller.js';
 
@@ -111,7 +112,8 @@ router.get('/registrations/reconciliation', validate(reconciliationQuerySchema, 
 router.get('/registrations',                listRegistrations);
 router.get('/registrations/:id',            getRegistration);
 router.patch('/registrations/:id',          requireEditor, validate(registrationStatusSchema), updateRegistrationStatus);
-router.post('/registrations/:id/resend-email', requireEditor, resendConfirmationEmail);
+router.post('/registrations/:id/resend-email',   requireEditor, resendConfirmationEmail);
+router.post('/registrations/:id/waitlist-invite', requireEditor, inviteFromWaitlist);
 
 // ── Batches ───────────────────────────────────────────────────────────────────
 router.get('/batches',        listBatches);

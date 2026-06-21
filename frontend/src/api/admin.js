@@ -63,6 +63,11 @@ export async function resendConfirmationEmail(id) {
   return data;
 }
 
+export async function inviteFromWaitlist(id) {
+  const { data } = await apiClient.post(`/admin/registrations/${id}/waitlist-invite`);
+  return data;
+}
+
 export function registrationsCsvUrl(params = {}) {
   const qs = new URLSearchParams(params).toString();
   return `/api/v1/admin/registrations/export.csv${qs ? `?${qs}` : ''}`;

@@ -337,3 +337,52 @@ export async function resendConfirmationEmail(req, res, next) {
     next(err);
   }
 }
+
+// ── inviteFromWaitlist ──────────────────────────────────────────────────────
+// Invites a WAITLISTED participant to complete their registration. Records the
+// invite + emails a register link (best-effort). Promotion to a paid candidate
+// happens through the normal payment flow (webhook assigns the candidate ID).
+export async function inviteFromWaitlist(req, res, next) {
+  try {
+    const { id } = req.params;
+    const reg = await prisma.registration.findUnique({
+      where:   { id },
+      include: { user: true, batch: true },
+    });
+    if (!reg) return res.status(404).json({ error: 'NOT_FOUND' });
+    if (reg.status !== 'WAITLISTED') {
+      return res.status(400).json({ error: 'Registration is not on the waiting list.' });
+    }
+
+    const updated = await prisma.registration.update({
+      where:  { id },
+      data:   { waitlistInvitedAt: new Date() },
+      select: { id: true, waitlistInvitedAt: true },
+    });
+
+    const base = process.env.APP_URL || 'https://www.iambadlaav.com';
+    const slug = reg.program === 'FUTURE_READINESS' ? 'badlaav-experience' : 'badlaav';
+    const link = `${base}/register?program=${slug}`;
+
+    // Best-effort — the endpoint succeeds even if email delivery fails.
+    sendEmail({
+      to:       reg.user.email,
+      subject:  'A seat has opened — complete your Badlaav registration',
+      template: 'waitlist-invite',
+      data:     { name: reg.user.name, batchName: reg.batch?.name ?? 'your batch', link },
+    }).catch(() => { /* logged by the email service */ });
+
+    await writeAudit({
+      actorId:     req.user.id,
+      action:      'registration.waitlist_invited',
+      subjectType: 'Registration',
+      subjectId:   id,
+      meta:        { userEmail: reg.user.email },
+      req,
+    });
+
+    return res.json({ ok: true, waitlistInvitedAt: updated.waitlistInvitedAt });
+  } catch (err) {
+    next(err);
+  }
+}
