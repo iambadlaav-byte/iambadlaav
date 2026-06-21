@@ -138,17 +138,35 @@ npm run dev
 
 ## Documentation
 
-Everything lives in **[`docs/`](docs/README.md)**. Read them in this order:
+Everything lives in **[`docs/`](docs/README.md)** — see the index there for the full set.
 
-| # | Doc | What it covers |
-|---|---|---|
-| 1 | [docs/SETUP.md](docs/SETUP.md) | Full setup from scratch: prerequisites, accounts to create, database, running locally, troubleshooting |
-| 2 | [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md) | Every environment variable — what it is, where to get it, example value |
-| 3 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How frontend + backend fit together, payment flows, data model |
-| 4 | [docs/API.md](docs/API.md) | Every API endpoint — method, path, auth, purpose |
-| 5 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Deploy to Railway + Vercel + Supabase, domains, Razorpay webhook |
-| 6 | [docs/USAGE.md](docs/USAGE.md) | How to operate the site (batches, coupons, registrations, emails) |
-| 7 | [docs/CONTENT.md](docs/CONTENT.md) | All the marketing copy in one place |
-| — | [CLAUDE.md](CLAUDE.md) | Conventions, brand voice, theme tokens (for developers/AI assistants) |
+**Deployment & operations guides** (provision each service step by step):
 
-**New here? Start with [docs/SETUP.md](docs/SETUP.md).**
+| Doc | What it covers |
+|---|---|
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | The big picture — architecture, provisioning order, how the services connect. Start here. |
+| [docs/ENVIRONMENT_VARIABLES.md](docs/ENVIRONMENT_VARIABLES.md) | Every backend + frontend (`VITE_*`) env var: required?, purpose, where to get it, example |
+| [docs/VERCEL_DEPLOYMENT.md](docs/VERCEL_DEPLOYMENT.md) | Deploy the frontend (Vite, repo-root `dist/`, SPA routing) |
+| [docs/RAILWAY_DEPLOYMENT.md](docs/RAILWAY_DEPLOYMENT.md) | Deploy the backend (migrations via `DIRECT_URL`, health check, webhook raw-body) |
+| [docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md) | Database — the two connection URLs, migrations, seed |
+| [docs/RAZORPAY_SETUP.md](docs/RAZORPAY_SETUP.md) | Payments — keys + the `/api/v1/payments/webhook` endpoint |
+| [docs/BREVO_SETUP.md](docs/BREVO_SETUP.md) | Email — SMTP + verified-sender (DMARC) rule |
+| [docs/CLOUDINARY_SETUP.md](docs/CLOUDINARY_SETUP.md) | Media — folders, signed invoice URLs, EXIF stripping |
+| [docs/MSG91_SETUP.md](docs/MSG91_SETUP.md) | Optional SMS / WhatsApp behind feature flags |
+| [docs/ADMIN_GUIDE.md](docs/ADMIN_GUIDE.md) | For non-technical admins — login, role matrix, every admin section |
+| [docs/BACKUP_AND_RECOVERY.md](docs/BACKUP_AND_RECOVERY.md) | Backups, restore, rotating secrets |
+| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Common issues and their real fixes |
+| [docs/SECURITY.md](docs/SECURITY.md) | The implemented security posture |
+
+**Reference docs** (codebase):
+
+| Doc | What it covers |
+|---|---|
+| [docs/SETUP.md](docs/SETUP.md) | Full local setup from scratch + troubleshooting |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How frontend + backend fit together, payment flows, data model |
+| [docs/API.md](docs/API.md) | Every API endpoint — method, path, auth, purpose |
+| [docs/USAGE.md](docs/USAGE.md) | How to operate the site (batches, coupons, registrations, emails) |
+| [docs/CONTENT.md](docs/CONTENT.md) | All the marketing copy in one place |
+| [CLAUDE.md](CLAUDE.md) | Conventions, brand voice, theme tokens (for developers/AI assistants) |
+
+**New here? Start with [docs/SETUP.md](docs/SETUP.md) to run it locally, then [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) to ship it.**

@@ -75,7 +75,7 @@ export async function anonymizeUser(req, res, next) {
     // Failure here is non-critical — the PII scrub already happened.
     if (user.photoUrl) {
       try {
-        await deleteAsset(`dnyanpith/profile-photos/${targetUserId}`);
+        await deleteAsset(`badlaav/profile-photos/${targetUserId}`);
       } catch { /* non-critical */ }
     }
 

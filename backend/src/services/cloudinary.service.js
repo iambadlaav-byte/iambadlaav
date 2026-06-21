@@ -4,7 +4,7 @@
  * Profile photo pipeline:
  *   buffer → upload_stream → transformation (400×400 fill face + f_auto/q_auto)
  *   f_auto re-encodes the image which strips EXIF metadata (T-06-09 / RESEARCH Pitfall 12).
- *   Resource stored at dnyanpith/profile-photos/<userId> (overwrite: true).
+ *   Resource stored at badlaav/profile-photos/<userId> (overwrite: true).
  *
  * EXIF stripping: Cloudinary's fetch_format:'auto' transformation forces a re-encode
  * into the optimal delivery format, which strips all original EXIF data including GPS.
@@ -38,7 +38,7 @@ export function uploadProfilePhoto(buffer, userId) {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       {
-        folder:          'dnyanpith/profile-photos',
+        folder:          'badlaav/profile-photos',
         public_id:       userId,
         overwrite:       true,
         resource_type:   'image',
