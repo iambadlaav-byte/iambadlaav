@@ -133,6 +133,23 @@ export async function updateEnquiryStatus(id, body) {
   return data.enquiry;
 }
 
+// ── Volunteers ───────────────────────────────────────────────────────────────
+
+export async function listVolunteers(params = {}) {
+  const { data } = await apiClient.get('/admin/volunteers', { params });
+  return data; // { rows, counts, byBatch }
+}
+
+export async function getVolunteerDetail(id) {
+  const { data } = await apiClient.get(`/admin/volunteers/${id}`);
+  return data.volunteer;
+}
+
+export async function updateVolunteerStatus(id, status) {
+  const { data } = await apiClient.patch(`/admin/volunteers/${id}`, { status });
+  return data.volunteer;
+}
+
 // ── Staff users (Admin only) ─────────────────────────────────────────────────
 
 export async function listStaffUsers() {

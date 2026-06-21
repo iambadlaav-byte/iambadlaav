@@ -16,6 +16,7 @@ import {
   Users,
   BarChart3,
   Inbox,
+  HeartHandshake,
   FileText,
   Settings,
   LogOut,
@@ -31,6 +32,7 @@ export const ADMIN_NAV_ITEMS = [
   { to: '/admin/registrations', label: 'Registrations', icon: Users },
   { to: '/admin/reports',       label: 'Reports',       icon: BarChart3 },
   { to: '/admin/enquiries',     label: 'Enquiries',     icon: Inbox },
+  { to: '/admin/volunteers',    label: 'Volunteers',    icon: HeartHandshake },
   { to: '/admin/invoices',      label: 'Invoices',      icon: FileText, adminOnly: true },
   { to: '/admin/settings',      label: 'Settings',      icon: Settings, adminOnly: true },
 ];

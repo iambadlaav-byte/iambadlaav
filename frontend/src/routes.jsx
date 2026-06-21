@@ -42,6 +42,7 @@ const AdminCouponsPage       = lazy(() => import('./pages/admin/AdminCouponsPage
 const AdminRegistrationsPage = lazy(() => import('./pages/admin/AdminRegistrationsPage.jsx'));
 const AdminReportsPage       = lazy(() => import('./pages/admin/AdminReportsPage.jsx'));
 const AdminEnquiriesPage     = lazy(() => import('./pages/admin/AdminEnquiriesPage.jsx'));
+const AdminVolunteersPage    = lazy(() => import('./pages/admin/AdminVolunteersPage.jsx'));
 const AdminInvoicesPage      = lazy(() => import('./pages/admin/AdminInvoicesPage.jsx'));
 const AdminSettingsPage      = lazy(() => import('./pages/admin/AdminSettingsPage.jsx'));
 
@@ -112,6 +113,7 @@ export default function AppRoutes() {
           <Route path="registrations"      element={<AdminSuspense><AdminRegistrationsPage /></AdminSuspense>} />
           <Route path="reports"            element={<AdminSuspense><AdminReportsPage /></AdminSuspense>} />
           <Route path="enquiries"          element={<AdminSuspense><AdminEnquiriesPage /></AdminSuspense>} />
+          <Route path="volunteers"         element={<AdminSuspense><AdminVolunteersPage /></AdminSuspense>} />
           <Route path="invoices"           element={<AdminSuspense><AdminInvoicesPage /></AdminSuspense>} />
           <Route path="settings"           element={<AdminSuspense><AdminSettingsPage /></AdminSuspense>} />
           <Route path="*"                  element={<Navigate to="dashboard" replace />} />
