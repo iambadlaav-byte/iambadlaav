@@ -165,12 +165,18 @@ async function onPaymentCaptured(payload) {
         },
       });
 
-      // Seat increment (anti-pattern: never outside the transaction — RESEARCH §Anti-Patterns)
+      // Seat increment (anti-pattern: never outside the transaction — RESEARCH §Anti-Patterns).
+      // The returned seatsBooked is the participant's number within the batch; Serializable
+      // isolation makes this collision-free, so we derive the candidate ID from it.
+      let candidateId = null;
       if (registration.batchId) {
-        await tx.batch.update({
+        const updatedBatch = await tx.batch.update({
           where: { id: registration.batchId },
           data: { seatsBooked: { increment: 1 } },
         });
+        const prefix = registration.program === 'FUTURE_READINESS' ? 'EXP'
+          : registration.program === 'BADLAAV' ? 'RET' : 'BAD';
+        candidateId = `${prefix}-${registration.batchId.slice(-4)}-${String(updatedBatch.seatsBooked).padStart(3, '0')}`;
       }
 
       // Prisma-native coupon atomic increment (FIX B — T-05-05)
@@ -208,10 +214,10 @@ async function onPaymentCaptured(payload) {
       // Row-locked invoice number (Pattern 7 — SELECT FOR UPDATE documented exception)
       invoiceNumber = await nextInvoiceNumber(tx);
 
-      // Write invoice number to registration (invoiceUrl updated after tx)
+      // Write invoice number + candidate ID + payment method (invoiceUrl updated after tx)
       await tx.registration.update({
         where: { id: registration.id },
-        data: { invoiceNumber },
+        data: { invoiceNumber, candidateId, paymentMethod: 'RAZORPAY' },
       });
 
       // Auto-account: flip emailVerified for shell users (Pitfall 5 — no temp password; OTP-only)
@@ -266,7 +272,7 @@ async function onPaymentCaptured(payload) {
           name:     registration.user.name,
           loginUrl: process.env.APP_URL
             ? `${process.env.APP_URL}/login`
-            : 'https://dnyanpith.org/login',
+            : 'https://www.iambadlaav.com/login',
         },
       }).catch((err) => logger.warn({ err }, 'email.auto_account_welcome.failed'));
     }
@@ -288,7 +294,7 @@ async function onPaymentCaptured(payload) {
 
     // Admin notification
     await sendEmail({
-      to:       process.env.ADMIN_EMAIL ?? 'hello@dnyanpith.org',
+      to:       process.env.ADMIN_EMAIL ?? 'iambadlaav@gmail.com',
       template: 'admin-new-registration',
       data: {
         program:     registration.program,
@@ -470,10 +476,10 @@ export async function verifyPayment(req, res, next) {
 
 function programDisplay(program) {
   const map = {
-    BADLAAV:          'Badlaav Corporate Retreat',
-    MISSION_UDAAN:    'Mission Udaan',
-    FUTURE_READINESS: 'Future Readiness',
-    ANTRANG:          'Antrang',
+    BADLAAV:          'The Retreat',
+    FUTURE_READINESS: 'The Badlaav Experience',
+    MISSION_UDAAN:    'Future programme 1',
+    ANTRANG:          'Future programme 2',
   };
   return map[program] ?? program;
 }
