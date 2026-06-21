@@ -6,9 +6,13 @@
  * All schemas use z.strictObject to reject unknown fields.
  */
 import { z } from 'zod';
+import { email } from './shared.js';
 
 // ── Program enum (mirrors Prisma) ──────────────────────────────────────────────
 const programEnum = z.enum(['BADLAAV', 'MISSION_UDAAN', 'FUTURE_READINESS', 'ANTRANG']);
+
+// ── Staff roles (mirrors Prisma UserRole staff tiers) ──────────────────────────
+const staffRoleEnum = z.enum(['ADMIN', 'CONTRIBUTOR', 'VIEWER']);
 
 // ── Enquiry ───────────────────────────────────────────────────────────────────
 
@@ -164,4 +168,21 @@ export const reportsQuerySchema = z.strictObject({
   from:    reportDate,
   to:      reportDate,
   program: z.string().trim().optional(),
+});
+
+// ── Staff user management (Settings) ───────────────────────────────────────────
+
+export const staffUserCreateSchema = z.strictObject({
+  name:     z.string().trim().min(2, 'Name is too short.').max(120),
+  email,
+  role:     staffRoleEnum,
+  password: z.string().min(8, 'Password must be at least 8 characters.').max(128),
+});
+
+export const staffRoleUpdateSchema = z.strictObject({
+  role: staffRoleEnum,
+});
+
+export const adminPasswordResetSchema = z.strictObject({
+  password: z.string().min(8, 'Password must be at least 8 characters.').max(128),
 });

@@ -32,6 +32,17 @@ export function AuthProvider({ children }) {
     setUser(newUser);
   }, []);
 
+  // Change the signed-in user's password. The endpoint returns a fresh
+  // accessToken (same shape as login) because rotating the password
+  // invalidates the old token — store it the same way login does so the
+  // current session keeps working.
+  const changePassword = useCallback(async ({ currentPassword, newPassword }) => {
+    const { data } = await apiClient.post('/auth/password/change', { currentPassword, newPassword });
+    setAccessToken(data.accessToken);
+    if (data.user) setUser(data.user);
+    return data;
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await apiClient.post('/auth/logout');
@@ -82,7 +93,7 @@ export function AuthProvider({ children }) {
   }, [accessToken, attemptRefresh]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, accessToken, login, logout, refresh: attemptRefresh }}>
+    <AuthContext.Provider value={{ user, loading, accessToken, login, logout, changePassword, refresh: attemptRefresh }}>
       {children}
     </AuthContext.Provider>
   );

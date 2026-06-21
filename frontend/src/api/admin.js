@@ -133,6 +133,46 @@ export async function updateEnquiryStatus(id, body) {
   return data.enquiry;
 }
 
+// ── Staff users (Admin only) ─────────────────────────────────────────────────
+
+export async function listStaffUsers() {
+  const { data } = await apiClient.get('/admin/users');
+  return data.rows; // [{ id, name, email, role, lastLoginAt, createdAt, hasPassword }]
+}
+
+export async function createStaffUser(body) {
+  const { data } = await apiClient.post('/admin/users', body);
+  return data.user;
+}
+
+export async function updateStaffUserRole(id, role) {
+  const { data } = await apiClient.patch(`/admin/users/${id}/role`, { role });
+  return data.user;
+}
+
+export async function resetUserPassword(id, password) {
+  const { data } = await apiClient.post(`/admin/users/${id}/reset-password`, { password });
+  return data; // { ok: true }
+}
+
+// ── Login activity (Admin only) ──────────────────────────────────────────────
+
+/**
+ * Fetch login activity by merging successful and failed admin sign-ins.
+ *
+ * The backend audit filter only accepts one `action` at a time, so we fire two
+ * requests in parallel and merge — newest first.
+ */
+export async function fetchLoginLogs(limit = 50) {
+  const [success, failed] = await Promise.all([
+    apiClient.get('/admin/audit', { params: { action: 'admin.login.success', limit } }),
+    apiClient.get('/admin/audit', { params: { action: 'admin.login.failed', limit } }),
+  ]);
+  const rows = [...(success.data.rows ?? []), ...(failed.data.rows ?? [])];
+  rows.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  return rows;
+}
+
 // ── Invoices ─────────────────────────────────────────────────────────────────
 
 export async function listInvoices(params = {}) {

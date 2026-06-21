@@ -26,6 +26,9 @@ import {
   reportsQuerySchema,
   couponCreateSchema,
   couponUpdateSchema,
+  staffUserCreateSchema,
+  staffRoleUpdateSchema,
+  adminPasswordResetSchema,
 } from '@dnyanpith/validators';
 
 // Controllers — Task 1a (core)
@@ -41,7 +44,13 @@ import {
   markPaidManually,
   markRefundedManually,
 } from '../../controllers/admin.registrations.controller.js';
-import { anonymizeUser } from '../../controllers/admin.users.controller.js';
+import {
+  anonymizeUser,
+  listStaffUsers,
+  createStaffUser,
+  updateStaffUserRole,
+  resetUserPassword,
+} from '../../controllers/admin.users.controller.js';
 import {
   getReports,
   exportReportsCsv,
@@ -167,7 +176,11 @@ router.get('/reports',            validate(reportsQuerySchema, 'query'), getRepo
 // ── Audit log ─────────────────────────────────────────────────────────────────
 router.get('/audit', listAudit);
 
-// ── Users ─────────────────────────────────────────────────────────────────────
-router.post('/users/:id/anonymize', requireAdmin, validate(anonymizeSchema), anonymizeUser);
+// ── Users (staff management — Admin only) ──────────────────────────────────────
+router.get('/users',                    requireAdmin, listStaffUsers);
+router.post('/users',                   requireAdmin, validate(staffUserCreateSchema), createStaffUser);
+router.patch('/users/:id/role',         requireAdmin, validate(staffRoleUpdateSchema), updateStaffUserRole);
+router.post('/users/:id/reset-password', requireAdmin, validate(adminPasswordResetSchema), resetUserPassword);
+router.post('/users/:id/anonymize',     requireAdmin, validate(anonymizeSchema), anonymizeUser);
 
 export default router;

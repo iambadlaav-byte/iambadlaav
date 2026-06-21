@@ -19,7 +19,8 @@ import { generateOtp, storeOtp, verifyOtp as checkOtp } from '../services/otp.se
 import { OTP_MAX_FAIL, OTP_LOCKOUT_MIN, OTP_EXPIRY_MIN } from '../services/otp.constants.js';
 import { sendEmail } from '../services/email.service.js';
 import { signAccessToken, issueRefreshToken, rotateRefreshToken, AuthError } from '../utils/jwt.js';
-import { bcryptCompare } from '../utils/hash.js';
+import { bcryptCompare, bcryptHash } from '../utils/hash.js';
+import { writeAudit, AUDIT_ACTIONS } from '../services/audit.service.js';
 
 // Cookie options for the httpOnly refresh token (CONSTRAINT-SEC-001)
 const REFRESH_COOKIE_OPTIONS = {
@@ -66,7 +67,7 @@ export async function requestOtp(req, res, next) {
 
     sendEmail({
       to: email,
-      subject: 'Your Dnyanpith sign-in code',
+      subject: 'Your Badlaav sign-in code',
       template: 'otp',
       data: {
         name: user?.name || null,
@@ -226,6 +227,16 @@ export async function loginPassword(req, res, next) {
         logger.warn({ userId: user.id, email }, 'auth.account.locked_after_password_failures');
       }
 
+      // Login-log: record the failed staff attempt (best-effort).
+      writeAudit({
+        actorId:     null,
+        action:      AUDIT_ACTIONS.ADMIN_LOGIN_FAILED,
+        subjectType: 'User',
+        subjectId:   user.id,
+        meta:        { email: user.email, reason: 'bad_password' },
+        req,
+      }).catch(() => { /* non-critical */ });
+
       return res.status(401).json({ error: 'INVALID_CREDENTIALS' });
     }
 
@@ -244,6 +255,65 @@ export async function loginPassword(req, res, next) {
     const refreshToken = await issueRefreshToken(user.id);
 
     logger.info({ userId: user.id, email }, 'auth.password.login');
+
+    // Login-log: record the successful staff login (best-effort).
+    writeAudit({
+      actorId:     user.id,
+      action:      AUDIT_ACTIONS.ADMIN_LOGIN_SUCCESS,
+      subjectType: 'User',
+      subjectId:   user.id,
+      meta:        { role: user.role, method: 'password' },
+      req,
+    }).catch(() => { /* non-critical */ });
+
+    return sendAuthResponse(res, user, accessToken, refreshToken);
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ============================================================
+// changePassword — POST /api/v1/auth/password/change (authenticated)
+// ============================================================
+export async function changePassword(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const { currentPassword, newPassword } = req.body;
+
+    const user = await prisma.user.findUnique({
+      where:  { id: userId, deletedAt: null },
+      select: { id: true, name: true, email: true, role: true, passwordHash: true },
+    });
+    if (!user || !user.passwordHash) {
+      // OTP-only accounts have no password to change.
+      return res.status(400).json({ error: 'NO_PASSWORD_SET' });
+    }
+
+    const matches = await bcryptCompare(currentPassword, user.passwordHash);
+    if (!matches) return res.status(401).json({ error: 'INVALID_CREDENTIALS' });
+
+    const newHash = await bcryptHash(newPassword);
+    await prisma.$transaction(async (tx) => {
+      await tx.user.update({ where: { id: userId }, data: { passwordHash: newHash } });
+      // Invalidate every existing session — the new device gets a fresh token below.
+      await tx.refreshToken.updateMany({
+        where: { userId, revokedAt: null },
+        data:  { revokedAt: new Date(), revokeReason: 'password_changed' },
+      });
+      await writeAudit({
+        tx,
+        actorId:     userId,
+        action:      AUDIT_ACTIONS.USER_PASSWORD_CHANGED,
+        subjectType: 'User',
+        subjectId:   userId,
+        req,
+      });
+    });
+
+    // Re-issue a session for the current device so the admin stays signed in.
+    const accessToken = signAccessToken(user);
+    const refreshToken = await issueRefreshToken(user.id);
+    logger.info({ userId }, 'auth.password.changed');
     return sendAuthResponse(res, user, accessToken, refreshToken);
   } catch (err) {
     next(err);
