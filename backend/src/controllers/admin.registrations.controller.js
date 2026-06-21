@@ -395,8 +395,9 @@ export async function inviteFromWaitlist(req, res, next) {
     });
 
     const base = process.env.APP_URL || 'https://www.iambadlaav.com';
-    const slug = reg.program === 'FUTURE_READINESS' ? 'badlaav-experience' : 'badlaav';
-    const link = `${base}/register?program=${slug}`;
+    // Direct "pay now" link — the invitee signs in with their registered email
+    // and pays for THIS registration without re-filling the form.
+    const link = `${base}/pay/${reg.id}`;
 
     // Best-effort — the endpoint succeeds even if a channel fails.
     sendEmail({

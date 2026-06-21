@@ -27,6 +27,7 @@ import StoriesPage from './pages/public/StoriesPage.jsx';
 import ContactPage from './pages/public/ContactPage.jsx';
 import RegisterPage from './pages/public/RegisterPage.jsx';
 import PaymentSuccessPage from './pages/public/PaymentSuccessPage.jsx';
+import ResumePaymentPage from './pages/public/ResumePaymentPage.jsx';
 import LoginPage from './pages/public/LoginPage.jsx';
 import PrivacyPage from './pages/public/PrivacyPage.jsx';
 import TermsPage from './pages/public/TermsPage.jsx';
@@ -88,6 +89,7 @@ export default function AppRoutes() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/register/*" element={<RegisterPage />} />
         <Route path="/payment-success" element={<PaymentSuccessPage />} />
+        <Route path="/pay/:registrationId" element={<ResumePaymentPage />} />
 
         {/* Auth (shared — admins land at /admin/dashboard, members at /account/dashboard) */}
         <Route path="/login" element={<LoginPage />} />
