@@ -70,6 +70,55 @@ export function requireAdmin(req, res, next) {
   next();
 }
 
+// ── Wave 2 staff RBAC ─────────────────────────────────────────────────────────
+// Matrix (locked): ADMIN = full (financials, batches, users, refunds);
+// CONTRIBUTOR = ops (registrations/enquiries/volunteers/stories/gallery) but NO
+// payment amounts/revenue, NO batch creation, NO user management;
+// VIEWER = read-only, NO financials.
+export const STAFF_ROLES = ['ADMIN', 'CONTRIBUTOR', 'VIEWER'];
+
+export function isStaff(user) {
+  return Boolean(user) && STAFF_ROLES.includes(user.role);
+}
+export function canSeeFinancials(user) {
+  return user?.role === 'ADMIN';
+}
+export function canEdit(user) {
+  return user?.role === 'ADMIN' || user?.role === 'CONTRIBUTOR';
+}
+export function canManageBatches(user) {
+  return user?.role === 'ADMIN';
+}
+export function canManageUsers(user) {
+  return user?.role === 'ADMIN';
+}
+
+/** requireStaff — any staff tier (read access to the admin panel). */
+export function requireStaff(req, res, next) {
+  if (!isStaff(req.user)) {
+    return res.status(403).json({ error: 'FORBIDDEN' });
+  }
+  next();
+}
+
+/** requireEditor — ADMIN or CONTRIBUTOR (write access; VIEWER is read-only). */
+export function requireEditor(req, res, next) {
+  if (!canEdit(req.user)) {
+    return res.status(403).json({ error: 'FORBIDDEN' });
+  }
+  next();
+}
+
+/** requireRole — factory gating to an explicit set of roles. */
+export function requireRole(...roles) {
+  return (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'FORBIDDEN' });
+    }
+    next();
+  };
+}
+
 /**
  * requireEnrolled — must be used AFTER authenticate + requireAuth.
  * Returns 403 if the user has no Registration with paymentStatus='PAID'.

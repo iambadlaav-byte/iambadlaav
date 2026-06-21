@@ -22,6 +22,10 @@ enum UserRole {
   ENROLLED
   VOLUNTEER
   ADMIN
+  // Staff tiers (Wave 2). ADMIN = full; CONTRIBUTOR = ops, no money/batches/users;
+  // VIEWER = read-only, no financials.
+  CONTRIBUTOR
+  VIEWER
 }
 
 enum Program {
@@ -55,6 +59,7 @@ enum RegistrationStatus {
   ACTIVE
   COMPLETED
   CANCELLED
+  WAITLISTED
 }
 
 enum EnquiryType {
@@ -151,27 +156,32 @@ model User {
   communityJoins   CommunityMember[]
   volunteerApp     Volunteer?
   refreshTokens    RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
 }
 
 // ============================================================
 // MODEL 2 — Batch
 // ============================================================
 model Batch {
-  id               String      @id @default(cuid())
-  program          Program
-  name             String      // e.g. "Badlaav · Aug 2026"
-  startDate        DateTime
-  endDate          DateTime
-  venue            String      @default("")
-  totalSeats       Int
-  seatsBooked      Int         @default(0)
-  priceIndividual  Decimal
-  priceCouple      Decimal?
-  priceCorporate   Decimal?
-  status           BatchStatus @default(OPEN)
-  createdAt        DateTime    @default(now())
+  id                   String      @id @default(cuid())
+  program              Program
+  name                 String      // e.g. "Badlaav · Aug 2026"
+  startDate            DateTime
+  endDate              DateTime
+  venue                String      @default("")
+  address              String?     // full location address (Wave 2)
+  mapLink              String?     // Google Maps URL (Wave 2)
+  totalSeats           Int
+  seatsBooked          Int         @default(0)
+  waitlistCapacity     Int         @default(0) // 0 = unlimited waiting list
+  priceIndividual      Decimal
+  priceCouple          Decimal?
+  priceCorporate       Decimal?
+  priceCorporateAnnual Decimal?
+  status               BatchStatus @default(OPEN)
+  createdAt            DateTime    @default(now())
 
-  registrations    Registration[]
+  registrations        Registration[]
 }
 
 // ============================================================
@@ -207,6 +217,10 @@ model Registration {
   reminderSentAt      DateTime?
   // The Retreat questionnaire (psychographic answers) captured at registration.
   questionnaire       Json?
+  // Wave 2 — admin ops
+  candidateId         String?            @unique // batch code + sequence, assigned on payment
+  paymentMethod       String?            // 'RAZORPAY' | 'MANUAL'
+  waitlistInvitedAt   DateTime?          // when an admin sent the waitlist payment invite
 
   @@index([userId])
   @@index([batchId])
@@ -486,7 +500,7 @@ model InvoiceSequence {
 model AuditLog {
   id          String   @id @default(cuid())
   actorId     String?  // null for system-generated events
-  action      String   // e.g. 'admin.registration.mark_completed'
+  action      String   // e.g. 'admin.registration.mark_completed', 'auth.login'
   subjectType String?  // e.g. 'Registration'
   subjectId   String?
   meta        Json?    // arbitrary context (before/after values, etc.)
@@ -496,4 +510,39 @@ model AuditLog {
   @@index([actorId])
   @@index([action])
   @@index([createdAt])
+}
+
+// ============================================================
+// MODEL 15 — Story (admin-authored "user stories" CMS, Wave 2)
+// ============================================================
+model Story {
+  id        String     @id @default(cuid())
+  title     String
+  subtitle  String?
+  batchName String?    // free-text batch label this story belongs to
+  date      DateTime?
+  passage   String     @db.Text
+  photos    String[]   // Cloudinary URLs
+  status    PostStatus @default(DRAFT)
+  authorId  String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([status])
+}
+
+// ============================================================
+// OPS MODEL 5 — PasswordResetToken (Wave 2)
+// Opaque token hashed at rest; single-use, short-lived.
+// ============================================================
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique // sha256 of the random token
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
 }
