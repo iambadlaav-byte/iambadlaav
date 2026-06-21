@@ -22,10 +22,12 @@ enum UserRole {
   ENROLLED
   VOLUNTEER
   ADMIN
-  // Staff tiers (Wave 2). ADMIN = full; CONTRIBUTOR = ops, no money/batches/users;
-  // VIEWER = read-only, no financials.
+  // Staff tiers (Wave 2). SUPERADMIN = everything incl. deleting ADMINs;
+  // ADMIN = full but can only delete CONTRIBUTOR/VIEWER; CONTRIBUTOR = ops,
+  // no money/batches/users; VIEWER = read-only, no financials.
   CONTRIBUTOR
   VIEWER
+  SUPERADMIN
 }
 
 enum Program {

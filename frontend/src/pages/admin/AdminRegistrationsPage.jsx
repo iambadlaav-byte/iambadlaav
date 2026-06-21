@@ -56,9 +56,9 @@ const fmtINR = (n) => `₹${Number(n ?? 0).toLocaleString('en-IN')}`;
 export default function AdminRegistrationsPage() {
   const { toast } = useToast();
   const { user } = useAuth();
-  const isAdmin = user?.role === 'ADMIN';
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPERADMIN';
   // Contact PII (email / phone / address) is hidden from Viewer — server strips it too.
-  const showContact = user?.role === 'ADMIN' || user?.role === 'CONTRIBUTOR';
+  const showContact = isAdmin || user?.role === 'CONTRIBUTOR';
   const [acting, setActing] = useState(false);
 
   const [program, setProgram] = useState('ALL');

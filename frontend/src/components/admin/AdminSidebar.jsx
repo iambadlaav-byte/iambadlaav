@@ -43,7 +43,8 @@ export const ADMIN_NAV_ITEMS = [
 
 export function AdminSidebar({ onNavigate }) {
   const { user, logout } = useAuth();
-  const navItems = ADMIN_NAV_ITEMS.filter((item) => !item.adminOnly || user?.role === 'ADMIN');
+  const isAdminTier = user?.role === 'ADMIN' || user?.role === 'SUPERADMIN';
+  const navItems = ADMIN_NAV_ITEMS.filter((item) => !item.adminOnly || isAdminTier);
 
   return (
     <aside className="h-full flex flex-col bg-ink text-pearl">

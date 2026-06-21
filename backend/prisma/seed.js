@@ -28,14 +28,16 @@ async function main() {
 
   // 1. Admin user
   const MAP_LINK = 'https://www.google.com/maps/place/Dnyanpitt+Abhyasika/@18.7177129,76.3777553,21z';
+  // The founder is the single SUPERADMIN — the only account that can delete
+  // ADMINs. Re-running the seed promotes an existing admin row to SUPERADMIN.
   const admin = await prisma.user.upsert({
     where: { email: 'iambadlaav@gmail.com' },
-    update: {},
+    update: { role: 'SUPERADMIN' },
     create: {
       name: 'Arjun Thoratt',
       email: 'iambadlaav@gmail.com',
       phone: '7409339740',
-      role: 'ADMIN',
+      role: 'SUPERADMIN',
       passwordHash,
       emailVerified: true,
     },

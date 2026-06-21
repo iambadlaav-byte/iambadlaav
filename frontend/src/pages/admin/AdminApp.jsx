@@ -57,8 +57,8 @@ export default function AdminApp() {
     return <Navigate to="/admin/login" replace />;
   }
 
-  // Authenticated but not admin — redirect to public homepage
-  if (user.role !== 'ADMIN') {
+  // Authenticated but not admin-tier — redirect to public homepage
+  if (user.role !== 'ADMIN' && user.role !== 'SUPERADMIN') {
     return <Navigate to="/" replace />;
   }
 

@@ -247,6 +247,11 @@ export async function resetUserPassword(id, password) {
   return data; // { ok: true }
 }
 
+export async function deleteStaffUser(id) {
+  const { data } = await apiClient.delete(`/admin/users/${id}`);
+  return data; // { ok: true }
+}
+
 // ── Login activity (Admin only) ──────────────────────────────────────────────
 
 /**

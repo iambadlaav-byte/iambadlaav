@@ -19,7 +19,7 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext.jsx';
 import { Spinner } from '../components/ui/Spinner.jsx';
 
-const STAFF_ROLES = ['ADMIN', 'CONTRIBUTOR', 'VIEWER'];
+const STAFF_ROLES = ['SUPERADMIN', 'ADMIN', 'CONTRIBUTOR', 'VIEWER'];
 
 export function AdminProtectedRoute() {
   const { user, loading } = useAuth();
