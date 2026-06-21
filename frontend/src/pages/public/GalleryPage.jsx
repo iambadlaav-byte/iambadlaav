@@ -1,9 +1,11 @@
 /**
  * GalleryPage — /gallery. Photographs from past batches.
  */
+import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
 import { getSeoForRoute } from '../../lib/seo.js';
+import { apiClient } from '../../api/client.js';
 import { ProgramHero } from '../../components/sections/ProgramHero.jsx';
 import { CtaBand } from '../../components/sections/CtaBand.jsx';
 import { StaggerChildren, StaggerItem } from '../../components/animations/StaggerChildren.jsx';
@@ -12,6 +14,22 @@ import { GALLERY } from '../../lib/content.js';
 export default function GalleryPage() {
   const { pathname } = useLocation();
   const seo = getSeoForRoute(pathname);
+
+  // Prefer CMS-managed gallery items; fall back to the bundled set so the page
+  // never blanks (e.g. before any items are added, or if the request fails).
+  const [images, setImages] = useState(GALLERY);
+  useEffect(() => {
+    let active = true;
+    apiClient
+      .get('/gallery')
+      .then(({ data }) => {
+        if (!active) return;
+        const rows = (data?.rows ?? []).map((r) => ({ url: r.url, alt: r.altText || r.caption || 'Badlaav' }));
+        if (rows.length) setImages(rows);
+      })
+      .catch(() => { /* keep the static fallback */ });
+    return () => { active = false; };
+  }, []);
 
   return (
     <>
@@ -34,7 +52,7 @@ export default function GalleryPage() {
       <section className="bg-cream py-[var(--section-y)] px-[var(--section-x)]">
         <div className="max-w-wide mx-auto">
           <StaggerChildren className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {GALLERY.map((img) => (
+            {images.map((img) => (
               <StaggerItem key={img.url}>
                 <div className="aspect-[4/3] rounded-lg overflow-hidden bg-ink/10">
                   <img

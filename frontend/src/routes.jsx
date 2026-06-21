@@ -46,6 +46,7 @@ const AdminEnquiriesPage     = lazy(() => import('./pages/admin/AdminEnquiriesPa
 const AdminVolunteersPage    = lazy(() => import('./pages/admin/AdminVolunteersPage.jsx'));
 const AdminInvoicesPage      = lazy(() => import('./pages/admin/AdminInvoicesPage.jsx'));
 const AdminStoriesPage       = lazy(() => import('./pages/admin/AdminStoriesPage.jsx'));
+const AdminGalleryPage       = lazy(() => import('./pages/admin/AdminGalleryPage.jsx'));
 const AdminSettingsPage      = lazy(() => import('./pages/admin/AdminSettingsPage.jsx'));
 
 function AdminSuspense({ children }) {
@@ -119,6 +120,7 @@ export default function AppRoutes() {
           <Route path="volunteers"         element={<AdminSuspense><AdminVolunteersPage /></AdminSuspense>} />
           <Route path="invoices"           element={<AdminSuspense><AdminInvoicesPage /></AdminSuspense>} />
           <Route path="stories"            element={<AdminSuspense><AdminStoriesPage /></AdminSuspense>} />
+          <Route path="gallery"            element={<AdminSuspense><AdminGalleryPage /></AdminSuspense>} />
           <Route path="settings"           element={<AdminSuspense><AdminSettingsPage /></AdminSuspense>} />
           <Route path="*"                  element={<Navigate to="dashboard" replace />} />
         </Route>

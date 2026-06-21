@@ -21,6 +21,8 @@ import {
   blogUpdateSchema,
   storyCreateSchema,
   storyUpdateSchema,
+  galleryCreateSchema,
+  galleryUpdateSchema,
   eventCreateSchema,
   eventUpdateSchema,
   refundSchema,
@@ -103,6 +105,13 @@ import {
   archiveStory,
   uploadStoryPhoto,
 } from '../../controllers/admin.stories.controller.js';
+import {
+  listGalleryItems,
+  createGalleryItem,
+  updateGalleryItem,
+  deleteGalleryItem,
+  uploadGalleryImage,
+} from '../../controllers/admin.gallery.controller.js';
 import {
   listEvents,
   createEvent,
@@ -191,6 +200,14 @@ router.get('/stories',            listStories);
 router.post('/stories',           requireEditor, validate(storyCreateSchema), createStory);
 router.patch('/stories/:id',      requireEditor, validate(storyUpdateSchema), updateStory);
 router.post('/stories/:id/archive', requireEditor, archiveStory);
+
+// ── Gallery ─────────────────────────────────────────────────────────────────────
+// Static '/gallery/upload' before '/gallery/:id' so 'upload' is never an :id.
+router.post('/gallery/upload', requireEditor, mediaImageUpload, verifyMagicBytes, uploadGalleryImage);
+router.get('/gallery',         listGalleryItems);
+router.post('/gallery',        requireEditor, validate(galleryCreateSchema), createGalleryItem);
+router.patch('/gallery/:id',   requireEditor, validate(galleryUpdateSchema), updateGalleryItem);
+router.delete('/gallery/:id',  requireEditor, deleteGalleryItem);
 
 // ── Events ────────────────────────────────────────────────────────────────────
 router.get('/events',             listEvents);

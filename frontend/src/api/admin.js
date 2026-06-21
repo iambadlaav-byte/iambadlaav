@@ -151,6 +151,41 @@ export async function uploadStoryPhoto(file) {
   return data.url;
 }
 
+// ── Gallery (gallery CMS) ─────────────────────────────────────────────────────
+
+export async function listGalleryItems(params = {}) {
+  const { data } = await apiClient.get('/admin/gallery', { params });
+  return data.rows;
+}
+
+export async function createGalleryItem(body) {
+  const { data } = await apiClient.post('/admin/gallery', body);
+  return data.item;
+}
+
+export async function updateGalleryItem(id, body) {
+  const { data } = await apiClient.patch(`/admin/gallery/${id}`, body);
+  return data.item;
+}
+
+export async function deleteGalleryItem(id) {
+  const { data } = await apiClient.delete(`/admin/gallery/${id}`);
+  return data;
+}
+
+/**
+ * Upload one gallery image as multipart/form-data (field name 'image').
+ * Returns the Cloudinary secure_url to pair with the mandatory altText on create.
+ */
+export async function uploadGalleryImage(file) {
+  const formData = new FormData();
+  formData.append('image', file);
+  const { data } = await apiClient.post('/admin/gallery/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data.url;
+}
+
 // ── Enquiries ────────────────────────────────────────────────────────────────
 
 export async function listEnquiries(params = {}) {

@@ -48,6 +48,11 @@ export const AUDIT_ACTIONS = Object.freeze({
   STORY_PUBLISHED:          'story.published',
   STORY_ARCHIVED:           'story.archived',
 
+  // Gallery
+  GALLERY_CREATED:          'gallery.created',
+  GALLERY_UPDATED:          'gallery.updated',
+  GALLERY_DELETED:          'gallery.deleted',
+
   // Events
   EVENT_CREATED:            'event.created',
   EVENT_UPDATED:            'event.updated',

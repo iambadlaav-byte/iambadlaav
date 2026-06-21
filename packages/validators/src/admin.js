@@ -85,6 +85,20 @@ export const storyCreateSchema = z.strictObject({
 
 export const storyUpdateSchema = storyCreateSchema.partial();
 
+// ── Gallery ───────────────────────────────────────────────────────────────────
+// altText is MANDATORY on create (accessibility, CONSTRAINT-MEDIA-001).
+
+export const galleryCreateSchema = z.strictObject({
+  url:       z.string().url(),
+  caption:   z.string().trim().max(300).optional(),
+  category:  z.enum(['badlaav', 'abhyasika', 'community', 'gallery']),
+  altText:   z.string().trim().min(1, 'Alt text is required.').max(300),
+  type:      z.enum(['PHOTO', 'VIDEO']).optional().default('PHOTO'),
+  sortOrder: z.coerce.number().int().min(0).optional().default(0),
+});
+
+export const galleryUpdateSchema = galleryCreateSchema.partial();
+
 // ── Event ─────────────────────────────────────────────────────────────────────
 
 export const eventCreateSchema = z.strictObject({
