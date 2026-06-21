@@ -25,9 +25,7 @@ The backend configures the SDK with `secure: true` (always HTTPS delivery). With
 | `badlaav/invoices` | Generated invoice PDFs (raw resources). | **Authenticated** — served via signed URLs only. |
 | `badlaav/stories` | Story CMS photos. | Public delivery. |
 | `badlaav/gallery` | Gallery CMS images. | Public delivery. |
-| `dnyanpith/profile-photos` | User profile photos (`public_id` = userId, overwrite on re-upload). | Public delivery. |
-
-> Note: in the current code the profile-photo folder is literally `dnyanpith/profile-photos` (a carryover from the parent project). Story, gallery, and invoice folders are all under `badlaav/`. This only affects where assets are stored in your Cloudinary account; it does not affect the public site branding.
+| `badlaav/profile-photos` | User profile photos (`public_id` = userId, overwrite on re-upload). | Public delivery. |
 
 ---
 

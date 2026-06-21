@@ -86,7 +86,7 @@ DIRECT_URL="postgresql://postgres.PROJECTREF:PASSWORD@aws-1-ap-south-1.pooler.su
 
 | Variable | What it is | Where to get it | Example |
 |---|---|---|---|
-| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name (public) | Cloudinary → Account Details | `dnyanpith` |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name (public) | Cloudinary → Account Details | `your-cloud-name` |
 | `CLOUDINARY_API_KEY` | Cloudinary API key | Same place | `123456789012345` |
 | `CLOUDINARY_API_SECRET` | Cloudinary API secret. **Backend only.** | Same place | `xxxxxxxx` |
 
@@ -107,7 +107,7 @@ DIRECT_URL="postgresql://postgres.PROJECTREF:PASSWORD@aws-1-ap-south-1.pooler.su
 | `NODE_ENV` | `development` for local, `production` for deployed | `development` |
 | `PORT` | Backend port. In Railway, **Railway sets this automatically — do not set it yourself.** | `4000` |
 | `APP_VERSION` | Shown in the health endpoint payload | `dev` |
-| `ALLOWED_ORIGINS` | Which frontend URLs may call the API. Comma-separated, **no spaces**. | `http://localhost:5173,https://badlaav.dnyanpith.org` |
+| `ALLOWED_ORIGINS` | Which frontend URLs may call the API. Comma-separated, **no spaces**. | `http://localhost:5173,https://www.iambadlaav.com` |
 | `LOG_LEVEL` | Pino log level: `trace`, `debug`, `info`, `warn`, `error`, `fatal` | `info` |
 | `RUN_CRONS` | Set to `"true"` on exactly **one** Railway service. Other instances skip cron startup to avoid duplicate emails. | `true` |
 | `SEED_ADMIN_PASSWORD` | Password for the admin user created by `prisma:seed` | `change-me` |
@@ -122,7 +122,7 @@ These values are **baked into the JavaScript bundle at build time** and visible 
 |---|---|---|
 | `VITE_API_URL` | Backend URL. Local dev: `http://localhost:4000`. Production: your Railway URL. | `http://localhost:4000` |
 | `VITE_RAZORPAY_KEY_ID` | **Public** Razorpay key (same value as `RAZORPAY_KEY_ID`). Never the secret. | `rzp_test_ABC123` |
-| `VITE_CLOUDINARY_CLOUD_NAME` | Public cloud name, used for building image URLs. | `dnyanpith` |
+| `VITE_CLOUDINARY_CLOUD_NAME` | Public cloud name, used for building image URLs. | `your-cloud-name` |
 | `VITE_SENTRY_DSN` | Sentry DSN for the **React** frontend (different from the backend one). Blank to disable. | `https://...@oXX.ingest.sentry.io/YY` |
 | `VITE_SENTRY_ENVIRONMENT` | Tag for Sentry events. | `development` |
 

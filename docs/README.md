@@ -64,4 +64,4 @@ Also see **[../README.md](../README.md)** (project overview) and **[../CLAUDE.md
 - **Ports (dev):** frontend `5173`, backend `4000`, Prisma Studio `5555`
 - **Build output:** `dist/` at the repo root (Vite builds from `frontend/` but outputs to root, per `vercel.json`)
 - **Scope of this build:** marketing site + online registration/payment with Razorpay + a live admin panel at `/admin/*`.
-- **Entity:** Badlaav is operated by Dnyanpith Abhyasika Pvt. Ltd., Ambajogai, Maharashtra. Founder: Arjun Thoratt.
+- **Entity:** Badlaav — Ambajogai, Maharashtra. Founder: Arjun Thoratt.

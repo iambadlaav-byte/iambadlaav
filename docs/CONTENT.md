@@ -12,7 +12,7 @@ Follow the brand voice rules in [../CLAUDE.md](../CLAUDE.md): calm, direct, warm
 
 | Field | Value |
 |---|---|
-| **Name** | Badlaav (a Dnyanpith initiative) |
+| **Name** | Badlaav |
 | **Tagline** | Trip नाही — Turning Point. |
 | **One-liner** | A 3-day residential retreat for professionals who need a real reset, not another workshop. |
 | **Core idea** | You cannot think clearly in a noisy environment. |
@@ -103,6 +103,6 @@ Morning: a specific plan for the next 90 days. Group debrief. Check-out by 2pm. 
 
 ## Contact
 
-- **Email:** hello@dnyanpith.org
+- **Email:** iambadlaav@gmail.com
 - **WhatsApp:** (set in `frontend/src/lib/constants.js`)
 - **Address:** Ambajogai, Dist. Beed, Maharashtra 431517

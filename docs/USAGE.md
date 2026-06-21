@@ -128,7 +128,7 @@ You also get an email notification for each new enquiry.
    ```bash
    curl -X POST http://localhost:4000/api/v1/auth/login \
      -H "Content-Type: application/json" \
-     -d '{"email": "arjun@dnyanpith.org", "password": "<your-seed-password>"}'
+     -d '{"email": "iambadlaav@gmail.com", "password": "<your-seed-password>"}'
    ```
    → Copy the access token from the response
 

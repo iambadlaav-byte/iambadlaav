@@ -70,7 +70,7 @@ export default function AdminLoginPage() {
     return (
       <>
         <Helmet>
-          <title>Account locked — Dnyanpith Admin</title>
+          <title>Account locked — Badlaav Admin</title>
           <meta name="robots" content="noindex" />
         </Helmet>
         <main className="flex items-center justify-center min-h-screen bg-cream px-4">
@@ -92,7 +92,7 @@ export default function AdminLoginPage() {
   return (
     <>
       <Helmet>
-        <title>Admin sign in — Dnyanpith</title>
+        <title>Admin sign in — Badlaav</title>
         <meta name="robots" content="noindex" />
       </Helmet>
 
@@ -100,7 +100,7 @@ export default function AdminLoginPage() {
         <div className="w-full max-w-sm">
           <div className="mb-8 text-center">
             <p className="font-mono text-xs uppercase tracking-widest text-muted mb-2">
-              Dnyanpith Admin
+              Badlaav Admin
             </p>
             <h1 className="font-display text-2xl font-light text-charcoal">
               Sign in

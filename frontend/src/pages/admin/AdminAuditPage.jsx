@@ -78,7 +78,7 @@ export default function AdminAuditPage() {
   return (
     <>
       <Helmet>
-        <title>Audit log — Dnyanpith Admin</title>
+        <title>Audit log — Badlaav Admin</title>
       </Helmet>
 
       <div className="p-6 max-w-6xl">

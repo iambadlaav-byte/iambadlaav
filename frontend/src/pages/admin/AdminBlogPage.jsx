@@ -157,7 +157,7 @@ export default function AdminBlogPage() {
   return (
     <>
       <Helmet>
-        <title>Blog — Dnyanpith Admin</title>
+        <title>Blog — Badlaav Admin</title>
       </Helmet>
 
       <div className="p-6 max-w-5xl">

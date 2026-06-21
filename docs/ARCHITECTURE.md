@@ -103,7 +103,7 @@ The main tables Badlaav uses:
 | `AuditLog` | Records of admin actions |
 | `Enquiry` | Corporate/college enquiry form submissions |
 
-> Some extra tables exist from the parent Dnyanpith project (`Volunteer`, `BlogPost`, etc.) — they're unused by this frontend. `CommunityMember` is used by the community join flow.
+> `Volunteer`, `GalleryItem`, and `Story` back the volunteer application and the gallery/story CMS. `CommunityMember` backs the community join flow. A few tables (`BlogPost`, `Event`) are carried over from the parent project and aren't surfaced in the current build.
 
 ### Dedup guards (duplicate submission protection)
 
