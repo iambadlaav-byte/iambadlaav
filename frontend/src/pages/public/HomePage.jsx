@@ -1,24 +1,26 @@
 /**
- * HomePage — / (Badlaav).
- * A single calm scroll: hero → the idea → the three days → who → highlights →
- * testimonials → pricing → upcoming batches → questions → closing CTA.
+ * HomePage — / (Badlaav). First Light flow:
+ * hero → the idea (noise wheel) → collage → interstitial → the three days →
+ * video → batches → the place → testimonials → facilitators → pricing → FAQ →
+ * closing band.
  */
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
 import { getSeoForRoute, OrganizationLD } from '../../lib/seo.js';
-import { ProgramHero } from '../../components/sections/ProgramHero.jsx';
-import { NextRetreatCard } from '../../components/sections/NextRetreatCard.jsx';
-import { StatStrip } from '../../components/sections/StatStrip.jsx';
-import { ValueProp } from '../../components/sections/ValueProp.jsx';
-import { RetreatDays } from '../../components/sections/RetreatDays.jsx';
-import { WhoItsFor } from '../../components/sections/WhoItsFor.jsx';
-import { Highlights } from '../../components/sections/Highlights.jsx';
-import { Testimonials } from '../../components/sections/Testimonials.jsx';
-import { Pricing3Plans } from '../../components/sections/Pricing3Plans.jsx';
+import { ProtoHero } from '../../components/sections/ProtoHero.jsx';
+import { NoiseWheel } from '../../components/sections/NoiseWheel.jsx';
+import { PhotoCollage } from '../../components/sections/PhotoCollage.jsx';
+import { InterstitialBand } from '../../components/sections/InterstitialBand.jsx';
+import { ThreeDaysInteractive } from '../../components/sections/ThreeDaysInteractive.jsx';
+import { VideoBanner } from '../../components/sections/VideoBanner.jsx';
 import { UpcomingBatches } from '../../components/sections/UpcomingBatches.jsx';
+import { LocationGrid } from '../../components/sections/LocationGrid.jsx';
+import { Testimonials } from '../../components/sections/Testimonials.jsx';
+import { FacilitatorsGrid } from '../../components/sections/FacilitatorsGrid.jsx';
+import { Pricing3Plans } from '../../components/sections/Pricing3Plans.jsx';
 import { FAQAccordion } from '../../components/sections/FAQAccordion.jsx';
-import { CtaBand } from '../../components/sections/CtaBand.jsx';
-import { SITE, PLANS, HERO_IMAGE } from '../../lib/content.js';
+import { BigFooterCta } from '../../components/sections/BigFooterCta.jsx';
+import { PLANS } from '../../lib/content.js';
 
 export default function HomePage() {
   const { pathname } = useLocation();
@@ -37,28 +39,19 @@ export default function HomePage() {
         <script type="application/ld+json">{JSON.stringify(OrganizationLD)}</script>
       </Helmet>
 
-      <ProgramHero
-        program="Badlaav · 3-day residential retreat"
-        headline={SITE.tagline}
-        subHeadline={SITE.oneLiner}
-        heroImage={HERO_IMAGE}
-        heroImageAlt="The Badlaav retreat grounds at Ambajogai"
-        primaryCta={{ label: 'Register', href: '/register?program=badlaav' }}
-        secondaryCta={{ label: 'Talk to Arjun Dada', href: '/contact' }}
-        aside={<NextRetreatCard />}
-        showAmbient
-      />
-
-      <StatStrip />
-      <ValueProp />
-      <RetreatDays variant="teaser" />
-      <WhoItsFor />
-      <Highlights />
+      <ProtoHero />
+      <NoiseWheel />
+      <PhotoCollage />
+      <InterstitialBand />
+      <ThreeDaysInteractive />
+      <VideoBanner />
+      <UpcomingBatches program="BADLAAV" title="Join us at an upcoming batch" />
+      <LocationGrid />
       <Testimonials />
+      <FacilitatorsGrid />
       <Pricing3Plans program="Badlaav" plans={PLANS} />
-      <UpcomingBatches />
       <FAQAccordion />
-      <CtaBand />
+      <BigFooterCta />
     </>
   );
 }
