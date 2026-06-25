@@ -34,7 +34,7 @@ export default {
       },
       fontFamily: {
         // Switched per theme via --font-* CSS variables (see ThemeContext)
-        display: ['var(--font-display)', 'system-ui', 'sans-serif'],
+        display: ['var(--font-display)', 'Georgia', 'serif'],
         sans:    ['var(--font-sans)', 'system-ui', 'sans-serif'],
         mono:    ['var(--font-mono)', 'ui-monospace', 'monospace'],
         // Mukta — Devanagari fallback (community pages with Marathi phrases)
