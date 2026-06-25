@@ -1,18 +1,15 @@
 /**
  * ThreeDaysInteractive — homepage "what three days look like": a selectable
  * list of the three days with the active day's image shown alongside.
- * Hover/click to switch (keyboard-accessible buttons). No image animation
- * for reduced-motion users.
+ * Hover/click to switch (keyboard-accessible buttons).
  */
 import { useState } from 'react';
 import { RETREAT_DAYS } from '../../lib/content.js';
 import { cn } from '../../lib/cn.js';
 import { FadeIn } from '../animations/FadeIn.jsx';
-import { useReducedMotion } from '../../hooks/useReducedMotion.js';
 
 export function ThreeDaysInteractive() {
   const [active, setActive] = useState(0);
-  const noMotion = useReducedMotion();
   const day = RETREAT_DAYS[active];
 
   return (
@@ -57,7 +54,7 @@ export function ThreeDaysInteractive() {
               key={day.image}
               src={day.image}
               alt={`${day.title} — ${day.subtitle}`}
-              className={cn('w-full h-[360px] object-cover', !noMotion && 'animate-[fadeIn_0.5s_ease]')}
+              className="w-full h-[360px] object-cover"
             />
           </div>
         </div>
