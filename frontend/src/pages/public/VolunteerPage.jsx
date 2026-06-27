@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { ProgramHero } from '../../components/sections/ProgramHero.jsx';
+import { HeroGeometry, HERO_FIGURE } from '../../components/animations/HeroGeometry.jsx';
 import { VolunteerForm } from '../../components/forms/VolunteerForm.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { FadeIn } from '../../components/animations/FadeIn.jsx';
@@ -43,13 +44,14 @@ export default function VolunteerPage() {
         heroImageAlt="Volunteers and participants in the open at a Badlaav batch"
         primaryCta={{ label: 'Apply to volunteer', href: '#apply' }}
         secondaryCta={{ label: 'Talk to Arjun Dada', href: '/contact' }}
+        aside={<HeroGeometry variant={HERO_FIGURE.VOLUNTEER} />}
       />
 
       {/* Intro */}
       <section className="bg-cream py-[var(--section-y)] px-[var(--section-x)]">
         <div className="max-w-narrow mx-auto">
           <FadeIn>
-            <p className="font-mono text-xs uppercase tracking-widest text-ochre mb-4">Why volunteer</p>
+            <p className="font-mono text-xs uppercase tracking-widest text-muted mb-4">Why volunteer</p>
             <div className="space-y-4 font-sans text-charcoal leading-body text-lg">
               {intro.map((p) => (
                 <p key={p.slice(0, 24)}>{p}</p>
@@ -103,7 +105,7 @@ export default function VolunteerPage() {
       <section id="apply" className="bg-soft py-[var(--section-y)] px-[var(--section-x)] scroll-mt-20">
         <div className="max-w-narrow mx-auto">
           <FadeIn>
-            <p className="font-mono text-xs uppercase tracking-widest text-ochre mb-3">Apply</p>
+            <p className="font-mono text-xs uppercase tracking-widest text-muted mb-3">Apply</p>
             <h2 className="font-display font-semibold text-ink mb-8" style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)' }}>
               Put your name forward
             </h2>

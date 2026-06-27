@@ -25,6 +25,7 @@ export const THEMES = {
       '--color-pearl': '255 243 239', // #FFF3EF warm white — text on dark surfaces (KEEP)
       '--color-gold': '243 167 71', // #f3a747 amber — primary CTAs / badges
       '--color-ochre': '141 62 29', // #8d3e1d terracotta — primary brand accent
+      '--color-ember': '92 34 16', // #5C2210 deep burnt terracotta — hero overlay (high text contrast)
       '--color-teal': '50 116 85', // #327455 deep fern — links (KEEP)
       '--color-teal-light': '78 155 119', // #4E9B77 fern — hover, accent (KEEP)
       '--color-sage': '78 155 119', // #4E9B77 fern — success / day-2 accent (KEEP)

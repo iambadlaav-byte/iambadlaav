@@ -19,6 +19,7 @@
   --color-pearl: 255 243 239; /* #FFF3EF warm white — text on dark surfaces */
   --color-gold: 250 208 98; /* #FAD062 sunny gold — primary CTAs */
   --color-ochre: 160 62 27; /* #A03E1B terracotta — warmth accent */
+  --color-ember: 92 34 16; /* #5C2210 deep burnt terracotta — hero overlay (high text contrast) */
   --color-teal: 50 116 85; /* #327455 deep fern — links, secondary actions */
   --color-teal-light: 78 155 119; /* #4E9B77 fern — hover, accent phrase */
   --color-sage: 78 155 119; /* #4E9B77 fern — success states */
@@ -32,8 +33,8 @@
   --font-sans: 'DM Sans', system-ui, sans-serif;
   --font-mono: 'DM Mono', ui-monospace, monospace;
 
-  /* Section spacing — fluid */
-  --section-y: clamp(60px, 8vw, 120px);
+  /* Section spacing — fluid (tightened so more content fits per viewport) */
+  --section-y: clamp(44px, 6vw, 96px);
   --section-x: 5%;
 
   /* Container widths (mirrors tailwind.config.js maxWidth tokens) */
@@ -43,15 +44,18 @@
 
   /* Fluid heading sizes — used via Tailwind arbitrary value:
      text-[length:var(--text-display)] etc. (no inline style=) */
-  --text-display: clamp(2.8rem, 7vw, 6rem); /* H1 hero */
-  --text-heading: clamp(1.8rem, 4vw, 3rem); /* H2 section */
-  --text-subheading: clamp(1.4rem, 3vw, 2rem); /* H3 card, form headings */
+  --text-display: clamp(2.4rem, 5.5vw, 4.5rem); /* H1 hero */
+  --text-heading: clamp(1.5rem, 3vw, 2.4rem); /* H2 section */
+  --text-subheading: clamp(1.2rem, 2.2vw, 1.6rem); /* H3 card, form headings */
 }
 
 /* ============================================================
    BASE STYLES
    ============================================================ */
 html {
+  /* Global zoom-out: scales rem-based type & spacing down ~10% so the page
+     reads less magnified and shows more content per screen. */
+  font-size: 90%;
   -webkit-text-size-adjust: 100%; /* prevent iOS font-size inflation */
   scroll-behavior: smooth;
 }

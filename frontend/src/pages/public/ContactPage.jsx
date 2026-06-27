@@ -7,9 +7,11 @@ import { useLocation, useSearchParams } from 'react-router-dom';
 import { Mail, MessageCircle, MapPin } from 'lucide-react';
 import { getSeoForRoute } from '../../lib/seo.js';
 import { ProgramHero } from '../../components/sections/ProgramHero.jsx';
+import { HeroGeometry, HERO_FIGURE } from '../../components/animations/HeroGeometry.jsx';
 import { CorporateEnquiryForm } from '../../components/forms/CorporateEnquiryForm.jsx';
 import { GenericContactForm } from '../../components/forms/GenericContactForm.jsx';
 import { FadeIn } from '../../components/animations/FadeIn.jsx';
+import { SocialLinks } from '../../components/ui/SocialLinks.jsx';
 import { cn } from '../../lib/cn.js';
 import { CONTACT_EMAIL, WHATSAPP_NUMBER, CONTACT_ADDRESS } from '../../lib/constants.js';
 
@@ -40,7 +42,11 @@ export default function ContactPage() {
       <ProgramHero
         program="Contact"
         headline="Talk to Arjun Dada"
+        headlineClassName="max-w-none md:whitespace-nowrap"
         subHeadline="Reaching out for yourself, or bringing a whole team? Pick what fits and we'll take it from there."
+        heroImage="/images/proto_dawn.png"
+        heroImageAlt="First light over the Badlaav retreat"
+        aside={<HeroGeometry variant={HERO_FIGURE.CONTACT} />}
       />
 
       {/* Direct contact strip */}
@@ -74,6 +80,14 @@ export default function ContactPage() {
             </div>
           </FadeIn>
         </div>
+
+        {/* Social — same set as the footer */}
+        <FadeIn>
+          <div className="max-w-default mx-auto mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+            <span className="font-mono text-xs uppercase tracking-widest text-muted">Follow along</span>
+            <SocialLinks iconSize={22} />
+          </div>
+        </FadeIn>
       </section>
 
       {/* Enquiry form — personal message or corporate enquiry */}

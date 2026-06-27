@@ -16,10 +16,10 @@ export function ThreeDaysInteractive() {
     <section className="bg-cream py-[var(--section-y)] px-[var(--section-x)]">
       <div className="max-w-default mx-auto">
         <FadeIn>
-          <p className="font-mono text-xs uppercase tracking-widest text-ochre text-center mb-3">
+          <p className="font-mono text-xs uppercase tracking-widest text-muted text-center mb-3">
             Three days, away from the noise
           </p>
-          <h2 className="font-display text-ink text-center mb-12" style={{ fontSize: 'clamp(2rem, 4.5vw, 3rem)' }}>
+          <h2 className="font-display text-ink text-center mb-12" style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)' }}>
             What three days look like
           </h2>
         </FadeIn>

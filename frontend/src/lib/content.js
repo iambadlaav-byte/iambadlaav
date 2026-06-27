@@ -169,7 +169,11 @@ export const EXPERIENCE_PLANS = [
 export const EXPERIENCE = {
   hero: {
     program: 'The Badlaav Experience',
-    headline: 'Transform your mindset. Transform your results.',
+    // Headline keeps "Transform your" fixed and rotates the closing word in
+    // place: mindset → results. `headline` is the static fallback (reduced motion).
+    headline: 'Transform your mindset.',
+    headlinePrefix: 'Transform your',
+    headlineWords: ['mindset', 'results'],
     sub: 'Every meaningful transformation begins with awareness. A guided experience to break through limiting patterns, gain clarity, and move forward with confidence and purpose.',
   },
   intro: [
@@ -288,6 +292,9 @@ export const STATS = [
 
 export const SOCIAL = {
   instagram: 'https://www.instagram.com/iambadlaav/',
+  // TODO: paste the real channel/page URLs — these icons render only once set.
+  youtube: '',
+  facebook: '',
 };
 
 // ── First Light prototype copy ──────────────────────────────────────────────
@@ -413,12 +420,4 @@ export const VIDEO = {
 
 export const BIG_FOOTER = {
   headline: ["You don't need more noise.", 'You need three quiet days.'],
-  brandLine: 'Trip नाही — Turning Point.',
-  credit: '© 2026 Badlaav · Dnyanpith Abhyasika Pvt. Ltd., Ambajogai',
-  links: [
-    { label: 'Home', href: '/' },
-    { label: 'The Three Days', href: '/retreat' },
-    { label: 'Upcoming Batches', href: '/register?program=badlaav' },
-    { label: 'Talk to Arjun Dada', href: '/contact' },
-  ],
 };

@@ -19,6 +19,7 @@ export default {
         navy:      themeColor('--color-navy'),
         gold:      themeColor('--color-gold'),
         ochre:     themeColor('--color-ochre'),
+        ember:     themeColor('--color-ember'),
         cream:     themeColor('--color-cream'),
         charcoal:  themeColor('--color-charcoal'),
         teal:      themeColor('--color-teal'),

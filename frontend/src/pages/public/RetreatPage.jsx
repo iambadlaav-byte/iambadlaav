@@ -6,10 +6,10 @@ import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
 import { getSeoForRoute } from '../../lib/seo.js';
 import { ProgramHero } from '../../components/sections/ProgramHero.jsx';
+import { HeroGeometry, HERO_FIGURE } from '../../components/animations/HeroGeometry.jsx';
 import { DayBlock } from '../../components/sections/DayBlock.jsx';
 import { Inclusions } from '../../components/sections/Inclusions.jsx';
 import { UpcomingBatches } from '../../components/sections/UpcomingBatches.jsx';
-import { BigFooterCta } from '../../components/sections/BigFooterCta.jsx';
 import { FadeIn } from '../../components/animations/FadeIn.jsx';
 import { RETREAT_DAYS, HERO } from '../../lib/content.js';
 
@@ -37,6 +37,7 @@ export default function RetreatPage() {
         heroImageAlt="Arrival at a Badlaav retreat"
         primaryCta={{ label: 'Register', href: '/register?program=badlaav' }}
         secondaryCta={{ label: 'Talk to Arjun Dada', href: '/contact' }}
+        aside={<HeroGeometry variant={HERO_FIGURE.RETREAT} />}
       />
 
       <section className="bg-cream pt-[var(--section-y)] text-center px-[var(--section-x)]">
@@ -56,7 +57,6 @@ export default function RetreatPage() {
 
       <Inclusions />
       <UpcomingBatches program="BADLAAV" title="Upcoming retreat dates" />
-      <BigFooterCta />
     </>
   );
 }

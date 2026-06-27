@@ -13,6 +13,7 @@ import { getSeoForRoute } from '../../lib/seo.js';
 import { apiClient } from '../../api/client.js';
 import { cn } from '../../lib/cn.js';
 import { ProgramHero } from '../../components/sections/ProgramHero.jsx';
+import { HeroGeometry, HERO_FIGURE } from '../../components/animations/HeroGeometry.jsx';
 import { CtaBand } from '../../components/sections/CtaBand.jsx';
 import { StaggerChildren, StaggerItem } from '../../components/animations/StaggerChildren.jsx';
 import { Lightbox } from '../../components/ui/Lightbox.jsx';
@@ -89,6 +90,9 @@ export default function GalleryPage() {
         program="Gallery"
         headline="From the retreat"
         subHeadline="The grounds, the sessions, the quiet. A look at the environment that does the work."
+        heroImage="/images/gallery_3.jpg"
+        heroImageAlt="The grounds at the Badlaav retreat in Ambajogai"
+        aside={<HeroGeometry variant={HERO_FIGURE.GALLERY} />}
       />
 
       <section className="bg-cream py-[var(--section-y)] px-[var(--section-x)]">
@@ -124,7 +128,7 @@ export default function GalleryPage() {
                   <button
                     type="button"
                     onClick={() => setLightboxIndex(i)}
-                    className="group relative block aspect-[4/3] w-full rounded-lg overflow-hidden bg-ink/10 focus:outline-none focus:ring-2 focus:ring-ochre/60"
+                    className="group relative block aspect-[4/3] w-full rounded-2xl overflow-hidden bg-ink/10 focus:outline-none focus:ring-2 focus:ring-ochre/60"
                     aria-label={img.alt ? `View photo: ${img.alt}` : 'View photo'}
                   >
                     <img

@@ -1,7 +1,11 @@
 /**
- * DayBlock — one day on the /retreat page: copy + check-list on one side,
- * image trio on the other. `reverse` alternates the layout. `day.accent` is a
- * theme token name ('gold' | 'sage') used for the badge + check marks.
+ * DayBlock — one block on a programme page: copy + check-list on one side,
+ * image on the other. `reverse` alternates the layout. `day.accent` is a theme
+ * token name ('gold' | 'sage') used for the badge + check marks.
+ *
+ * Flexible enough to serve both /retreat (day-by-day) and /badlaav-experience
+ * (learn / highlights / outcomes): `subtitle` and `paragraphs` are optional, and
+ * each `list` item may be a plain string or a { title, body } object.
  */
 import { cn } from '../../lib/cn.js';
 import { FadeIn } from '../animations/FadeIn.jsx';
@@ -21,22 +25,34 @@ export function DayBlock({ day, reverse = false }) {
             {day.day}
           </span>
           <h3 className="font-display text-ink mb-5" style={{ fontSize: 'clamp(1.6rem, 3.5vw, 2.4rem)' }}>
-            {day.title} | <span className="text-ochre">{day.subtitle}</span>
+            {day.title}
+            {day.subtitle && <> | <span className="text-ochre">{day.subtitle}</span></>}
           </h3>
-          {day.paragraphs.map((p) => (
+          {(day.paragraphs ?? []).map((p) => (
             <p key={p.slice(0, 24)} className="font-sans text-charcoal leading-body mb-4">{p}</p>
           ))}
           <ul className="space-y-2 mt-2">
-            {day.list.map((item) => (
-              <li key={item} className="flex items-start gap-3 font-sans text-charcoal">
-                <span className={cn('mt-1 flex-shrink-0', accent.mark)} aria-hidden="true">✓</span>
-                {item}
-              </li>
-            ))}
+            {(day.list ?? []).map((item) => {
+              const detailed = typeof item === 'object' && item !== null;
+              return (
+                <li key={detailed ? item.title : item} className="flex items-start gap-3 font-sans text-charcoal">
+                  <span className={cn('mt-1 flex-shrink-0', accent.mark)} aria-hidden="true">✓</span>
+                  {detailed ? (
+                    <span><span className="font-semibold text-ink">{item.title}.</span> {item.body}</span>
+                  ) : (
+                    item
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </FadeIn>
         <FadeIn delay={0.1}>
-          <img src={day.image} alt={`${day.title} — ${day.subtitle}`} className="w-full h-[360px] object-cover rounded-2xl shadow-lg" />
+          <img
+            src={day.image}
+            alt={day.subtitle ? `${day.title} — ${day.subtitle}` : day.title}
+            className="w-full h-[360px] object-cover rounded-2xl shadow-lg"
+          />
         </FadeIn>
       </div>
     </article>

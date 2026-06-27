@@ -5,6 +5,7 @@ import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
 import { getSeoForRoute } from '../../lib/seo.js';
 import { ProgramHero } from '../../components/sections/ProgramHero.jsx';
+import { HeroGeometry, HERO_FIGURE } from '../../components/animations/HeroGeometry.jsx';
 import { Testimonials } from '../../components/sections/Testimonials.jsx';
 import { CtaBand } from '../../components/sections/CtaBand.jsx';
 import { FadeIn } from '../../components/animations/FadeIn.jsx';
@@ -30,13 +31,16 @@ export default function AboutPage() {
         program="About"
         headline="दादा who walked the same road"
         subHeadline="Badlaav is led by Arjun. Not a motivational speaker — a fellow who needed the reset himself, and built the space he wished had existed."
+        heroImage="/images/arjun_study.jpg"
+        heroImageAlt="Arjun at his desk in Ambajogai"
+        aside={<HeroGeometry variant={HERO_FIGURE.ABOUT} />}
       />
 
       {/* The idea */}
       <section className="bg-cream py-[var(--section-y)] px-[var(--section-x)]">
         <div className="max-w-narrow mx-auto">
           <FadeIn>
-            <p className="font-mono text-xs uppercase tracking-widest text-teal mb-3">The idea</p>
+            <p className="font-mono text-xs uppercase tracking-widest text-muted mb-3">The idea</p>
             <h2 className="font-display font-semibold text-ink mb-6" style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)' }}>
               {SITE.coreIdea}
             </h2>
@@ -53,17 +57,17 @@ export default function AboutPage() {
       <section className="bg-soft py-[var(--section-y)] px-[var(--section-x)]">
         <div className="max-w-default mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <FadeIn>
-            <div className="aspect-[4/5] max-w-[420px] rounded-lg overflow-hidden bg-ink/10">
+            <div className="group aspect-[4/5] max-w-[420px] rounded-2xl overflow-hidden bg-ink/10">
               <img
                 src="/images/arjun_portrait.jpg"
                 alt="Arjun Thoratt, who leads the Badlaav retreat"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 loading="lazy"
               />
             </div>
           </FadeIn>
           <FadeIn>
-            <p className="font-mono text-xs uppercase tracking-widest text-teal mb-3">Who leads it</p>
+            <p className="font-mono text-xs uppercase tracking-widest text-muted mb-3">Who leads it</p>
             <h2 className="font-display font-semibold text-ink mb-6" style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)' }}>
               Arjun Dada
             </h2>

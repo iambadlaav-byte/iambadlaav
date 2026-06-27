@@ -11,6 +11,7 @@ import { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Seo } from '../../components/ui/Seo.jsx';
 import { ProgramHero } from '../../components/sections/ProgramHero.jsx';
+import { HeroGeometry, HERO_FIGURE } from '../../components/animations/HeroGeometry.jsx';
 import { CtaBand } from '../../components/sections/CtaBand.jsx';
 import { StaggerChildren, StaggerItem } from '../../components/animations/StaggerChildren.jsx';
 import { Spinner } from '../../components/ui/Spinner.jsx';
@@ -83,6 +84,9 @@ export default function StoriesPage() {
         program="Stories"
         headline="What changed, in their words"
         subHeadline="Three days in Ambajogai look different from the inside. Here are a few who came, and what they carried home."
+        heroImage="/images/badlaav_day3.jpg"
+        heroImageAlt="The closing circle at a Badlaav retreat"
+        aside={<HeroGeometry variant={HERO_FIGURE.STORIES} />}
       />
 
       <section className="bg-cream py-[var(--section-y)] px-[var(--section-x)]">
@@ -126,14 +130,14 @@ export default function StoriesPage() {
               <StaggerChildren className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filtered.map((story) => (
                   <StaggerItem key={story.id}>
-                    <article className="flex flex-col h-full bg-pearl rounded-lg overflow-hidden border border-soft">
+                    <article className="group flex flex-col h-full bg-pearl rounded-2xl overflow-hidden border border-charcoal/5 shadow-sm hover:shadow-lg transition-shadow">
                       {story.photos?.[0] && (
                         <div className="aspect-[4/3] overflow-hidden bg-ink/10">
                           <img
                             src={story.photos[0]}
                             alt={story.title}
                             loading="lazy"
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                           />
                         </div>
                       )}

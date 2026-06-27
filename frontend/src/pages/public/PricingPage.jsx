@@ -5,6 +5,7 @@ import { Helmet } from 'react-helmet-async';
 import { useLocation, Link } from 'react-router-dom';
 import { getSeoForRoute } from '../../lib/seo.js';
 import { ProgramHero } from '../../components/sections/ProgramHero.jsx';
+import { HeroGeometry, HERO_FIGURE } from '../../components/animations/HeroGeometry.jsx';
 import { Pricing3Plans } from '../../components/sections/Pricing3Plans.jsx';
 import { Inclusions } from '../../components/sections/Inclusions.jsx';
 import { CtaBand } from '../../components/sections/CtaBand.jsx';
@@ -31,7 +32,10 @@ export default function PricingPage() {
         program="Pricing"
         headline="One price, everything included"
         subHeadline="Stay, meals, and every session — no add-ons, no surprises. Choose how you want to come."
+        heroImage="/images/proto_golden.png"
+        heroImageAlt="Warm evening light at the Badlaav retreat"
         primaryCta={{ label: 'Register', href: '/register?program=badlaav' }}
+        aside={<HeroGeometry variant={HERO_FIGURE.PRICING} />}
       />
 
       <Pricing3Plans program="Retreat" plans={PLANS} />

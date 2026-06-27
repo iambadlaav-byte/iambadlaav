@@ -1,13 +1,16 @@
 /**
  * Header — desktop top bar + mobile hamburger trigger.
- * Deep-forest background, 72px height, gold-accent active route indicator.
+ * Terracotta bar; once the page scrolls it condenses into a translucent,
+ * blurred surface with a stronger shadow and a slightly smaller logo for a
+ * calmer, more premium feel (no layout shift — only paint/transform change).
  * On mobile (<768px): shows logo + hamburger; MobileNav handles the rest.
  * NO inline styles (CONSTRAINT-CODE-001).
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { cn } from '../../lib/cn.js';
+import { HEADER_SCROLL_THRESHOLD } from '../../lib/constants.js';
 import MobileNav from './MobileNav.jsx';
 import NavDropdown from './NavDropdown.jsx';
 
@@ -21,26 +24,53 @@ const NAV_LINKS = [
   { label: 'Programmes', dropdown: PROGRAMME_LINKS },
   { label: 'Pricing',   href: '/pricing' },
   { label: 'About',     href: '/about' },
-  { label: 'Gallery',   href: '/gallery' },
   { label: 'Stories',   href: '/stories' },
+  { label: 'Gallery',   href: '/gallery' },
   { label: 'Volunteer', href: '/volunteer' },
   { label: 'Contact',   href: '/contact' },
 ];
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  // Condense the bar into a translucent, blurred surface once the page scrolls.
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > HEADER_SCROLL_THRESHOLD);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-ochre text-pearl shadow-md">
-        <div className="max-w-default mx-auto px-4 flex items-center justify-between h-[72px]">
+      <header
+        className={cn(
+          'sticky top-0 z-40 text-pearl transition-[background-color,box-shadow,padding] duration-300',
+          scrolled ? 'bg-transparent pt-3' : 'bg-ochre shadow-md',
+        )}
+      >
+        {/* On scroll the bar contracts into a shorter, centered floating pill
+            (still carries the logo). Heights are tuned so the total header box
+            stays 72px — no layout shift, only paint/size change. */}
+        <div
+          className={cn(
+            'mx-auto flex items-center justify-between transition-all duration-300',
+            scrolled
+              ? 'max-w-3xl px-5 h-[60px] rounded-full bg-ochre/90 backdrop-blur-md shadow-lg'
+              : 'max-w-default px-4 h-[72px]',
+          )}
+        >
 
           {/* Logo */}
           <Link to="/" className="flex items-center" aria-label="Badlaav — home">
             <img
               src="/images/badlaav-logo-white.png"
               alt="Badlaav"
-              className="h-12 sm:h-14 w-auto"
+              className={cn(
+                'h-12 sm:h-14 w-auto origin-left transition-transform duration-300',
+                scrolled && 'scale-90',
+              )}
             />
           </Link>
 

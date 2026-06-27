@@ -18,7 +18,7 @@ export function NoiseWheel() {
         <FadeIn>
           <h2
             className="font-display text-ink text-center mb-12"
-            style={{ fontSize: 'clamp(2rem, 5vw, 3.4rem)' }}
+            style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)' }}
           >
             {w.heading}
             <br />
