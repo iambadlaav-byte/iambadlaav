@@ -13,7 +13,7 @@ export function ValueProp() {
       <div className="max-w-default mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           <FadeIn>
-            <p className="font-mono text-xs uppercase tracking-widest text-teal mb-4">What is Badlaav</p>
+            <p className="font-mono text-xs uppercase tracking-widest text-muted mb-4">What is Badlaav</p>
             <h2
               className="font-display font-semibold text-ink mb-6"
               style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)' }}

@@ -30,6 +30,16 @@ export const API_BASE = import.meta.env.VITE_API_URL
   : '/api/v1';
 
 // ============================================================
+// UI / LAYOUT
+// ============================================================
+// Scroll distance (px) past which the sticky header condenses into its
+// translucent, blurred state.
+export const HEADER_SCROLL_THRESHOLD = 24;
+
+// How long (ms) each word in a rotating hero headline holds before it swaps.
+export const HERO_WORD_ROTATE_MS = 2200;
+
+// ============================================================
 // CONTACT / SOCIAL
 // ============================================================
 export const WHATSAPP_NUMBER = '+917409339740';

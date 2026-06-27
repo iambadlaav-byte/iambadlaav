@@ -1,18 +1,17 @@
 /**
- * RetreatPage — /retreat. The experience in depth: the three days,
- * what's included, and the place itself.
+ * RetreatPage — /retreat. The three days in depth (First Light look):
+ * hero → day-by-day blocks → inclusions → batches → closing band.
  */
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
 import { getSeoForRoute } from '../../lib/seo.js';
 import { ProgramHero } from '../../components/sections/ProgramHero.jsx';
-import { RetreatDays } from '../../components/sections/RetreatDays.jsx';
+import { HeroGeometry, HERO_FIGURE } from '../../components/animations/HeroGeometry.jsx';
+import { DayBlock } from '../../components/sections/DayBlock.jsx';
 import { Inclusions } from '../../components/sections/Inclusions.jsx';
-import { Highlights } from '../../components/sections/Highlights.jsx';
 import { UpcomingBatches } from '../../components/sections/UpcomingBatches.jsx';
-import { CtaBand } from '../../components/sections/CtaBand.jsx';
 import { FadeIn } from '../../components/animations/FadeIn.jsx';
-import { SITE, HERO_IMAGE } from '../../lib/content.js';
+import { RETREAT_DAYS, HERO } from '../../lib/content.js';
 
 export default function RetreatPage() {
   const { pathname } = useLocation();
@@ -31,48 +30,33 @@ export default function RetreatPage() {
       </Helmet>
 
       <ProgramHero
-        program="The Retreat"
-        headline="Three days in Ambajogai"
-        subHeadline="Not a workshop you attend, but an environment you enter. Here is exactly what the three days hold."
-        heroImage={HERO_IMAGE}
-        heroImageAlt="The Badlaav retreat grounds at Ambajogai"
+        program="Day by day"
+        headline="The Badlaav Retreat Experience"
+        subHeadline="Step by step, day by day — a glimpse into the journey that awaits when you step away from the noise."
+        heroImage={HERO.image}
+        heroImageAlt="Arrival at a Badlaav retreat"
         primaryCta={{ label: 'Register', href: '/register?program=badlaav' }}
-        secondaryCta={{ label: 'See pricing', href: '/pricing' }}
+        secondaryCta={{ label: 'Talk to Arjun Dada', href: '/contact' }}
+        aside={<HeroGeometry variant={HERO_FIGURE.RETREAT} />}
       />
 
-      <RetreatDays variant="deep" />
-      <Inclusions />
-      <Highlights />
-
-      {/* The place */}
-      <section className="bg-soft py-[var(--section-y)] px-[var(--section-x)]">
-        <div className="max-w-narrow mx-auto">
-          <FadeIn>
-            <p className="font-mono text-xs uppercase tracking-widest text-muted mb-3">The place</p>
-            <h2 className="font-display font-semibold text-ink mb-6" style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)' }}>
-              Why Ambajogai
-            </h2>
-            <div className="space-y-4 font-sans text-charcoal leading-body">
-              <p>
-                {SITE.locationLong} The distance is not an inconvenience — it is the point. Far enough
-                that the office cannot reach you; close enough that you can get here in a morning.
-              </p>
-              <p>
-                We share detailed travel instructions once you register. Come by road or rail to
-                Aurangabad or Latur; we will guide you the rest of the way.
-              </p>
-            </div>
-          </FadeIn>
-        </div>
+      <section className="bg-cream pt-[var(--section-y)] text-center px-[var(--section-x)]">
+        <FadeIn>
+          <h2 className="font-display text-ink" style={{ fontSize: 'clamp(2rem, 5vw, 3.2rem)' }}>
+            The Three Days
+          </h2>
+          <p className="font-sans text-charcoal/80 max-w-narrow mx-auto mt-3">
+            Three days, carefully held, to take you from exhaustion to clarity. Here is how the journey unfolds.
+          </p>
+        </FadeIn>
       </section>
 
-      <UpcomingBatches program="BADLAAV" title="Upcoming retreat dates" />
+      {RETREAT_DAYS.map((day, i) => (
+        <DayBlock key={day.day} day={day} reverse={i % 2 === 1} />
+      ))}
 
-      <CtaBand
-        eyebrow="Ready when you are"
-        heading="Hold a seat for the next batch."
-        body="Batches are small — twenty people at most. When the dates open, they fill quickly."
-      />
+      <Inclusions />
+      <UpcomingBatches program="BADLAAV" title="Upcoming retreat dates" />
     </>
   );
 }

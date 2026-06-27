@@ -169,7 +169,11 @@ export const EXPERIENCE_PLANS = [
 export const EXPERIENCE = {
   hero: {
     program: 'The Badlaav Experience',
-    headline: 'Transform your mindset. Transform your results.',
+    // Headline keeps "Transform your" fixed and rotates the closing word in
+    // place: mindset → results. `headline` is the static fallback (reduced motion).
+    headline: 'Transform your mindset.',
+    headlinePrefix: 'Transform your',
+    headlineWords: ['mindset', 'results'],
     sub: 'Every meaningful transformation begins with awareness. A guided experience to break through limiting patterns, gain clarity, and move forward with confidence and purpose.',
   },
   intro: [
@@ -288,4 +292,132 @@ export const STATS = [
 
 export const SOCIAL = {
   instagram: 'https://www.instagram.com/iambadlaav/',
+  // TODO: paste the real channel/page URLs — these icons render only once set.
+  youtube: '',
+  facebook: '',
+};
+
+// ── First Light prototype copy ──────────────────────────────────────────────
+export const HERO = {
+  badge: 'A three-day residential retreat · Ambajogai, Maharashtra',
+  titleTop: 'Trip नाही —',
+  titleBottom: 'Turning Point.',
+  subtitle: 'You cannot think clearly in a noisy environment.',
+  image: '/images/proto_hero.png',
+  imageAlt: 'A quiet Badlaav morning',
+};
+
+export const NOISE_WHEEL = {
+  heading: "You already know what's wrong.",
+  subheading: "You just can't hear it over the noise.",
+  center: ['Turning', 'Point'],
+  spokes: ['Clarity', 'Focus', 'Rest', 'Direction', 'Patience', 'Honesty', 'Stillness', 'Self'],
+  listHeading: 'Eight things the noise quietly takes from you',
+  list: [
+    'See the patterns you keep repeating',
+    "Sit with what you've been avoiding",
+    'Hear yourself think again',
+    'Leave with one clear next step',
+    'Spend three days with people doing the same work',
+  ],
+};
+
+export const COLLAGE = {
+  images: [
+    { src: '/images/proto_day1.png', alt: 'A moment at Badlaav', span: 'col-span-2 row-span-2' },
+    { src: '/images/proto_day2.png', alt: 'A moment at Badlaav', span: '' },
+    { src: '/images/proto_day3.png', alt: 'A moment at Badlaav', span: '' },
+    { src: '/images/proto_day4.png', alt: 'A moment at Badlaav', span: '' },
+    { src: '/images/proto_day5.png', alt: 'A moment at Badlaav', span: '' },
+    { src: '/images/proto_venue_dining.png', alt: 'A moment at Badlaav', span: 'col-span-2' },
+  ],
+};
+
+export const INTERSTITIAL = {
+  line1: 'Trip नाही. This is not a getaway.',
+  line2: "It's the pause your life keeps asking for.",
+  ctaLabel: 'See upcoming batches',
+  ctaHref: '/register?program=badlaav',
+};
+
+// Richer 3-day data for ThreeDaysInteractive + DayBlock (additive; DAYS stays as-is).
+export const RETREAT_DAYS = [
+  {
+    day: 'Day 1',
+    title: 'Arrival',
+    subtitle: 'Coming Into Stillness',
+    accent: 'gold',
+    image: '/images/proto_day1.png',
+    paragraphs: [
+      'You arrive carrying the weight of the outside world. Today is about putting your bags down — literally and mentally. We welcome you with warmth, chai, and a simple instruction: stop.',
+      'The evening is an opening circle. You meet the others, and for the first time in a long while, the phone stays off and the noise stays outside.',
+    ],
+    list: [
+      'Disconnect from devices and the constant noise',
+      'Settle into a slower, more natural rhythm',
+    ],
+  },
+  {
+    day: 'Day 2',
+    title: 'The Honest Look',
+    subtitle: 'Seeing Your Patterns Clearly',
+    accent: 'sage',
+    image: '/images/proto_day3.png',
+    paragraphs: [
+      "With the noise gone, the real work begins. Through quiet reflection and long stretches of silence, you start to see the patterns running your life — the ones you're usually too busy to notice.",
+      "We don't chase quick fixes. We sit with what's true. By evening, things you've avoided for years feel a little easier to face.",
+    ],
+    list: [
+      'Honest reflection in long stretches of silence',
+      'Seeing the patterns and loops you keep repeating',
+    ],
+  },
+  {
+    day: 'Day 3',
+    title: 'Walking Back',
+    subtitle: 'Taking It Home With You',
+    accent: 'gold',
+    image: '/images/proto_day5.png',
+    paragraphs: [
+      "Clarity that stays at the retreat isn't clarity. The final day turns inward work into one clear, honest decision — and a plan for carrying it back into ordinary life.",
+      'We close the circle, sit together one last time, and say goodbye. You leave not just rested, but clear, grounded, and pointed in a direction you chose.',
+    ],
+    list: [
+      'Turning three days of silence into one clear next step',
+      'A closing circle, and a calm goodbye',
+    ],
+  },
+];
+
+export const LOCATION = {
+  eyebrow: 'The Place',
+  badge: 'Quiet by design',
+  copy: 'We choose properties that are secluded, surrounded by deep nature, and simple enough that nothing competes for your attention — so you can do the only work that matters here: your own.',
+  images: [
+    { src: '/images/proto_venue_aerial.png', alt: 'The retreat, from above', large: true },
+    { src: '/images/proto_venue_room.png', alt: 'A quiet room', large: false },
+    { src: '/images/proto_venue_dining.png', alt: 'Shared, home-cooked meals', large: false },
+    { src: '/images/proto_day2.png', alt: 'The land around the retreat', large: false },
+  ],
+};
+
+export const FACILITATORS = {
+  heading: 'Who holds the space',
+  subheading: 'People who have done the work themselves',
+  people: [
+    { name: 'Arjun Dada', role: 'Founder & Facilitator', image: '/images/proto_figure.png', alt: 'Arjun Dada, founder of Badlaav' },
+    { name: 'Sandeep', role: 'Facilitator', image: '/images/proto_day3.png', alt: 'Badlaav facilitator' },
+    { name: 'Meera', role: 'Facilitator & Care', image: '/images/proto_day4.png', alt: 'Badlaav facilitator' },
+  ],
+};
+
+export const VIDEO = {
+  heading: 'See a Badlaav unfold',
+  sub: 'Three days, in three minutes',
+  cta: 'Watch',
+  image: '/images/proto_hero.png',
+};
+
+export const BIG_FOOTER = {
+  headline: ["You don't need more noise.", 'You need three quiet days.'],
 };

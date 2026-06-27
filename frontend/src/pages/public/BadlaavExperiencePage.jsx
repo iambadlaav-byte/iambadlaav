@@ -1,21 +1,51 @@
 /**
  * BadlaavExperiencePage — /badlaav-experience
- * The lighter, second programme. Client-supplied copy lives in content.js (EXPERIENCE).
- * Reuses ProgramHero + the warm card/section system (LBD look).
+ * The second programme, presented with the same First Light "programme" template
+ * as /retreat: hero → centered intro → alternating image/copy blocks → audience
+ * → how-to-register → upcoming dates. Copy lives in content.js (EXPERIENCE).
  */
 import { Helmet } from 'react-helmet-async';
 import { ProgramHero } from '../../components/sections/ProgramHero.jsx';
+import { HeroGeometry, HERO_FIGURE } from '../../components/animations/HeroGeometry.jsx';
+import { DayBlock } from '../../components/sections/DayBlock.jsx';
 import { UpcomingBatches } from '../../components/sections/UpcomingBatches.jsx';
-import { CtaBand } from '../../components/sections/CtaBand.jsx';
 import { FadeIn } from '../../components/animations/FadeIn.jsx';
 import { NumberBadge } from '../../components/ui/NumberBadge.jsx';
-import { Highlight } from '../../components/ui/Highlight.jsx';
 import { EXPERIENCE } from '../../lib/content.js';
 
 const REGISTER_HREF = '/register?program=badlaav-experience';
 
 export default function BadlaavExperiencePage() {
   const { hero, intro, learn, audience, highlights, outcomes, process } = EXPERIENCE;
+
+  // Same alternating image/copy rhythm as /retreat's day blocks, carrying the
+  // Experience's own content (learn pillars, highlights, outcomes).
+  const blocks = [
+    {
+      day: 'Learn',
+      title: 'What you will learn',
+      subtitle: 'Awareness to action',
+      accent: 'gold',
+      image: '/images/proto_day1.png',
+      list: learn,
+    },
+    {
+      day: 'Inside',
+      title: 'Programme highlights',
+      subtitle: 'How the room runs',
+      accent: 'sage',
+      image: '/images/proto_day3.png',
+      list: highlights,
+    },
+    {
+      day: 'Outcomes',
+      title: 'What you can expect',
+      subtitle: 'What you take home',
+      accent: 'gold',
+      image: '/images/proto_day5.png',
+      list: outcomes,
+    },
+  ];
 
   return (
     <>
@@ -30,48 +60,34 @@ export default function BadlaavExperiencePage() {
       <ProgramHero
         program={hero.program}
         headline={hero.headline}
+        headlinePrefix={hero.headlinePrefix}
+        headlineWords={hero.headlineWords}
         subHeadline={hero.sub}
         heroImage="/images/badlaav_day2.jpg"
         heroImageAlt="A working session at a Badlaav batch"
         primaryCta={{ label: 'Register', href: REGISTER_HREF }}
         secondaryCta={{ label: 'Talk to Arjun Dada', href: '/contact' }}
+        aside={<HeroGeometry variant={HERO_FIGURE.EXPERIENCE} />}
       />
 
-      {/* Intro */}
-      <section className="bg-cream py-[var(--section-y)] px-[var(--section-x)]">
-        <div className="max-w-narrow mx-auto">
-          <FadeIn>
-            <p className="font-mono text-xs uppercase tracking-widest text-ochre mb-4">About this programme</p>
-            <div className="space-y-4 font-sans text-charcoal leading-body text-lg">
-              {intro.map((p) => (
-                <p key={p.slice(0, 24)}>{p}</p>
-              ))}
-            </div>
-          </FadeIn>
-        </div>
-      </section>
-
-      {/* What you will learn */}
-      <section className="bg-soft py-[var(--section-y)] px-[var(--section-x)]">
-        <div className="max-w-default mx-auto">
-          <FadeIn>
-            <h2 className="font-display font-semibold text-ink text-center mb-10" style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)' }}>
-              What you will <Highlight>learn</Highlight>
-            </h2>
-          </FadeIn>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {learn.map((item, i) => (
-              <FadeIn key={item.title} className="h-full">
-                <div className="bg-pearl rounded-2xl p-7 h-full flex flex-col border border-charcoal/5 shadow-sm hover:shadow-lg transition-shadow">
-                  <NumberBadge label={String(i + 1).padStart(2, '0')} index={i} className="mb-4" />
-                  <h3 className="font-display text-xl font-semibold text-ink mb-2">{item.title}</h3>
-                  <p className="font-sans text-sm text-charcoal leading-body flex-1">{item.body}</p>
-                </div>
-              </FadeIn>
+      {/* Intro — mirrors /retreat's centered opener */}
+      <section className="bg-cream pt-[var(--section-y)] text-center px-[var(--section-x)]">
+        <FadeIn>
+          <h2 className="font-display text-ink" style={{ fontSize: 'clamp(2rem, 5vw, 3.2rem)' }}>
+            The Experience
+          </h2>
+          <div className="max-w-narrow mx-auto mt-3 space-y-4 font-sans text-charcoal/80 leading-body">
+            {intro.map((p) => (
+              <p key={p.slice(0, 24)}>{p}</p>
             ))}
           </div>
-        </div>
+        </FadeIn>
       </section>
+
+      {/* Alternating image/copy blocks — the same look as the retreat day blocks */}
+      {blocks.map((block, i) => (
+        <DayBlock key={block.title} day={block} reverse={i % 2 === 1} />
+      ))}
 
       {/* Who it's for */}
       <section className="bg-cream py-[var(--section-y)] px-[var(--section-x)]">
@@ -89,30 +105,6 @@ export default function BadlaavExperiencePage() {
               ))}
             </div>
           </FadeIn>
-        </div>
-      </section>
-
-      {/* Highlights + Outcomes */}
-      <section className="bg-soft py-[var(--section-y)] px-[var(--section-x)]">
-        <div className="max-w-default mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-          {[
-            { label: 'Programme highlights', items: highlights },
-            { label: 'What you can expect', items: outcomes },
-          ].map((col) => (
-            <FadeIn key={col.label} className="h-full">
-              <div className="bg-pearl rounded-2xl p-8 h-full border border-charcoal/5 shadow-sm">
-                <h3 className="font-display text-xl font-semibold text-ink mb-5">{col.label}</h3>
-                <ul className="space-y-3">
-                  {col.items.map((item) => (
-                    <li key={item} className="flex items-start gap-2 font-sans text-sm text-charcoal">
-                      <span className="text-ochre mt-0.5 flex-shrink-0">●</span>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </FadeIn>
-          ))}
         </div>
       </section>
 
@@ -139,14 +131,6 @@ export default function BadlaavExperiencePage() {
       </section>
 
       <UpcomingBatches program="FUTURE_READINESS" title="Upcoming Experience dates" />
-
-      <CtaBand
-        eyebrow="Ready when you are"
-        heading="Join the next Experience."
-        body="One programme, real tools, and a room of people moving in the same direction."
-        primary={{ label: 'Register', href: REGISTER_HREF }}
-        secondary={{ label: 'Talk to Arjun Dada', href: '/contact' }}
-      />
     </>
   );
 }

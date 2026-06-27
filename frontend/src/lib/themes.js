@@ -14,25 +14,26 @@ export const THEMES = {
   // terracotta #A03E1B, fern #4E9B77, warm charcoal #373735.
   warm: {
     label: 'Warm',
-    swatch: '#fff0ea',
-    accent: '#fad062',
+    swatch: '#fdfaf6',
+    accent: '#f3a747',
     vars: {
-      '--color-cream': '255 240 234', // #FFF0EA warm blush — default page background
-      '--color-soft': '248 231 224', // #F8E7E0 warm pale — alternating bands, cards
-      '--color-navy': '1 82 67', // #015243 deep green — header bar, dark surfaces
-      '--color-ink': '1 51 40', // #013328 deepest green — hero overlay, footer
-      '--color-charcoal': '55 55 53', // #373735 warm near-black — body text on light
-      '--color-pearl': '255 243 239', // #FFF3EF warm white — text on dark surfaces
-      '--color-gold': '250 208 98', // #FAD062 sunny gold — primary CTAs
-      '--color-ochre': '160 62 27', // #A03E1B terracotta — warmth accent
-      '--color-teal': '50 116 85', // #327455 deep fern — links, secondary actions
-      '--color-teal-light': '78 155 119', // #4E9B77 fern — hover, accent phrase
-      '--color-sage': '78 155 119', // #4E9B77 fern — success / payment confirmation
-      '--color-muted': '110 110 110', // #6E6E6E grey — captions, metadata
-      '--color-danger': '196 74 58', // form errors, destructive actions
-      '--color-on-gold': '1 51 40', // deep green text on gold CTA backgrounds
-      '--color-on-ochre': '255 243 239', // warm white on terracotta backgrounds
-      '--font-display': "'Poppins', system-ui, sans-serif",
+      '--color-cream': '253 250 246', // #fdfaf6 off-white — default page background
+      '--color-soft': '250 238 229', // #faeee5 peach — alternating bands, cards
+      '--color-navy': '1 82 67', // #015243 deep green — header bar, dark surfaces (KEEP)
+      '--color-ink': '1 51 40', // #013328 deepest green — hero overlay, footer (KEEP)
+      '--color-charcoal': '44 44 44', // #2c2c2c warm near-black — body text on light
+      '--color-pearl': '255 243 239', // #FFF3EF warm white — text on dark surfaces (KEEP)
+      '--color-gold': '243 167 71', // #f3a747 amber — primary CTAs / badges
+      '--color-ochre': '141 62 29', // #8d3e1d terracotta — primary brand accent
+      '--color-ember': '92 34 16', // #5C2210 deep burnt terracotta — hero overlay (high text contrast)
+      '--color-teal': '50 116 85', // #327455 deep fern — links (KEEP)
+      '--color-teal-light': '78 155 119', // #4E9B77 fern — hover, accent (KEEP)
+      '--color-sage': '78 155 119', // #4E9B77 fern — success / day-2 accent (KEEP)
+      '--color-muted': '110 110 110', // #6E6E6E grey — captions (KEEP)
+      '--color-danger': '196 74 58', // form errors (KEEP)
+      '--color-on-gold': '1 51 40', // deep green text on amber CTA (KEEP)
+      '--color-on-ochre': '255 243 239', // warm white on terracotta (KEEP)
+      '--font-display': "'Cormorant Garamond', Georgia, serif",
       '--font-sans': "'DM Sans', system-ui, sans-serif",
       '--font-mono': "'DM Mono', ui-monospace, monospace",
     },

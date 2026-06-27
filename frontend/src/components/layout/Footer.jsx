@@ -3,9 +3,14 @@
  * NO inline styles. NO forbidden phrases.
  */
 import { Link } from 'react-router-dom';
-import { Instagram, Mail, MapPin, Phone } from 'lucide-react';
-import { CONTACT_EMAIL, WHATSAPP_NUMBER, CONTACT_PHONE, MAP_LINK } from '../../lib/constants.js';
-import { SITE, SOCIAL } from '../../lib/content.js';
+import { Mail, MapPin, Phone } from 'lucide-react';
+import { CONTACT_EMAIL, CONTACT_PHONE, MAP_LINK } from '../../lib/constants.js';
+import { SITE } from '../../lib/content.js';
+import { SocialLinks } from '../ui/SocialLinks.jsx';
+
+// "नाही" (Devanagari) renders taller than the Latin letters around it, so we
+// drop it a touch to sit level with the English in the tagline.
+const [TAGLINE_BEFORE, TAGLINE_AFTER] = SITE.tagline.split('नाही');
 
 // Main site navigation — kept distinct from the legal column below.
 const EXPLORE_LINKS = [
@@ -37,10 +42,10 @@ const linkClass = 'font-sans text-sm text-charcoal/80 hover:text-teal transition
 export default function Footer() {
   return (
     <footer className="bg-cream border-t border-soft">
-      <div className="max-w-default mx-auto px-4 py-16 grid grid-cols-2 gap-x-8 gap-y-12 md:grid-cols-4 lg:grid-cols-12 lg:gap-x-10">
+      <div className="max-w-default mx-auto px-4 py-16 grid grid-cols-2 gap-x-8 gap-y-12 md:grid-cols-4 lg:grid-cols-12 lg:gap-x-6">
 
         {/* Brand + contact — wider lead column */}
-        <div className="col-span-2 md:col-span-4 lg:col-span-4">
+        <div className="col-span-2 md:col-span-4 lg:col-span-6">
           <img
             src="/images/badlaav-logo.png"
             alt="Badlaav"
@@ -50,7 +55,15 @@ export default function Footer() {
             {SITE.parent}
           </p>
           <p className="font-display text-lg text-ink mb-6">
-            {SITE.tagline}
+            {TAGLINE_AFTER !== undefined ? (
+              <>
+                {TAGLINE_BEFORE}
+                <span className="text-[0.85em]">नाही</span>
+                {TAGLINE_AFTER}
+              </>
+            ) : (
+              SITE.tagline
+            )}
           </p>
           <address className="not-italic space-y-3 text-sm text-charcoal/80 font-sans">
             <a
@@ -81,40 +94,8 @@ export default function Footer() {
               </a>
             </div>
           </address>
-          <div className="flex items-center gap-4 mt-5">
-            <a
-              href={SOCIAL.instagram}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-charcoal/80 hover:text-teal transition-colors"
-              aria-label="Instagram"
-            >
-              <Instagram size={20} />
-            </a>
-            <a
-              href={`https://wa.me/${WHATSAPP_NUMBER.replace(/\D/g, '')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={linkClass}
-            >
-              WhatsApp us
-            </a>
-          </div>
+          <SocialLinks className="mt-5" />
         </div>
-
-        {/* Explore */}
-        <nav aria-label="Footer navigation" className="lg:col-span-3">
-          <h3 className="font-mono text-xs uppercase tracking-widest text-muted mb-4">Explore</h3>
-          <ul className="space-y-2.5">
-            {EXPLORE_LINKS.map((link) => (
-              <li key={link.href}>
-                <Link to={link.href} className={linkClass}>
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
 
         {/* Programmes */}
         <nav aria-label="Programmes" className="lg:col-span-2">
@@ -130,8 +111,22 @@ export default function Footer() {
           </ul>
         </nav>
 
+        {/* Explore */}
+        <nav aria-label="Footer navigation" className="lg:col-span-2">
+          <h3 className="font-mono text-xs uppercase tracking-widest text-muted mb-4">Explore</h3>
+          <ul className="space-y-2.5">
+            {EXPLORE_LINKS.map((link) => (
+              <li key={link.href}>
+                <Link to={link.href} className={linkClass}>
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
         {/* Legal — its own grouped column */}
-        <nav aria-label="Legal" className="lg:col-span-3">
+        <nav aria-label="Legal" className="lg:col-span-2">
           <h3 className="font-mono text-xs uppercase tracking-widest text-muted mb-4">Legal</h3>
           <ul className="space-y-2.5">
             {LEGAL_LINKS.map((link) => (

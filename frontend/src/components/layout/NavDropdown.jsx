@@ -8,12 +8,29 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '../../lib/cn.js';
+import { useReducedMotion } from '../../hooks/useReducedMotion.js';
 
 export default function NavDropdown({ label, items = [] }) {
   const [open, setOpen] = useState(false);
   const groupRef = useRef(null);
   const { pathname } = useLocation();
+  const reduce = useReducedMotion();
+
+  // Panel grows out of the bar (fade + slide-down + scale-from-top); items
+  // cascade in. Reduced motion → a quick fade, no transform. transform/opacity
+  // only (CONSTRAINT-CODE-004).
+  const panelVariants = reduce
+    ? { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { duration: 0.1 } }, exit: { opacity: 0, transition: { duration: 0.1 } } }
+    : {
+        hidden: { opacity: 0, y: -8, scale: 0.96 },
+        visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.2, ease: [0.16, 1, 0.3, 1], staggerChildren: 0.045, delayChildren: 0.02 } },
+        exit: { opacity: 0, y: -6, scale: 0.97, transition: { duration: 0.14 } },
+      };
+  const itemVariants = reduce
+    ? { hidden: { opacity: 0 }, visible: { opacity: 1 } }
+    : { hidden: { opacity: 0, x: -6 }, visible: { opacity: 1, x: 0, transition: { duration: 0.18, ease: 'easeOut' } } };
 
   const isActiveGroup = items.some((item) => pathname.startsWith(item.href));
 
@@ -76,33 +93,40 @@ export default function NavDropdown({ label, items = [] }) {
         />
       </button>
 
-      {open && (
-        <div
-          className="absolute left-0 top-full pt-2 z-50 min-w-[14rem]"
-          role="menu"
-          aria-label={label}
-        >
-          <div className="bg-ink rounded-lg shadow-lg border border-pearl/10 py-2">
-            {items.map((item) => (
-              <NavLink
-                key={item.href}
-                to={item.href}
-                role="menuitem"
-                className={({ isActive }) =>
-                  cn(
-                    'block px-4 py-2.5 font-sans text-sm transition-colors',
-                    isActive
-                      ? 'text-gold'
-                      : 'text-pearl/80 hover:text-pearl hover:bg-pearl/5',
-                  )
-                }
-              >
-                {item.label}
-              </NavLink>
-            ))}
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            className="absolute left-0 top-full pt-2 z-50 min-w-[14rem] origin-top"
+            role="menu"
+            aria-label={label}
+            variants={panelVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            <div className="bg-ember rounded-xl shadow-xl ring-1 ring-pearl/10 py-2">
+              {items.map((item) => (
+                <motion.div key={item.href} variants={itemVariants}>
+                  <NavLink
+                    to={item.href}
+                    role="menuitem"
+                    className={({ isActive }) =>
+                      cn(
+                        'block mx-1.5 rounded-lg px-3.5 py-2.5 font-sans text-sm transition-colors',
+                        isActive
+                          ? 'text-gold bg-pearl/5'
+                          : 'text-pearl/80 hover:text-pearl hover:bg-pearl/10',
+                      )
+                    }
+                  >
+                    {item.label}
+                  </NavLink>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

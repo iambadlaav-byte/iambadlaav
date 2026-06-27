@@ -31,7 +31,7 @@ export function ProgramSpotlight() {
           {/* Content */}
           <FadeIn delay={0.15}>
             <div>
-              <p className="font-mono text-xs uppercase tracking-widest text-teal mb-3">
+              <p className="font-mono text-xs uppercase tracking-widest text-muted mb-3">
                 Featured — Corporate Retreat
               </p>
               <h2

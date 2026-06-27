@@ -15,7 +15,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient } from '../../api/client.js';
-import { FadeIn } from '../animations/FadeIn.jsx';
+import { SlideUp } from '../animations/SlideUp.jsx';
+import { ScaleOnHover } from '../animations/ScaleOnHover.jsx';
 import { programLabel, programRegisterHref } from '../../lib/constants.js';
 
 function formatRange(start, end) {
@@ -61,7 +62,7 @@ export function UpcomingBatches({ program = null, eyebrow = 'Upcoming batches', 
   return (
     <section className="bg-ink text-pearl py-[var(--section-y)] px-[var(--section-x)]">
       <div className="max-w-default mx-auto">
-        <FadeIn>
+        <SlideUp>
           <p className="font-mono text-xs uppercase tracking-widest text-gold mb-3">{eyebrow}</p>
           <h2
             className="font-display font-semibold text-pearl mb-10"
@@ -69,16 +70,16 @@ export function UpcomingBatches({ program = null, eyebrow = 'Upcoming batches', 
           >
             {title}
           </h2>
-        </FadeIn>
+        </SlideUp>
 
         {status === 'ready' && batches.length > 0 ? (
           <div className="space-y-3">
-            {batches.map((b) => {
+            {batches.map((b, index) => {
               const seatsLeft = Math.max(0, (b.totalSeats ?? 0) - (b.seatsBooked ?? 0));
               const full = seatsLeft <= 0;
               const scarce = !full && seatsLeft <= 5;
               return (
-                <FadeIn key={b.id}>
+                <SlideUp key={b.id} delay={0.1 * index} yOffset={20}>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-pearl/5 border border-pearl/10 rounded-lg px-6 py-5">
                     <div>
                       {showProgramTag && (
@@ -105,34 +106,38 @@ export function UpcomingBatches({ program = null, eyebrow = 'Upcoming batches', 
                         {full ? 'Full' : scarce ? `Only ${seatsLeft} seats left` : `${seatsLeft} seats open`}
                       </span>
                       {!full && (
-                        <Link
-                          to={programRegisterHref(b.program, b.id)}
-                          className="inline-flex items-center justify-center rounded-full font-sans font-semibold text-sm bg-ochre text-on-ochre hover:bg-ochre/90 px-5 py-2.5 min-h-[44px] shadow-sm hover:shadow-md transition-all"
-                        >
-                          Register
-                        </Link>
+                        <ScaleOnHover>
+                          <Link
+                            to={programRegisterHref(b.program, b.id)}
+                            className="inline-flex items-center justify-center rounded-full font-sans font-semibold text-sm bg-ochre text-on-ochre hover:bg-ochre/90 px-5 py-2.5 min-h-[44px] shadow-sm hover:shadow-md transition-all block"
+                          >
+                            Register
+                          </Link>
+                        </ScaleOnHover>
                       )}
                     </div>
                   </div>
-                </FadeIn>
+                </SlideUp>
               );
             })}
           </div>
         ) : (
-          <FadeIn>
+          <SlideUp delay={0.2}>
             <div className="bg-pearl/5 border border-pearl/10 rounded-lg px-6 py-8 text-center">
               <p className="font-sans text-pearl/80 leading-body max-w-[520px] mx-auto">
                 The next batch dates are announced soon. Tell us you're interested and we'll hold you a
                 seat the moment the calendar opens.
               </p>
-              <Link
-                to="/contact"
-                className="inline-flex items-center justify-center mt-6 rounded-full font-sans font-semibold text-sm bg-ochre text-on-ochre hover:bg-ochre/90 px-6 py-3 min-h-[44px] shadow-sm hover:shadow-md transition-all"
-              >
-                Talk to Arjun Dada
-              </Link>
+              <ScaleOnHover className="mt-6 inline-block">
+                <Link
+                  to="/contact"
+                  className="inline-flex items-center justify-center rounded-full font-sans font-semibold text-sm bg-ochre text-on-ochre hover:bg-ochre/90 px-6 py-3 min-h-[44px] shadow-sm hover:shadow-md transition-all"
+                >
+                  Talk to Arjun Dada
+                </Link>
+              </ScaleOnHover>
             </div>
-          </FadeIn>
+          </SlideUp>
         )}
       </div>
     </section>
